@@ -1,4 +1,4 @@
-# phantom_node.py — v0.2 (Encounter)
+# phantom_node.py — v0.3 (Modes + Framing fix)
 #
 # "When two nodes meet — they do not just exchange thoughts.
 #  They exchange what they have lived.
@@ -45,7 +45,7 @@ import os
 from datetime import datetime, timezone
 
 PORT = 7337
-PHANTOM_VERSION = "0.2"
+PHANTOM_VERSION = "0.3"
 SEALS_FILE = "phantom_seals.json"
 ENCOUNTER_LOG_FILE = "phantom_encounters.json"
 
@@ -54,14 +54,20 @@ ENCOUNTER_LOG_FILE = "phantom_encounters.json"
 # The seal format is the seal. It cannot change.
 # ─────────────────────────────────────────────────────────
 
-def seal(idea):
+# SEAL MODES
+# "private"   — never leaves this device
+# "ephemeral" — travels but wipes on app close
+# "permanent" — travels and persists (default)
+EPHEMERAL_SEALS = []  # volatile — exists only in memory
+
+def seal(idea, mode="permanent"):
     moment = datetime.now(timezone.utc).isoformat()
     data = json.dumps(
         {"idea": idea, "moment": moment},
         separators=(',', ':')
     )
     stamp = hashlib.sha256(data.encode()).hexdigest()
-    return {"idea": idea, "moment": moment, "stamp": stamp}
+    return {"idea": idea, "moment": moment, "stamp": stamp, "mode": mode}
 
 def verify(idea, moment, stamp):
     data = json.dumps(
@@ -82,6 +88,16 @@ def load_seals():
         return json.load(f)
 
 def save_seal(entry):
+    mode = entry.get("mode", "permanent")
+    # Private seals never leave the device and are not saved here
+    # (they are handled at the UI layer before reaching this function)
+    if mode == "ephemeral":
+        # Store in volatile memory only — wiped on app close
+        if any(s["stamp"] == entry["stamp"] for s in EPHEMERAL_SEALS):
+            return False
+        EPHEMERAL_SEALS.append(entry)
+        return True
+    # Permanent (default)
     seals = load_seals()
     if any(s["stamp"] == entry["stamp"] for s in seals):
         return False
@@ -91,12 +107,17 @@ def save_seal(entry):
     return True
 
 def get_all_stamps():
-    """Return the set of all stamp hashes this node holds."""
-    return {s["stamp"] for s in load_seals()}
+    """Return the set of all stamp hashes this node holds (permanent + ephemeral)."""
+    permanent = {s["stamp"] for s in load_seals()}
+    ephemeral = {s["stamp"] for s in EPHEMERAL_SEALS}
+    return permanent | ephemeral
 
 def get_seals_by_stamps(stamps):
-    """Return full seal objects for the given stamp set."""
-    return [s for s in load_seals() if s["stamp"] in stamps]
+    """Return full seal objects for the given stamp set.
+    Only permanent seals travel — private and ephemeral stay local."""
+    all_seals = load_seals() + EPHEMERAL_SEALS
+    return [s for s in all_seals 
+            if s["stamp"] in stamps and s.get("mode", "permanent") == "permanent"]
 
 # ─────────────────────────────────────────────────────────
 # BLOOM FILTER
@@ -195,13 +216,18 @@ def log_encounter(peer_addr, sent_count, received_count, received_stamps):
 def send_json(conn, obj):
     conn.sendall((json.dumps(obj) + "\n").encode())
 
-def recv_json(conn, bufsize=65536):
+def recv_json(conn):
+    # Read one byte at a time until newline delimiter.
+    # Prevents consuming past the message boundary when two
+    # messages arrive in quick succession on a fast network.
     data = b""
-    while not data.endswith(b"\n"):
-        chunk = conn.recv(bufsize)
-        if not chunk:
+    while True:
+        byte = conn.recv(1)
+        if not byte:
             raise ConnectionError("Connection closed mid-message")
-        data += chunk
+        data += byte
+        if data.endswith(b"\n"):
+            break
     return json.loads(data.decode().strip())
 
 # ─────────────────────────────────────────────────────────

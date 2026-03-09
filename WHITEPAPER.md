@@ -117,13 +117,14 @@ A model that runs entirely on the device —
 answering questions, helping think, preserving memory —
 without any thought leaving the device.
 
-Current implementation: Llama 3.2 1B (Android, Termux)
+Current implementation: 1B local model (Android, Termux)
 Target: 7B+ parameter models for deeper reasoning
 Future: Federated learning — Echo trained by thousands 
 of nodes from their own devices, without data leaving any node.
 
 A model trained by those the world does not hear.
-The woman in Lagos did not train GPT or Claude.
+The woman in Lagos did not train the models that serve
+those who already have power.
 She could train Echo.
 
 ### SUIJURIS — The Economic Layer

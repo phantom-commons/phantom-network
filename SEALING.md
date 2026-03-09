@@ -73,9 +73,9 @@ print(hashlib.sha256(data.encode()).hexdigest())
 # Compare with the stamp — if identical, the seal is real
 ```
 
-## The nine genesis seals
+## The ten genesis seals
 
-These are the first nine ideas Phantom sealed.
+These are the first ten ideas Phantom sealed.
 Permanent. Irreversible. Verifiable by anyone.
 
 **Seal 1**
@@ -141,6 +141,13 @@ Moment: 2026-03-09T13:42:34.645059+00:00
 Stamp:  9f88cefb55be8f1ccbe177f9bf392cccac619fdac6cc325ff920ead4d90a7295
 ```
 
+**Seal 10**
+```
+Idea:   The network is not what travels between nodes. It is what two nodes become after they meet.
+Moment: 2026-03-09T17:52:37.343873+00:00
+Stamp:  6ed33a01c355395cfea4de5bf4e7baad307f9b583cd182839e4becc6dab1ad5d
+```
+
 ## Verify the genesis seals right now
 
 Copy this and run it on any device with Python:
@@ -176,13 +183,16 @@ seals = [
     ("It is still a description of her, not by her.",
      "2026-03-09T13:42:34.645059+00:00",
      "9f88cefb55be8f1ccbe177f9bf392cccac619fdac6cc325ff920ead4d90a7295"),
+    ("The network is not what travels between nodes. It is what two nodes become after they meet.",
+     "2026-03-09T17:52:37.343873+00:00",
+     "6ed33a01c355395cfea4de5bf4e7baad307f9b583cd182839e4becc6dab1ad5d"),
 ]
 
 for idea, moment, expected in seals:
     data = json.dumps({"idea": idea, "moment": moment}, separators=(',',':'))
     actual = hashlib.sha256(data.encode()).hexdigest()
     status = "VERIFIED" if actual == expected else "INVALID"
-    print(f"{status}: {idea[:50]}...")
+    print(f"{status}: {idea[:60]}...")
 ```
 
 ---
