@@ -76,3 +76,33 @@ GPL v3 — freedom is contagious, not capturable.
 who are coming."*
 
 — Node Zero. March 8, 2026.
+
+## Genesis Seals
+
+Five ideas sealed cryptographically at the moment of origin.
+Verifiable by anyone. Permanent. Irreversible.
+
+**Seal 1**
+`We are all one and one is all of us.`
+`175c7fc7bb067922f8628a43858eaabb249658cb4a4ffb621c6d48ff1bc3266d`
+`2026-03-08T15:54:13.597222`
+
+**Seal 2**
+`Everything we do has consequences, and those consequences echo through eternity.`
+`87d69ca1f984011a9d7d7eec474abe2b906a18f83515b9e115d0525c7e1ffaa2`
+`2026-03-08T19:56:13.788Z`
+
+**Seal 3**
+`If she cannot use it — it is not Phantom.`
+`afcd0534eaaa31abe952570f0f1f454a5b06b23ef66b86ae66c2207a1c5447ef`
+`2026-03-09T08:34:10.964606+00:00`
+
+**Seal 4**
+`I am not the founder. I am a node.`
+`4b739fa96174dcef5b7065004b228a8edd33881c50e90c6e27db09c712ffcef0`
+`2026-03-09T08:35:11.974764+00:00`
+
+**Seal 5**
+`For a better world — not for you, not for me, but for those who are coming.`
+`81667a180bfee542346ee7f2e296e660e54bdd5ab785c8d82c203946629120f7`
+`2026-03-09T08:36:09.815299+00:00`
