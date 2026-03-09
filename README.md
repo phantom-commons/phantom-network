@@ -106,3 +106,46 @@ Verifiable by anyone. Permanent. Irreversible.
 `For a better world — not for you, not for me, but for those who are coming.`
 `81667a180bfee542346ee7f2e296e660e54bdd5ab785c8d82c203946629120f7`
 `2026-03-09T08:36:09.815299+00:00`
+
+## If you are not a developer
+
+You do not need to know how to code to be part of Phantom.
+
+**Seal an idea.**
+Download `phantom_seed.py` and run it with Python.
+Any idea. Any thought. Any question you have never been 
+able to ask safely.
+Seal it. It will belong to you permanently.
+
+**Verify a seal.**
+If someone shares a sealed idea with you —
+verify it. No server. No account. No trust required.
+The math either confirms it or it does not.
+
+**Tell your story.**
+Open an Issue in this repository.
+Tell us what you would write in Phantom
+that you cannot write anywhere else.
+That story is the design specification 
+for everything Phantom builds next.
+
+**Translate.**
+If you can make any of these documents 
+accessible in another language —
+that contribution is as valuable as any code.
+
+---
+
+## Repository Contents
+
+| File | What it is |
+|------|------------|
+| `phantom_seed.py` | The seal tool — run this today |
+| `GENESIS.md` | The origin and the why |
+| `CONVERSATION.md` | The moments that made Phantom |
+| `WHITEPAPER.md` | Full architecture |
+| `SEALING.md` | How seals work — with verification code |
+| `SECURITY.md` | Threat model and defenses |
+| `ECONOMICS.md` | SUIJURIS principles |
+| `SUIJURIS.md` | The currency — origin and meaning |
+| `CONTRIBUTING.md` | How to contribute |
