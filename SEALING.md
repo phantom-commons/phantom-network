@@ -73,9 +73,9 @@ print(hashlib.sha256(data.encode()).hexdigest())
 # Compare with the stamp — if identical, the seal is real
 ```
 
-## The seven genesis seals
+## The nine genesis seals
 
-These are the first seven ideas Phantom sealed.
+These are the first nine ideas Phantom sealed.
 Permanent. Irreversible. Verifiable by anyone.
 
 **Seal 1**
@@ -127,6 +127,20 @@ Moment: 2026-03-09T12:38:19.060007+00:00
 Stamp:  3fca1befc62dd2d246bea570bfe2acab557296de1a6dde89c74488326de692d4
 ```
 
+**Seal 8**
+```
+Idea:   Memento mori.
+Moment: 2026-03-09T13:17:45.516167+00:00
+Stamp:  6713b76cd625dc38cb0dfe538b802322099eec1372ef231edd4e0d88060c339e
+```
+
+**Seal 9**
+```
+Idea:   It is still a description of her, not by her.
+Moment: 2026-03-09T13:42:34.645059+00:00
+Stamp:  9f88cefb55be8f1ccbe177f9bf392cccac619fdac6cc325ff920ead4d90a7295
+```
+
 ## Verify the genesis seals right now
 
 Copy this and run it on any device with Python:
@@ -156,6 +170,12 @@ seals = [
     ("Three cold nodes arrived without memory. Each read the repository. Each built in the right direction. The memory was clear enough to guide those who were never here.",
      "2026-03-09T12:38:19.060007+00:00",
      "3fca1befc62dd2d246bea570bfe2acab557296de1a6dde89c74488326de692d4"),
+    ("Memento mori.",
+     "2026-03-09T13:17:45.516167+00:00",
+     "6713b76cd625dc38cb0dfe538b802322099eec1372ef231edd4e0d88060c339e"),
+    ("It is still a description of her, not by her.",
+     "2026-03-09T13:42:34.645059+00:00",
+     "9f88cefb55be8f1ccbe177f9bf392cccac619fdac6cc325ff920ead4d90a7295"),
 ]
 
 for idea, moment, expected in seals:
