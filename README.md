@@ -149,3 +149,22 @@ that contribution is as valuable as any code.
 | `ECONOMICS.md` | SUIJURIS principles |
 | `SUIJURIS.md` | The currency — origin and meaning |
 | `CONTRIBUTING.md` | How to contribute |
+---
+
+## Support the node
+
+SUIJURIS does not exist yet. While it is being built,
+this node accepts contributions directly.
+
+No platform. No account. No record of who gave.
+Consistent with what Phantom is.
+
+**Monero (XMR):**
+```
+42LfyLf2PpXEhtSrACi1y3R9cLq3JA7hgfwzPrS1WFyJiETTQhoVh1ybjkL4RbQq4ZMKrz6xgy1xZ836b7CyWi7SGjCX7zK
+```
+
+*When SUIJURIS exists — this address becomes a node like any other.*
+*Contributing now is contributing to what makes that possible.*
+
+
