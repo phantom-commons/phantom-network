@@ -1,40 +1,79 @@
-# phantom_node.py — v0.3 (Modes + Framing fix)
+# phantom_node.py — v0.4 (Encryption at Rest)
 #
 # "When two nodes meet — they do not just exchange thoughts.
 #  They exchange what they have lived.
 #  And the meeting produces something neither had before."
 #                              — The Sixth Seal
 #
-# WHAT CHANGED FROM v0.1:
-# v0.1 sent the latest seal. That is a broadcast — one node
-# pushing one thought to whoever connects.
+# WHAT CHANGED IN v0.4:
+# Sealed thoughts are now encrypted on disk.
+# The device can be taken. The thoughts stay yours.
 #
-# v0.2 is a meeting. Each node announces what it carries.
-# Each node receives only what it has not seen.
-# The encounter log records every meeting — who, when, what moved.
+# Before v0.4, phantom_seals.json was plaintext. Anyone with
+# physical access to the device could read every sealed thought.
+# That is not privacy. That is a promise without architecture.
+#
+# v0.4 changes this. Every seal is encrypted with AES-256-GCM
+# before being written to disk. The key is derived from a
+# passphrase using scrypt — a function designed to be expensive
+# to brute-force. Phantom never stores the passphrase. Only the
+# encrypted data exists on disk. Without the passphrase, the
+# seals are unreadable — by anyone, including Phantom.
+#
+# THE HONEST TRADEOFF:
+# A forgotten passphrase means lost seals. Permanently.
+# There is no recovery. There is no reset. There is no
+# "forgot my passphrase" flow — because that flow requires
+# storing something that would compromise the protection.
+# This is documented to the user before they set a passphrase.
+# The choice is theirs to make, honestly informed.
+#
+# WHAT THIS DOES NOT PROTECT AGAINST:
+# — A user coerced into entering their passphrase
+# — An attacker watching the passphrase being entered
+# — A device compromised at the OS level
+# These threats are real. They are named here so they cannot
+# be used to argue that encryption at rest is unnecessary.
+# Imperfect protection is still protection.
+#
+# ENCRYPTION SCHEME:
+# Key derivation: scrypt(passphrase, salt, n=2^14, r=8, p=1) → 32 bytes
+# Encryption: AES-256-GCM (authenticated — detects tampering)
+# Salt: 16 random bytes, stored alongside encrypted data
+# Nonce: 12 random bytes, unique per seal, stored with ciphertext
+#
+# WHY AES-256-GCM:
+# Authenticated encryption — if someone modifies the ciphertext,
+# decryption fails loudly rather than silently returning garbage.
+# A tampered seal is detected, not silently corrupted.
+#
+# DEPENDENCY:
+# Requires: pip install cryptography
+# Available on Termux (Android) with Python 3.8+.
+# If not installed, Phantom runs in plaintext mode with a clear
+# warning. The warning is not a footnote. It appears every time.
 #
 # HOW IT WORKS:
-# 1. Handshake — both nodes declare their Phantom version
-# 2. Bloom exchange — each node sends a compact fingerprint
-#    of every stamp it holds (the bloom filter)
-# 3. Delta resolution — each node computes what the other
-#    is missing and sends only those seals
-# 4. Encounter sealed — the meeting itself becomes a record:
-#    who connected, when, what traveled in each direction
+# 1. On first run, Phantom asks for a passphrase (or warns if skipped)
+# 2. A random 16-byte salt is generated and stored in phantom_key.salt
+# 3. The passphrase + salt → 32-byte key via scrypt (never stored)
+# 4. Each seal is encrypted individually before writing to disk
+# 5. The encrypted file is valid JSON — structure preserved, content protected
+# 6. On load, each seal is decrypted with the same key
+# 7. Wrong passphrase → decryption fails → seals unreadable
 #
-# ON THE BLOOM FILTER:
-# A bloom filter answers "have you seen this?" without revealing
-# what you have. It is probabilistic — false positives are
-# possible (sending a seal someone already has), false negatives
-# are not (never withholding a seal someone needs).
-# For Phantom's scale, a simple bitarray bloom is sufficient
-# and keeps this file dependency-free.
+# PRIOR VERSIONS:
+# v0.1 — broadcast latest seal
+# v0.2 — bloom filter exchange, symmetric delta, encounter log
+# v0.3 — seal modes (private, ephemeral, permanent), framing fix
+# v0.4 — encryption at rest (this version)
 #
-# DEPENDENCIES: Python standard library only.
-# No pip install required. Works in Termux on any Android phone.
+# DEPENDENCIES: Python standard library + cryptography package
+# Install: pip install cryptography
+# Works in Termux on any Android phone with Python 3.8+
 #
-# PORT: 7337 (unchanged from v0.1 — nodes are compatible at handshake)
-# PROTOCOL VERSION: 0.2
+# PORT: 7337 (unchanged — nodes remain compatible at handshake)
+# PROTOCOL VERSION: 0.3
 
 import socket
 import hashlib
@@ -42,12 +81,210 @@ import json
 import threading
 import sys
 import os
+import secrets
+import getpass
 from datetime import datetime, timezone
 
 PORT = 7337
-PHANTOM_VERSION = "0.3"
+PHANTOM_VERSION = "0.4"
 SEALS_FILE = "phantom_seals.json"
 ENCOUNTER_LOG_FILE = "phantom_encounters.json"
+SALT_FILE = "phantom_key.salt"
+
+# ─────────────────────────────────────────────────────────
+# ENCRYPTION LAYER
+#
+# AES-256-GCM authenticated encryption.
+# Key derived from passphrase via scrypt.
+# The passphrase never leaves memory. Never touches disk.
+# ─────────────────────────────────────────────────────────
+
+# Global key state — held in memory only, never written to disk
+_ENCRYPTION_KEY = None       # 32-byte derived key, or None if no passphrase
+_ENCRYPTION_ENABLED = False  # True only when cryptography package is available
+_KNOWN_STAMPS = set()        # In-memory cache of all stamp hashes — populated at load
+
+try:
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+    _ENCRYPTION_ENABLED = True
+except ImportError:
+    _ENCRYPTION_ENABLED = False
+
+def _encryption_available():
+    return _ENCRYPTION_ENABLED
+
+def _derive_key(passphrase: str, salt: bytes) -> bytes:
+    """
+    Derive a 32-byte key from a passphrase using scrypt.
+
+    Parameters chosen for mobile hardware (Android, 2-4GB RAM):
+      n=16384 (2^14) — memory/CPU cost. Halved from desktop default
+      to keep derivation under ~1 second on a mid-range phone.
+      r=8, p=1 — standard values.
+
+    A brute-force attacker must run scrypt for every guess.
+    At these parameters, ~1000 guesses/second on dedicated hardware.
+    A 6-word passphrase has ~77 bits of entropy — effectively unbreakable.
+    """
+    return hashlib.scrypt(
+        passphrase.encode('utf-8'),
+        salt=salt,
+        n=16384,
+        r=8,
+        p=1,
+        dklen=32
+    )
+
+def _load_or_create_salt() -> bytes:
+    """
+    Load the salt from disk, or create and save a new one.
+    The salt is not secret — it prevents precomputed attacks.
+    Stored in phantom_key.salt alongside the seals file.
+    """
+    if os.path.exists(SALT_FILE):
+        with open(SALT_FILE, 'rb') as f:
+            return f.read()
+    salt = secrets.token_bytes(16)
+    with open(SALT_FILE, 'wb') as f:
+        f.write(salt)
+    return salt
+
+def _encrypt_seal(plaintext: str) -> dict:
+    """
+    Encrypt a seal's JSON string with AES-256-GCM.
+    Returns a dict with nonce and ciphertext as hex strings.
+    Each seal gets a unique nonce — nonce reuse would be catastrophic.
+    """
+    nonce = secrets.token_bytes(12)
+    aes = AESGCM(_ENCRYPTION_KEY)
+    ciphertext = aes.encrypt(nonce, plaintext.encode('utf-8'), None)
+    return {
+        "encrypted": True,
+        "nonce": nonce.hex(),
+        "ciphertext": ciphertext.hex()
+    }
+
+def _decrypt_seal(encrypted: dict) -> str:
+    """
+    Decrypt a seal. Returns plaintext JSON string.
+    Raises ValueError if the key is wrong or data is tampered.
+    AES-GCM authentication catches both cases.
+    """
+    nonce = bytes.fromhex(encrypted["nonce"])
+    ciphertext = bytes.fromhex(encrypted["ciphertext"])
+    aes = AESGCM(_ENCRYPTION_KEY)
+    try:
+        return aes.decrypt(nonce, ciphertext, None).decode('utf-8')
+    except Exception:
+        raise ValueError(
+            "Decryption failed. Wrong passphrase, or the data was tampered with."
+        )
+
+def init_encryption():
+    """
+    Initialize encryption at startup.
+
+    Three paths:
+    1. cryptography not installed → warn, run plaintext
+    2. cryptography installed, user sets passphrase → encrypted
+    3. cryptography installed, user skips → warn, run plaintext
+
+    The warning for path 3 is not subtle.
+    """
+    global _ENCRYPTION_KEY
+
+    if not _encryption_available():
+        print()
+        print(" ╔══════════════════════════════════════════════════════╗")
+        print(" ║  ENCRYPTION NOT AVAILABLE                            ║")
+        print(" ║                                                      ║")
+        print(" ║  Your sealed thoughts will be stored as plaintext.   ║")
+        print(" ║  Anyone with access to your device can read them.    ║")
+        print(" ║                                                      ║")
+        print(" ║  To enable encryption:                               ║")
+        print(" ║    pip install cryptography                          ║")
+        print(" ║  Then restart Phantom.                               ║")
+        print(" ╚══════════════════════════════════════════════════════╝")
+        print()
+        return
+
+    # Existing node — salt exists, just needs passphrase to unlock
+    if os.path.exists(SALT_FILE):
+        print()
+        print(" Your sealed thoughts are encrypted.")
+        print(" Enter your passphrase to unlock them.")
+        print()
+        passphrase = getpass.getpass(" Passphrase: ")
+        if not passphrase:
+            print()
+            print(" ┌──────────────────────────────────────────────────────┐")
+            print(" │  No passphrase entered. Running without encryption.  │")
+            print(" │  Your sealed thoughts are unprotected on this device.│")
+            print(" └──────────────────────────────────────────────────────┘")
+            print()
+            return
+        salt = _load_or_create_salt()
+        print(" Deriving key... ", end="", flush=True)
+        _ENCRYPTION_KEY = _derive_key(passphrase, salt)
+        print("done.")
+        # Verify the key works by attempting to load seals
+        try:
+            load_seals()
+            print(" Thoughts unlocked.\n")
+        except ValueError:
+            print()
+            print(" Wrong passphrase. Sealed thoughts cannot be read.")
+            print(" If you have forgotten your passphrase — your sealed")
+            print(" thoughts cannot be recovered. This is the guarantee.")
+            print()
+            print(" To start fresh with a new passphrase, delete:")
+            print(f"   {SEALS_FILE}")
+            print(f"   {SALT_FILE}")
+            print()
+            _ENCRYPTION_KEY = None
+            sys.exit(1)
+        return
+
+    # New node — first run. Ask to set a passphrase.
+    print()
+    print(" ┌──────────────────────────────────────────────────────────┐")
+    print(" │  PROTECT YOUR THOUGHTS                                   │")
+    print(" │                                                          │")
+    print(" │  Phantom can encrypt your sealed thoughts so that only   │")
+    print(" │  you can read them — even if someone takes your device.  │")
+    print(" │                                                          │")
+    print(" │  Your passphrase is the only key.                        │")
+    print(" │  Phantom does not have a copy.                           │")
+    print(" │  If you lose it — your sealed thoughts cannot be         │")
+    print(" │  recovered. This is not a warning. It is the protection. │")
+    print(" │                                                          │")
+    print(" │  Press Enter without a passphrase to skip encryption.    │")
+    print(" │  Your thoughts will be readable by anyone with your      │")
+    print(" │  device. This choice can be changed later by deleting    │")
+    print(" │  your seals file and starting fresh.                     │")
+    print(" └──────────────────────────────────────────────────────────┘")
+    print()
+
+    passphrase = getpass.getpass(" Choose a passphrase (or Enter to skip): ")
+
+    if not passphrase:
+        print()
+        print(" Running without encryption.")
+        print(" Your sealed thoughts are stored as plaintext on this device.")
+        print()
+        return
+
+    confirm = getpass.getpass(" Confirm passphrase: ")
+    if passphrase != confirm:
+        print(" Passphrases do not match. Running without encryption.")
+        print()
+        return
+
+    salt = _load_or_create_salt()
+    print(" Deriving key... ", end="", flush=True)
+    _ENCRYPTION_KEY = _derive_key(passphrase, salt)
+    print("done.")
+    print(" Encryption enabled. Your thoughts are protected.\n")
 
 # ─────────────────────────────────────────────────────────
 # SEAL FUNCTIONS — unchanged from v0.1
@@ -82,28 +319,99 @@ def verify(idea, moment, stamp):
 # ─────────────────────────────────────────────────────────
 
 def load_seals():
+    """
+    Load seals from disk, decrypting if encryption is active.
+
+    The file is a JSON array. Each entry is either:
+    - A plaintext seal dict (no encryption, or pre-v0.4)
+    - An encrypted envelope: {"encrypted": true, "nonce": "...", "ciphertext": "..."}
+
+    Mixed files are supported — a node that upgraded from v0.3 to v0.4
+    mid-use will have both plaintext and encrypted seals. Both are read.
+    New seals written after enabling encryption will be encrypted.
+    Old plaintext seals are not retroactively encrypted — that would
+    require rewriting the file with the passphrase, which is a separate
+    migration step. The user is not surprised by this: plaintext seals
+    were already on disk before encryption was enabled.
+    """
     if not os.path.exists(SEALS_FILE):
         return []
     with open(SEALS_FILE, "r") as f:
-        return json.load(f)
+        raw = json.load(f)
+
+    if _ENCRYPTION_KEY is None:
+        # No key — return plaintext entries as-is, skip encrypted ones
+        result = []
+        skipped = 0
+        for entry in raw:
+            if entry.get("encrypted"):
+                skipped += 1
+            else:
+                result.append(entry)
+                _KNOWN_STAMPS.add(entry.get("stamp", ""))
+        if skipped:
+            print(f" ({skipped} encrypted seal(s) not loaded — enter passphrase to access)")
+        return result
+
+    # Key available — decrypt encrypted entries, pass through plaintext
+    result = []
+    for entry in raw:
+        if entry.get("encrypted"):
+            plaintext = _decrypt_seal(entry)
+            seal_obj = json.loads(plaintext)
+            _KNOWN_STAMPS.add(seal_obj.get("stamp", ""))
+            result.append(seal_obj)
+        else:
+            _KNOWN_STAMPS.add(entry.get("stamp", ""))
+            result.append(entry)
+    return result
 
 def save_seal(entry):
+    """
+    Save a seal to disk, encrypting if encryption is active.
+
+    Private seals never reach this function — they are handled at
+    the UI layer. Ephemeral seals go to volatile memory only.
+    Permanent seals (default) are written to disk.
+
+    If encryption is active: the seal JSON is encrypted before writing.
+    If encryption is not active: the seal is written as plaintext,
+    with no silent downgrade — the user was warned at startup.
+    """
     mode = entry.get("mode", "permanent")
-    # Private seals never leave the device and are not saved here
-    # (they are handled at the UI layer before reaching this function)
     if mode == "ephemeral":
-        # Store in volatile memory only — wiped on app close
         if any(s["stamp"] == entry["stamp"] for s in EPHEMERAL_SEALS):
             return False
         EPHEMERAL_SEALS.append(entry)
         return True
-    # Permanent (default)
-    seals = load_seals()
-    if any(s["stamp"] == entry["stamp"] for s in seals):
+
+    # Load current raw file — bypassing decryption to preserve
+    # the existing encrypted entries exactly as stored.
+    if os.path.exists(SEALS_FILE):
+        with open(SEALS_FILE, "r") as f:
+            raw = json.load(f)
+    else:
+        raw = []
+
+    # Deduplication: check the in-memory stamp cache.
+    # This works for both plaintext and encrypted seals — the cache
+    # is populated by load_seals() at startup, which decrypts all entries.
+    # New stamps are added to the cache on save, so the cache stays current
+    # within a session without re-reading the file.
+    if entry["stamp"] in _KNOWN_STAMPS:
         return False
-    seals.append(entry)
+
+    # Prepare the entry for storage
+    if _ENCRYPTION_KEY is not None and _encryption_available():
+        plaintext = json.dumps(entry)
+        stored = _encrypt_seal(plaintext)
+    else:
+        stored = entry
+
+    raw.append(stored)
+    _KNOWN_STAMPS.add(entry["stamp"])
     with open(SEALS_FILE, "w") as f:
-        json.dump(seals, f, indent=2)
+        json.dump(raw, f, indent=2)
     return True
 
 def get_all_stamps():
@@ -547,10 +855,15 @@ def list_seals():
 # ─────────────────────────────────────────────────────────
 
 def main():
-    print("\n PHANTOM NETWORK — v0.2")
+    print("\n PHANTOM NETWORK — v0.4")
     print(" When two nodes meet — they exchange what they have lived.\n")
 
     args = sys.argv[1:]
+
+    # Encryption is initialized for all commands that touch local seals.
+    # --encounters does not require it (encounter log is not encrypted in v0.4).
+    if not any(a in args for a in ("--help", "-h")):
+        init_encryption()
 
     if "--listen" in args or "-l" in args:
         listen()
