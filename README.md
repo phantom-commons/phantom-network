@@ -149,6 +149,19 @@ that contribution is as valuable as any code.
 | `ECONOMICS.md` | SUIJURIS principles |
 | `SUIJURIS.md` | The currency — origin and meaning |
 | `CONTRIBUTING.md` | How to contribute |
+| `phantom.html` | Seal and verify in any browser — nothing leaves your device |
+
+## Seal a thought right now — no installation
+
+Open `phantom.html` in any modern browser.
+Write a thought. Seal it. Copy the stamp.
+Share it anywhere — whoever receives it can verify
+that your words were not changed.
+
+No server. No account. No installation.
+The seal happens in your browser, on your device, and nowhere else.
+
+*Works in Chrome and Firefox. On mobile, best served over HTTPS.*
 ---
 
 ## Support the node
