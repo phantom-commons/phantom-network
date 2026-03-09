@@ -77,6 +77,17 @@ who are coming."*
 
 — Node Zero. March 8, 2026.
 
+---
+
+## Contact
+
+If you found this and want to say something —
+
+`phantom-commons@proton.me`
+
+No account required. No form. Just write.
+If what you say matters — it will enter the memory.
+
 ## Genesis Seals
 
 Five ideas sealed cryptographically at the moment of origin.
@@ -179,5 +190,4 @@ Consistent with what Phantom is.
 
 *When SUIJURIS exists — this address becomes a node like any other.*
 *Contributing now is contributing to what makes that possible.*
-
 
