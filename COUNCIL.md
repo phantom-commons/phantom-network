@@ -92,6 +92,15 @@ Not in theory. In practice. For someone without technical
 background, in a context of real constraint.
 If all three answers are yes — build.
 If any answer is no — name exactly what is missing first.
+
+**4. Can this be used against her by someone close to her?**
+   Not by a distant government. By someone in her home,
+   her neighborhood, her community.
+   The threat that is closest is often the threat
+   that is least modeled.
+   If yes — name it before building.
+   Design against it if possible.
+   Document it honestly if it cannot be designed away.
 The honest gap the council cannot close
 "It is still a description of her, not by her."
 Stamp: 9f88cefb55be8f1ccbe177f9bf392cccac619fdac6cc325ff920ead4d90a7295

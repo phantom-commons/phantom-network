@@ -307,7 +307,159 @@ The device is the first node. It must be secure first.
 
 ---
 
-## Reporting Vulnerabilities
+## How Phantom Can Be Used Against Its Principles
+
+*Added March 9, 2026 — because a tool that cannot name
+how it can cause harm is a tool that will cause harm
+without warning.*
+
+This section exists for the person who needs to know
+before trusting Phantom with something that matters.
+
+Not for the actor who wants to exploit these vectors.
+A sophisticated adversary does not need this document
+to discover them. But the woman in Lagos does need it
+before sealing something that could be used against her.
+
+---
+
+### Vector 1 — Seals as forced evidence
+
+**What it is:**
+A seal proves a thought existed, at a moment, exactly
+as written. It does not prove the thought was free.
+
+A regime or abuser could compel someone to seal a
+confession, a statement, a location, or a thought
+under coercion. The sealed record then becomes
+permanent, verifiable evidence — against the person
+who was forced to create it.
+
+The seal is mathematically neutral. It cannot
+distinguish between a thought freely given and a
+thought extracted by force.
+
+**What mitigates this today:** Nothing architectural.
+This is a real risk with no technical solution.
+
+**What the user must know:** Do not seal anything
+under pressure. A sealed thought cannot be unsealed.
+If someone is compelling you to use Phantom —
+that is the threat, not Phantom itself.
+Seek safety before using any tool.
+
+---
+
+### Vector 2 — Nodes as local surveillance
+
+**What it is:**
+A node operated by a malicious actor — a state,
+an employer, a domestic abuser, someone in the
+user's immediate community — can record metadata
+even if it cannot read encrypted content.
+
+Who connects to whom. When. How often.
+The size of what travels. The pattern of encounters.
+
+Metadata kills. This is documented history, not theory.
+Knowing that two people meet regularly on Phantom
+can be as dangerous as knowing what they said.
+
+**What mitigates this today:** Tor integration —
+when built — will obscure connection metadata.
+Until then: local network connections expose IP addresses.
+Two phones meeting on a WiFi hotspot are visible
+to anyone monitoring that network.
+
+**What the user must know:** In v0.1 and v0.2,
+node encounters happen over local WiFi.
+Anyone monitoring the local network can see
+that two devices connected, when, and for how long.
+They cannot read the content — but they can see
+the meeting happened.
+
+Do not use Phantom for sensitive encounters
+over networks you do not control
+until Tor integration is complete.
+
+---
+
+### Vector 3 — The network as propaganda infrastructure
+
+**What it is:**
+A seal verifies integrity — not truth.
+A sealed lie is a perfectly verified lie.
+
+A coordinated network of nodes could distribute
+sealed disinformation that carries the appearance
+of cryptographic verification. To someone who
+does not understand what the seal proves —
+and does not prove — it looks like verified truth.
+
+The seal says: *this exact text existed at this
+exact moment, unchanged.*
+
+It does not say: *this text is accurate.*
+It does not say: *this source is trustworthy.*
+It does not say: *this was not fabricated.*
+
+**What mitigates this today:** The honest documentation
+in `SEALING.md` — the section "What the seal does not prove."
+Every user who reads it understands the distinction.
+
+**What does not mitigate this:** Most users will not
+read the documentation. The seal stamp looks like
+verification. That appearance can be exploited.
+
+**What the network needs long-term:** Reputation systems
+that distinguish between sealed content and
+verified-accurate content. That is a harder problem
+than cryptographic integrity — and it is not solved.
+
+---
+
+### The fourth question — added to the Lagos Protocol
+
+Before any major decision, the council now asks
+four questions, not three:
+
+1. Can she use it?
+2. Does it actually protect her?
+3. Does it change something concrete in her life?
+4. **Can this be used against her by someone close to her?**
+
+Not by a distant government. By someone in her home,
+her neighborhood, her community. The threat that is
+closest is often the threat that is least modeled.
+
+If the answer to question four is yes — name it
+before building. Design against it if possible.
+Document it honestly if it cannot be designed away.
+
+---
+
+### What Phantom cannot promise
+
+Phantom cannot promise safety in all contexts.
+
+No tool can. The same architecture that protects
+a journalist protects someone with worse intentions.
+The same seal that preserves a truth preserves a lie.
+The same network that connects people in freedom
+can connect people in coordination against others.
+
+What Phantom can promise is this:
+
+The risks are named here. Not hidden.
+The user who reads this document understands
+what the tool can and cannot do.
+The choice to use it — and how — belongs to them.
+
+That is the only honest position a tool can hold.
+
+---
+
+
 
 If you find a vulnerability — report it.
 
