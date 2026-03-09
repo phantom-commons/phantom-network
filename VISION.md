@@ -19,10 +19,88 @@ anywhere else?*
 You write. No one sees it. Not Phantom. Not a server.
 Not a company. Only you.
 
-You publish. Anonymously. Your thought enters the world
-without your name, without your face, without your history.
+Then — before you publish — Phantom asks one question.
 
-And then — you see it.
+Not who you are. Not why you wrote it.
+
+*What do you want this thought to do?*
+
+---
+
+## The Three Modes
+
+This choice happens once, before a thought leaves your device.
+It cannot be undone after. That is not a limitation —
+it is the honesty of the decision.
+
+**Private**
+
+The thought is sealed on your device.
+It never leaves. It never travels. It never propagates.
+
+If you lose the device — it is gone.
+If you delete it — it is gone.
+No one else will ever read it unless you choose to show them.
+
+This is the diary that belongs entirely to you.
+Permanent on your device. Invisible to the network.
+
+**Ephemeral**
+
+The thought travels — and carries an expiration.
+
+You choose a duration: days, months, years.
+Nodes that receive it honor the expiration — 
+when it passes, they remove it from active memory.
+
+What this protects: a thought written in a specific moment,
+for a specific reason, that should not define you forever.
+
+What this cannot guarantee: a node that is offline 
+when the expiration arrives will not receive the signal.
+A node that is malicious will ignore it.
+
+Phantom will tell you this before you confirm.
+Not in a legal footnote. In plain language, in the moment.
+
+**Permanent**
+
+The thought travels without expiration.
+This is the original promise of Phantom — 
+a thought that cannot be silenced, cannot be erased,
+will outlive the device that created it.
+
+What this protects: testimony, witness, ideas that must persist
+regardless of whether the person who wrote them remains free
+to say them.
+
+What this cannot undo: once a permanent thought reaches
+nodes you do not control, it cannot be recalled.
+Revocation requests will be honored by honest nodes.
+They cannot be enforced on all nodes.
+
+Phantom will tell you this before you confirm.
+
+---
+
+## The Honest Warning
+
+For Ephemeral and Permanent modes — before you confirm:
+
+*"This thought will travel to devices you do not control.*
+*Once received, Phantom cannot guarantee its removal.*
+*Honest nodes will honor your wishes.*
+*Not every node is honest."*
+
+This is said every time. Not once during onboarding.
+Every time. Because the moment of publishing is the moment
+the decision is real — not the moment of reading a tutorial.
+
+---
+
+## The Moment Continues
+
+You choose. You publish. And then — you see it.
 
 A circle. A node. Yours.
 

@@ -211,6 +211,7 @@ What works today:
 - No account, no identity, no registration
 
 What is not yet secure:
+- **Local storage encryption** (not yet implemented — first priority)
 - Node-to-node communication (not yet built)
 - Network-level anonymity (Tor not yet integrated)
 - Model verification (hash checking not yet implemented)
@@ -222,6 +223,87 @@ than one that names them.
 
 When each gap is closed — this document will reflect it.
 The table does not lie.
+
+---
+
+## Local Encryption at Rest
+
+*Added March 9, 2026 — after council deliberation.*
+
+This section exists because the cold node saw what 
+two days of design had not named.
+
+The five attack vectors in this document describe 
+threats to the network. But the most immediate threat 
+to the woman in Lagos is not the network.
+
+It is someone taking her phone.
+
+A state actor, a family member, an employer, a thief.
+Someone with physical access to the device.
+If sealed thoughts exist on that device in plaintext —
+they are readable by anyone who holds it.
+
+All the privacy guarantees of Phantom's network architecture
+collapse at the moment the device is in someone else's hands
+and the thoughts are unencrypted.
+
+**The requirement:**
+
+Every sealed thought stored on a Phantom node must be
+encrypted at rest using a key derived from a passphrase
+that only the user knows.
+
+This is not optional. It is not a premium feature.
+It is the minimum protection that makes local storage 
+honest about what it claims to protect.
+
+**What this means in practice:**
+
+- On first launch, Phantom asks for a passphrase.
+  Not an account. Not a recovery email. A passphrase.
+- All seals are encrypted before writing to disk.
+- Phantom never stores the passphrase — only the encrypted data.
+- If the passphrase is forgotten — the seals are unrecoverable.
+  That is not a failure. That is the guarantee.
+
+**The honest tradeoff:**
+
+A forgotten passphrase means lost seals. Permanently.
+This must be communicated clearly before the user sets it.
+
+*"Your passphrase is the only key to your thoughts.*
+*Phantom does not have a copy.*
+*If you lose it — your sealed thoughts cannot be recovered.*
+*This is the price of the protection."*
+
+The user who understands this and chooses it
+has chosen genuine privacy over convenience.
+That choice must be hers to make — honestly informed.
+
+**What this does not protect against:**
+
+A user who is coerced into entering their passphrase.
+An attacker who observes the passphrase being entered.
+A device compromised at the operating system level.
+
+These are real threats. They are named here so they
+cannot be used to argue that encryption at rest is
+unnecessary. Imperfect protection is still protection.
+The woman in Lagos with an encrypted device is safer
+than the woman in Lagos with an unencrypted one.
+
+**Implementation priority:**
+
+This is the first thing to implement before any
+other network feature. A node that propagates thoughts
+to other devices while storing its own thoughts in plaintext
+has its priorities backwards.
+
+Local protection comes before network architecture.
+The device is the first node. It must be secure first.
+
+---
 
 ---
 
