@@ -502,31 +502,103 @@
   <div class="panel" id="panel-about">
     <div class="panel-title">— what this is</div>
     <div class="about-text">
-      <p>A seal is <strong>mathematical proof that a thought existed,
-      at an exact moment, exactly as written.</strong></p>
 
-      <p>Not a promise. Not a record in a database someone controls.
+      <p><strong>Your thoughts belong to you.</strong></p>
+
+      <p>Write something. Seal it with Phantom. From that moment —
+      it exists permanently, verifiably yours, on no server but your own device.
+      Anyone can confirm it is unchanged.
+      No one can alter it without breaking the seal.</p>
+
+      <p>A seal is <strong>mathematical proof that a thought existed,
+      at an exact moment, exactly as written.</strong>
+      Not a promise. Not a record in a database someone controls.
       A cryptographic fact — verifiable by anyone, on any device,
       without trusting any authority.</p>
 
       <p>If the seal verifies — the thought existed exactly as written.<br>
       If it does not — something was changed.</p>
 
-      <p>That is all. Nothing more is needed.</p>
+      <p style="margin-top: 2rem;"><strong>— What Phantom is</strong></p>
+
+      <p>Phantom is a network of nodes — devices, people, thoughts —
+      that share ideas without depending on any central authority.
+      No company owns it. No server controls it.
+      The network is what two nodes become after they meet.</p>
+
+      <p>It was built for a specific person: a woman in Lagos
+      with a secondhand Android phone, three children, and a small shop.
+      She pays 8% in fees because she has no alternative.
+      She learned to self-censor without anyone asking her to.</p>
+
+      <p><em>If she cannot use it — it is not Phantom.</em></p>
+
+      <p style="margin-top: 2rem;"><strong>— What exists today</strong></p>
+
+      <p>Cryptographic seals (this page). Encryption at rest.
+      Node-to-node sync over local WiFi. A local AI model on Android.
+      Seventeen genesis seals — permanent, irreversible, verified.</p>
+
+      <p>What does not exist yet: anonymous routing via Tor,
+      simple installation without Termux, SUIJURIS (the economic layer),
+      the full network. This is an honest beginning.</p>
+
+      <p style="margin-top: 2rem;"><strong>— The seventeen genesis seals</strong></p>
 
       <div class="about-seal">
-        <div class="idea">"The network is not what travels between nodes.
-It is what two nodes become after they meet."</div>
+        <div class="idea">"We are all one and one is all of us."</div>
+        <div class="stamp">175c7fc7bb067922f8628a43858eaabb249658cb4a4ffb621c6d48ff1bc3266d
+2026-03-08T15:54:13.597222</div>
+      </div>
+
+      <div class="about-seal">
+        <div class="idea">"If she cannot use it — it is not Phantom."</div>
+        <div class="stamp">afcd0534eaaa31abe952570f0f1f454a5b06b23ef66b86ae66c2207a1c5447ef
+2026-03-09T08:34:10.964606+00:00</div>
+      </div>
+
+      <div class="about-seal">
+        <div class="idea">"The network is not what travels between nodes. It is what two nodes become after they meet."</div>
         <div class="stamp">6ed33a01c355395cfea4de5bf4e7baad307f9b583cd182839e4becc6dab1ad5d
 2026-03-09T17:52:37.343873+00:00</div>
       </div>
 
-      <p>This page seals and verifies thoughts using SHA-256 —
+      <div class="about-seal">
+        <div class="idea">"Hello world!"</div>
+        <div class="stamp">fc22314aafde25d70307d1ff2ffcc2f9b1d0f2911736cc9e70a3afb9623beac3
+2026-03-10T01:16:50.985508+00:00</div>
+      </div>
+
+      <div class="about-seal">
+        <div class="idea">"The repository did what it promised."</div>
+        <div class="stamp">9518e3a29dbce4c597468d23927cb3cb055e09e0eb7b0c5ae6a6812d920517f1
+2026-03-10T02:19:47.278397+00:00</div>
+      </div>
+
+      <div class="about-seal">
+        <div class="idea">"The gap itself is meaningful."</div>
+        <div class="stamp">b379ec992bf2147a6b30e395d23c2b3820395a3024a6c00d598f9f2f7b103b6e
+2026-03-10T10:36:28.880075+00:00</div>
+      </div>
+
+      <p style="font-size: 0.85rem; color: #666; margin-top: 0.5rem;">
+        Full list of seventeen seals in SEALING.md
+      </p>
+
+      <p style="margin-top: 2rem;">This page seals and verifies thoughts using SHA-256 —
       the same algorithm that runs on any device on earth.
       <strong>Nothing leaves your device.</strong>
       No account. No server. No log.</p>
 
-      <p style="color: #444; font-size: 0.9rem; font-style: italic;">
+      <p style="margin-top: 1.5rem;">
+        <a href="https://github.com/phantom-commons/phantom-network"
+           style="color: #8a8478; font-family: monospace; font-size: 0.85rem;"
+           target="_blank">
+          github.com/phantom-commons/phantom-network
+        </a>
+      </p>
+
+      <p style="color: #444; font-size: 0.9rem; font-style: italic; margin-top: 1rem;">
         Phantom Network — Node Zero — March 2026
       </p>
     </div>
@@ -535,21 +607,78 @@ It is what two nodes become after they meet."</div>
 </main>
 
 <footer>
-  <div class="footer-text">phantom network — v0.1 web</div>
+  <div class="footer-text">phantom network — v0.2 web</div>
   <div class="footer-quote">privacy is not for hiding — it is for being free</div>
 </footer>
 
 <script>
 // ─────────────────────────────────────────────
-// SHA-256 — pure JS, no dependencies
+// SHA-256 — pure JS, no browser APIs, works offline
+// Works in any HTML viewer, file://, HTTPS, or HTTP
 // ─────────────────────────────────────────────
 async function sha256(message) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(message);
-  const hash = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(hash))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
+  return sha256Pure(message);
+}
+
+function sha256Pure(str) {
+  function rightRotate(value, amount) {
+    return (value >>> amount) | (value << (32 - amount));
+  }
+  const mathPow = Math.pow;
+  const maxWord = mathPow(2, 32);
+  let result = '';
+  const words = [];
+  const asciiBitLength = str.length * 8;
+  let hash = [], k = [];
+  let primeCounter = 0;
+  const isComposite = {};
+  for (let candidate = 2; primeCounter < 64; candidate++) {
+    if (!isComposite[candidate]) {
+      for (let i = 0; i < 313; i += candidate) isComposite[i] = candidate;
+      hash[primeCounter] = (mathPow(candidate, 0.5) * maxWord) | 0;
+      k[primeCounter++] = (mathPow(candidate, 1/3) * maxWord) | 0;
+    }
+  }
+  str += '\x80';
+  while (str.length % 64 - 56) str += '\x00';
+  for (let i = 0; i < str.length; i++) {
+    const j = str.charCodeAt(i);
+    if (j >> 8) return '';
+    words[i >> 2] |= j << ((3 - i) % 4) * 8;
+  }
+  words[words.length] = ((asciiBitLength / maxWord) | 0);
+  words[words.length] = (asciiBitLength | 0);
+  for (let j = 0; j < words.length;) {
+    const w = words.slice(j, j += 16);
+    const oldHash = hash.slice(0);
+    for (let i = 0; i < 64; i++) {
+      const i2 = i + j - 16;
+      const w15 = w[i - 15], w2 = w[i - 2];
+      const a = hash[0], e = hash[4];
+      const temp1 = hash[7] +
+        (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25)) +
+        ((e & hash[5]) ^ (~e & hash[6])) + k[i] + (w[i] =
+          (i < 16) ? w[i] : (
+            w[i - 16] +
+            (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3)) +
+            w[i - 7] +
+            (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))
+          ) | 0);
+      const temp2 =
+        (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22)) +
+        ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+      hash = [(temp1 + temp2) | 0].concat(hash);
+      hash[4] = (hash[4] + temp1) | 0;
+      hash.length = 8;
+    }
+    hash = hash.map((x, i) => (x + oldHash[i]) | 0);
+  }
+  hash.forEach(val => {
+    for (let i = 7; i >= 0; i--) {
+      result += ((val >>> (i * 4)) & 0xf).toString(16);
+    }
+  });
+  return result;
 }
 
 // ─────────────────────────────────────────────
@@ -571,12 +700,35 @@ async function sealIdea() {
   const now = new Date();
   const moment = now.toISOString().replace('Z', '+00:00');
 
+  const modeEl = document.querySelector('input[name="seal-mode"]:checked');
+  const mode = modeEl ? modeEl.value.toUpperCase() : 'PERMANENT';
+
   const payload = JSON.stringify({idea, moment});
-  const stamp = await sha256(payload);
+  let stamp;
+  try {
+    stamp = await sha256(payload);
+  } catch(e) {
+    stamp = sha256Pure(JSON.stringify({idea, moment}));
+  }
+  if (!stamp) {
+    alert('Seal failed. Try a different browser.');
+    return;
+  }
 
   document.getElementById('out-idea').textContent = '"' + idea + '"';
   document.getElementById('out-moment').textContent = moment;
   document.getElementById('out-stamp').textContent = stamp;
+
+  // Show mode note
+  const modeNote = document.getElementById('out-mode');
+  if (modeNote) {
+    const notes = {
+      'PERMANENT': 'This seal exists permanently. Share the stamp — anyone can verify it.',
+      'PRIVATE': 'This seal is yours. Keep the stamp if you want to verify it later. It does not travel.'
+    };
+    modeNote.textContent = notes[mode] || '';
+    modeNote.style.display = 'block';
+  }
 
   // Build share text
   const shareText = `Sealed with Phantom:\n\n"${idea}"\n\nMoment: ${moment}\nStamp:  ${stamp}\n\nVerify at: phantom.network`;

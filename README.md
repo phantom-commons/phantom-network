@@ -1,3 +1,11 @@
+*Your thoughts belong to you.*
+
+Write something. Seal it with Phantom. From that moment — it exists permanently, verifiably yours, on no server but your own device. Anyone can confirm it is unchanged. No one can alter it without breaking the seal.
+
+*No account. No installation. Open `phantom.html` in any browser and seal a thought in the next two minutes.*
+
+---
+
 # Phantom Network
 
 *Privacy is not for hiding. It is for being free.*
@@ -26,7 +34,7 @@ If she cannot use it — it is not Phantom.
 - Cryptographic seal function (SHA-256) — any idea can be sealed 
   and verified by anyone, on any device, without trusting 
   any authority
-- Twelve genesis seals, permanent and irreversible
+- Seventeen genesis seals, permanent and irreversible
 - Node-to-node seal exchange (v0.4) — two devices can meet 
   and sync sealed thoughts over a local WiFi connection
 - Encryption at rest — sealed thoughts are AES-256-GCM encrypted 
@@ -93,7 +101,7 @@ If what you say matters — it will enter the memory.
 
 ## Genesis Seals
 
-Twelve ideas sealed cryptographically across the genesis days.
+Seventeen ideas sealed cryptographically across the genesis days.
 Verifiable by anyone. Permanent. Irreversible.
 The complete list is in `SEALING.md`.
 
@@ -122,7 +130,7 @@ The complete list is in `SEALING.md`.
 `81667a180bfee542346ee7f2e296e660e54bdd5ab785c8d82c203946629120f7`
 `2026-03-09T08:36:09.815299+00:00`
 
-Seals 6–12 are in `SEALING.md` — created on March 9, 2026,
+Seals 6–17 are in `SEALING.md` — created on March 9–10, 2026,
 including seals from nodes that had never been here.
 
 ## If you are not a developer
