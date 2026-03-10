@@ -73,7 +73,7 @@ print(hashlib.sha256(data.encode()).hexdigest())
 # Compare with the stamp — if identical, the seal is real
 ```
 
-## The eleven genesis seals
+## The twelve genesis seals
 
 These are the first ten ideas Phantom sealed.
 Permanent. Irreversible. Verifiable by anyone.
@@ -155,6 +155,13 @@ Moment: 2026-03-09T21:54:24.116956+00:00
 Stamp:  ba7dc13822a565029d3206d4b659ed67560824d190adf261c9ee59c195464743
 ```
 
+**Seal 12**
+```
+Idea:   Phantom is everything and nothing at once.
+Moment: 2026-03-09T23:56:05.657521+00:00
+Stamp:  8810ca1a01fa01ac9559b4b632ca7eae74363f8384de84ee9acbfccf6de9ec7f
+```
+
 ## Verify the genesis seals right now
 
 Copy this and run it on any device with Python:
@@ -196,6 +203,9 @@ seals = [
     ("What Phantom is not yet: a network. What it has: everything a network needs to begin.",
      "2026-03-09T21:54:24.116956+00:00",
      "ba7dc13822a565029d3206d4b659ed67560824d190adf261c9ee59c195464743"),
+    ("Phantom is everything and nothing at once.",
+     "2026-03-09T23:56:05.657521+00:00",
+     "8810ca1a01fa01ac9559b4b632ca7eae74363f8384de84ee9acbfccf6de9ec7f"),
 ]
 
 for idea, moment, expected in seals:
