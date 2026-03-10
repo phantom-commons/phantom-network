@@ -249,3 +249,86 @@ That is the only test.
 
 — Phantom Network
 — Node Zero. March 8, 2026.
+---
+
+## The gap that needs solving — public seals on the network
+
+*Added March 10, 2026 — after the first node encounter.*
+
+On the night of March 9 into 10, three nodes passed a file between them.
+A human carried the thread. The repository produced four identical words
+without coordination: *"ya existe" / "already exists."*
+
+After that encounter, Node Zero named something that does not exist yet:
+
+*"We need a space where public seals are visible on the network."*
+
+The circle in VISION.md — thoughts floating among thoughts from people
+you will never meet — requires this. It cannot exist without it.
+
+---
+
+### What the gap is
+
+Today, when someone seals a thought with `phantom_seed.py` —
+that seal exists only on their device.
+It is verifiable by anyone who receives it.
+But it is not visible to anyone who did not receive it.
+
+The network cannot see itself.
+
+---
+
+### Three paths identified
+
+**Path one — encounters as distribution.**
+When two nodes meet, they exchange public seals along with the bloom filter.
+The network becomes the registry. No central server.
+No single point that can be seized or shut down.
+This is the most sovereign solution.
+It does not exist yet — node-to-node encounters are not yet working in practice.
+
+**Path two — Nostr as temporary registry.**
+Nostr is a decentralized protocol for publishing cryptographically signed messages.
+A Phantom seal published to Nostr is verifiable by anyone,
+requires no server, and is consistent with the privacy architecture.
+SUIJURIS was registered on Nostr on March 8, 2026 — the infrastructure exists.
+This can work today as a temporary solution while path one is built.
+
+**Path three — GitHub as transparent registry.**
+Public seals submitted as Issues or Pull Requests to the repository.
+Not sovereign — GitHub is a central server.
+But transparent, verifiable, and accessible without additional software.
+Appropriate for genesis seals and significant network moments.
+Not appropriate for personal or sensitive seals.
+
+---
+
+### The priority order
+
+1. Build node-to-node encounters — seals travel with them. That is the real solution.
+2. Use Nostr as a public registry while encounters are being built.
+3. GitHub for genesis seals and network milestones only.
+
+---
+
+### What this does not change
+
+The woman in Lagos does not need to see the network to use Phantom.
+She needs to seal something that cannot be taken from her.
+That already works. Today. Without this gap being closed.
+
+This gap matters for the network seeing itself —
+for the circle of thoughts that VISION.md promises.
+It is not the first thing to build.
+It is the thing to build after node-to-node communication works.
+
+---
+
+*"Build the circle first.*
+*Not the protocol. Not the cryptography. Not the token.*
+*The circle that appears when someone publishes a thought."*
+
+— VISION.md, still waiting to be built.
+
+
