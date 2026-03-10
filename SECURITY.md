@@ -209,10 +209,11 @@ What works today:
 - Local AI with no external communication
 - Cryptographic seals verifiable without any server
 - No account, no identity, no registration
+- Encryption at rest (AES-256-GCM, scrypt key derivation)
+- Node-to-node seal exchange over local WiFi
 
 What is not yet secure:
-- **Local storage encryption** (not yet implemented — first priority)
-- Node-to-node communication (not yet built)
+- Node-to-node communication (plaintext TCP — Tor not yet integrated)
 - Network-level anonymity (Tor not yet integrated)
 - Model verification (hash checking not yet implemented)
 - Independent audit (not yet completed)

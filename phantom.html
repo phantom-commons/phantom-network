@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Phantom — Seal a Thought</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap');
+  /* No external font loading — every CDN request leaks your IP.
+     System fonts only. Privacy by architecture. */
 
   :root {
     --black: #0a0a0a;
@@ -21,7 +22,7 @@
   body {
     background: var(--black);
     color: var(--white);
-    font-family: 'EB Garamond', Georgia, serif;
+    font-family: Georgia, 'Times New Roman', 'Palatino Linotype', serif;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -47,7 +48,7 @@
   }
 
   .logo {
-    font-family: 'Courier Prime', monospace;
+    font-family: 'SFMono-Regular', 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace;
     font-size: 0.75rem;
     letter-spacing: 0.3em;
     text-transform: uppercase;
@@ -67,7 +68,7 @@
     background: none;
     border: none;
     color: var(--dim);
-    font-family: 'Courier Prime', monospace;
+    font-family: 'SFMono-Regular', 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace;
     font-size: 0.7rem;
     letter-spacing: 0.2em;
     text-transform: uppercase;
@@ -96,7 +97,7 @@
   /* SEAL PANEL */
   .panel-title {
     font-size: 0.65rem;
-    font-family: 'Courier Prime', monospace;
+    font-family: 'SFMono-Regular', 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace;
     letter-spacing: 0.4em;
     text-transform: uppercase;
     color: var(--dim);
@@ -114,7 +115,7 @@
     border: none;
     border-bottom: 1px solid #2a2a2a;
     color: var(--white);
-    font-family: 'EB Garamond', Georgia, serif;
+    font-family: Georgia, 'Times New Roman', 'Palatino Linotype', serif;
     font-size: 1.4rem;
     line-height: 1.7;
     padding: 1rem 0 2rem;
@@ -137,7 +138,7 @@
     position: absolute;
     bottom: 0.5rem;
     right: 0;
-    font-family: 'Courier Prime', monospace;
+    font-family: 'SFMono-Regular', 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace;
     font-size: 0.6rem;
     color: #2a2a2a;
     letter-spacing: 0.1em;
@@ -147,7 +148,7 @@
     background: none;
     border: 1px solid var(--accent);
     color: var(--accent);
-    font-family: 'Courier Prime', monospace;
+    font-family: 'SFMono-Regular', 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace;
     font-size: 0.7rem;
     letter-spacing: 0.3em;
     text-transform: uppercase;
@@ -184,7 +185,7 @@
   }
 
   .result-label {
-    font-family: 'Courier Prime', monospace;
+    font-family: 'SFMono-Regular', 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace;
     font-size: 0.6rem;
     letter-spacing: 0.4em;
     text-transform: uppercase;
@@ -201,14 +202,14 @@
   }
 
   .result-moment {
-    font-family: 'Courier Prime', monospace;
+    font-family: 'SFMono-Regular', 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace;
     font-size: 0.75rem;
     color: var(--dim);
     margin-bottom: 0.5rem;
   }
 
   .result-stamp {
-    font-family: 'Courier Prime', monospace;
+    font-family: 'SFMono-Regular', 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace;
     font-size: 0.65rem;
     color: var(--accent);
     word-break: break-all;
@@ -218,7 +219,7 @@
 
   .result-footer {
     margin-top: 1rem;
-    font-family: 'Courier Prime', monospace;
+    font-family: 'SFMono-Regular', 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace;
     font-size: 0.6rem;
     color: var(--dim);
     font-style: italic;
@@ -235,7 +236,7 @@
     background: none;
     border: 1px solid #2a2a2a;
     color: var(--dim);
-    font-family: 'Courier Prime', monospace;
+    font-family: 'SFMono-Regular', 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace;
     font-size: 0.65rem;
     letter-spacing: 0.2em;
     text-transform: uppercase;
@@ -267,7 +268,7 @@
   .share-block.show { display: block; }
 
   .share-text {
-    font-family: 'Courier Prime', monospace;
+    font-family: 'SFMono-Regular', 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace;
     font-size: 0.72rem;
     line-height: 1.8;
     color: var(--dim);
@@ -281,7 +282,7 @@
   }
 
   .verify-label {
-    font-family: 'Courier Prime', monospace;
+    font-family: 'SFMono-Regular', 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace;
     font-size: 0.6rem;
     letter-spacing: 0.3em;
     text-transform: uppercase;
@@ -296,7 +297,7 @@
     border: none;
     border-bottom: 1px solid #2a2a2a;
     color: var(--white);
-    font-family: 'Courier Prime', monospace;
+    font-family: 'SFMono-Regular', 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace;
     font-size: 0.85rem;
     padding: 0.75rem 0;
     outline: none;
@@ -308,7 +309,7 @@
   }
 
   .verify-input.idea-input {
-    font-family: 'EB Garamond', Georgia, serif;
+    font-family: Georgia, 'Times New Roman', 'Palatino Linotype', serif;
     font-size: 1.1rem;
   }
 
@@ -333,7 +334,7 @@
   }
 
   .verify-status {
-    font-family: 'Courier Prime', monospace;
+    font-family: 'SFMono-Regular', 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace;
     font-size: 0.65rem;
     letter-spacing: 0.4em;
     text-transform: uppercase;
@@ -378,7 +379,7 @@
   }
 
   .about-seal .stamp {
-    font-family: 'Courier Prime', monospace;
+    font-family: 'SFMono-Regular', 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace;
     font-size: 0.6rem;
     color: var(--dim);
     word-break: break-all;
@@ -393,7 +394,7 @@
   }
 
   .footer-text {
-    font-family: 'Courier Prime', monospace;
+    font-family: 'SFMono-Regular', 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace;
     font-size: 0.6rem;
     color: #2a2a2a;
     letter-spacing: 0.2em;

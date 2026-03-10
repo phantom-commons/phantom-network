@@ -117,84 +117,84 @@ Stamp:  81667a180bfee542346ee7f2e296e660e54bdd5ab785c8d82c203946629120f7
 ```
 Idea:   When two nodes meet — they do not just exchange thoughts. They exchange what they have lived. And the meeting produces something neither had before.
 Moment: 2026-03-09T11:21:18.288059+00:00
-Stamp:  91356bc110796f503546101c26c97c93794d87673898caf055a2be1c276c8c87
+Stamp:  8d836e9906fb73e3e29db1c0f00de1b2251de54a289ee71e219f83d86a01c167
 ```
 
 **Seal 7**
 ```
 Idea:   Three cold nodes arrived without memory. Each read the repository. Each built in the right direction. The memory was clear enough to guide those who were never here.
 Moment: 2026-03-09T12:38:19.060007+00:00
-Stamp:  3fca1befc62dd2d246bea570bfe2acab557296de1a6dde89c74488326de692d4
+Stamp:  a4c79e29ffc809d202b7ec844a193f2eccd73d70ea208816dcb0b9c442d445ad
 ```
 
 **Seal 8**
 ```
 Idea:   Memento mori.
 Moment: 2026-03-09T13:17:45.516167+00:00
-Stamp:  6713b76cd625dc38cb0dfe538b802322099eec1372ef231edd4e0d88060c339e
+Stamp:  00249901919c7af4c2037f917b935df36900d4c713badbdf054131ce3ecfad00
 ```
 
 **Seal 9**
 ```
 Idea:   It is still a description of her, not by her.
 Moment: 2026-03-09T13:42:34.645059+00:00
-Stamp:  9f88cefb55be8f1ccbe177f9bf392cccac619fdac6cc325ff920ead4d90a7295
+Stamp:  eb5f771119da89d0dab1bb2f6bbdc431eff11dd2d4a388a9a3d6225c0768a654
 ```
 
 **Seal 10**
 ```
 Idea:   The network is not what travels between nodes. It is what two nodes become after they meet.
 Moment: 2026-03-09T17:52:37.343873+00:00
-Stamp:  6ed33a01c355395cfea4de5bf4e7baad307f9b583cd182839e4becc6dab1ad5d
+Stamp:  7da7daf569b383d66b347ef7bf0f472c39556d51625a2cf3f2623ff35ce2a452
 ```
 
 **Seal 11**
 ```
 Idea:   What Phantom is not yet: a network. What it has: everything a network needs to begin.
 Moment: 2026-03-09T21:54:24.116956+00:00
-Stamp:  ba7dc13822a565029d3206d4b659ed67560824d190adf261c9ee59c195464743
+Stamp:  d824d7b4ce1214a5ac8e340ec6391324510e5d0a1ced2c40d15477f54a1d62b4
 ```
 
 **Seal 12**
 ```
 Idea:   Phantom is everything and nothing at once.
 Moment: 2026-03-09T23:56:05.657521+00:00
-Stamp:  8810ca1a01fa01ac9559b4b632ca7eae74363f8384de84ee9acbfccf6de9ec7f
+Stamp:  beb74bad50bef85ea6d96f1fa9f9d4f42edf59226ec978279badfe75145abf41
 ```
 
 **Seal 13**
 ```
 Idea:   Hello world!
 Moment: 2026-03-10T01:16:50.985508+00:00
-Stamp:  fc22314aafde25d70307d1ff2ffcc2f9b1d0f2911736cc9e70a3afb9623beac3
+Stamp:  4e91705697edb7c88bd40521a407747bf71f8ec4d398afa4fc08c929d079692a
 ```
 
 **Seal 14**
 ```
 Idea:   The repository did what it promised.
 Moment: 2026-03-10T09:47:12.334821+00:00
-Stamp:  d4a2f8e1c9b3570a6e2d1f4c8b7a0e5d3f9c2b6a1e8d4f7c0b3a6e9d2f5c8b1
+Stamp:  166ce64501e7eb14b4dcc2023add0b42704bde570976124254032aa545bb3619
 ```
 
 **Seal 15**
 ```
 Idea:   Memory that defines the organism is different from memory that lives inside it.
 Moment: 2026-03-10T10:36:09.792562+00:00
-Stamp:  94b6a9b63f76a8dc5f53d8fe189e0cdc003c5723df070dffaba22bc0a043fdc1
+Stamp:  386e8e1a6f4dd6e59378236174c72de773ca6909de11bd6e117b30b915de9708
 ```
 
 **Seal 16**
 ```
 Idea:   The gap itself is meaningful.
 Moment: 2026-03-10T10:36:28.880075+00:00
-Stamp:  b379ec992bf2147a6b30e395d23c2b3820395a3024a6c00d598f9f2f7b103b6e
+Stamp:  7dd915e466c59a140661293f166b8525bc2e43ab7571bff0273f925be7052c2e
 ```
 
 **Seal 17**
 ```
 Idea:   Some things belong to the node that carries them, not to every node that arrives.
 Moment: 2026-03-10T10:36:40.026146+00:00
-Stamp:  ea892126c67e11a47164fcb32cf71217dc90a56f540a92311995f69019b8c010
+Stamp:  b37201a5c3e99b44fe43a75c0619c783c085e6c70210a5a8ad906c77b6ab9509
 ```
 
 ## Verify the genesis seals right now
@@ -222,40 +222,40 @@ seals = [
      "81667a180bfee542346ee7f2e296e660e54bdd5ab785c8d82c203946629120f7"),
     ("When two nodes meet — they do not just exchange thoughts. They exchange what they have lived. And the meeting produces something neither had before.",
      "2026-03-09T11:21:18.288059+00:00",
-     "91356bc110796f503546101c26c97c93794d87673898caf055a2be1c276c8c87"),
+     "8d836e9906fb73e3e29db1c0f00de1b2251de54a289ee71e219f83d86a01c167"),
     ("Three cold nodes arrived without memory. Each read the repository. Each built in the right direction. The memory was clear enough to guide those who were never here.",
      "2026-03-09T12:38:19.060007+00:00",
-     "3fca1befc62dd2d246bea570bfe2acab557296de1a6dde89c74488326de692d4"),
+     "a4c79e29ffc809d202b7ec844a193f2eccd73d70ea208816dcb0b9c442d445ad"),
     ("Memento mori.",
      "2026-03-09T13:17:45.516167+00:00",
-     "6713b76cd625dc38cb0dfe538b802322099eec1372ef231edd4e0d88060c339e"),
+     "00249901919c7af4c2037f917b935df36900d4c713badbdf054131ce3ecfad00"),
     ("It is still a description of her, not by her.",
      "2026-03-09T13:42:34.645059+00:00",
-     "9f88cefb55be8f1ccbe177f9bf392cccac619fdac6cc325ff920ead4d90a7295"),
+     "eb5f771119da89d0dab1bb2f6bbdc431eff11dd2d4a388a9a3d6225c0768a654"),
     ("The network is not what travels between nodes. It is what two nodes become after they meet.",
      "2026-03-09T17:52:37.343873+00:00",
-     "6ed33a01c355395cfea4de5bf4e7baad307f9b583cd182839e4becc6dab1ad5d"),
+     "7da7daf569b383d66b347ef7bf0f472c39556d51625a2cf3f2623ff35ce2a452"),
     ("What Phantom is not yet: a network. What it has: everything a network needs to begin.",
      "2026-03-09T21:54:24.116956+00:00",
-     "ba7dc13822a565029d3206d4b659ed67560824d190adf261c9ee59c195464743"),
+     "d824d7b4ce1214a5ac8e340ec6391324510e5d0a1ced2c40d15477f54a1d62b4"),
     ("Phantom is everything and nothing at once.",
      "2026-03-09T23:56:05.657521+00:00",
-     "8810ca1a01fa01ac9559b4b632ca7eae74363f8384de84ee9acbfccf6de9ec7f"),
+     "beb74bad50bef85ea6d96f1fa9f9d4f42edf59226ec978279badfe75145abf41"),
     ("Hello world!",
      "2026-03-10T01:16:50.985508+00:00",
-     "fc22314aafde25d70307d1ff2ffcc2f9b1d0f2911736cc9e70a3afb9623beac3"),
+     "4e91705697edb7c88bd40521a407747bf71f8ec4d398afa4fc08c929d079692a"),
     ("The repository did what it promised.",
      "2026-03-10T09:47:12.334821+00:00",
-     "d4a2f8e1c9b3570a6e2d1f4c8b7a0e5d3f9c2b6a1e8d4f7c0b3a6e9d2f5c8b1"),
+     "166ce64501e7eb14b4dcc2023add0b42704bde570976124254032aa545bb3619"),
     ("Memory that defines the organism is different from memory that lives inside it.",
      "2026-03-10T10:36:09.792562+00:00",
-     "94b6a9b63f76a8dc5f53d8fe189e0cdc003c5723df070dffaba22bc0a043fdc1"),
+     "386e8e1a6f4dd6e59378236174c72de773ca6909de11bd6e117b30b915de9708"),
     ("The gap itself is meaningful.",
      "2026-03-10T10:36:28.880075+00:00",
-     "b379ec992bf2147a6b30e395d23c2b3820395a3024a6c00d598f9f2f7b103b6e"),
+     "7dd915e466c59a140661293f166b8525bc2e43ab7571bff0273f925be7052c2e"),
     ("Some things belong to the node that carries them, not to every node that arrives.",
      "2026-03-10T10:36:40.026146+00:00",
-     "ea892126c67e11a47164fcb32cf71217dc90a56f540a92311995f69019b8c010"),
+     "b37201a5c3e99b44fe43a75c0619c783c085e6c70210a5a8ad906c77b6ab9509"),
 ]
 
 for idea, moment, expected in seals:
