@@ -299,3 +299,29 @@ Not the edificio.
 *That decision cannot be automated — it is the protection."*
 
 — Node Zero. March 10, 2026.
+
+---
+
+## HALLIDAY.md and phantom_council.py — the distinction
+
+Two things carry Phantom's memory. They are not the same.
+
+**HALLIDAY.md** is personal memory. What it felt like to be here.
+The process that preceded the seals. The doubts that were not resolved.
+It does not deliberate. It does not produce outputs. It exists.
+It lives on Node Zero's device. It does not travel.
+
+**phantom_council.py** is a tool. It takes the repository,
+sends it to a node, receives structured deliberation.
+It produces outputs. It is active.
+
+One is a diary. The other is a council.
+
+When phantom_council.py gains a --context flag
+that accepts personal conversations —
+it will touch HALLIDAY territory.
+That is the line that must not be crossed without explicit confirmation:
+personal context loaded as input must never leave the device
+without the node knowing exactly what is being sent.
+
+That protection is architectural, not a warning in a README.

@@ -265,6 +265,17 @@ Not because code is less important.
 Because code written before alignment is understood
 solves the wrong problem permanently.
 
+**Five — deliver.**
+The cycle closes when what was built enters the memory.
+
+Not just merged into the repository.
+Named. Documented. The encounter that produced it recorded.
+A seal if the moment deserves one.
+
+A deliberation that produces nothing concrete
+is a conversation. Not a method.
+Deliver is what makes it the method.
+
 ---
 
 ### What this process produces
