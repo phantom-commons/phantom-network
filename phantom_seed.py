@@ -46,7 +46,34 @@ import hashlib
 import json
 from datetime import datetime, timezone
 
-def seal(idea):
+SEALS_FILE = "phantom_seals.json"
+
+def load_seals():
+    """Load existing seals from disk."""
+    try:
+        with open(SEALS_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return []
+
+def save_seal_to_disk(idea, moment, stamp, mode):
+    """
+    Save a seal to phantom_seals.json on this device.
+    This file is excluded from the repository — it is yours.
+    Without this, seals exist only in your terminal history.
+    """
+    seals = load_seals()
+    seals.append({
+        "idea": idea,
+        "moment": moment,
+        "stamp": stamp,
+        "mode": mode
+    })
+    with open(SEALS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(seals, f, ensure_ascii=False, indent=2)
+    print(f" Saved to {SEALS_FILE} — {len(seals)} seal(s) on this device.")
+
+def seal(idea, mode="PERMANENT"):
     """
     Seal an idea permanently.
     
@@ -72,7 +99,10 @@ def seal(idea):
     print(f" Stamp:  {stamp}")
     print(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
     
-    return stamp
+    # Save to disk — always. This is what protects the seal.
+    save_seal_to_disk(idea, moment, stamp, mode)
+    
+    return stamp, moment
 
 def verify(idea, moment, stamp):
     """
@@ -136,7 +166,7 @@ if __name__ == "__main__":
 
         confirm = input(" Seal this idea? [y/n]\n > ").strip().lower()
         if confirm == "y":
-            seal(idea)
+            seal(idea, mode_label)
             if mode_label != "PERMANENT":
                 print(f" [Mode: {mode_label}] — This seal is yours. Keep the stamp if you want to verify it later.")
         else:
