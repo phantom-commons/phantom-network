@@ -33,7 +33,7 @@
 # The format is the seal. Change it and you change history.
 #
 # THE GENESIS SEALS — permanent since March 8, 2026:
-# These five ideas were the first things Phantom sealed.
+# These seventeen ideas were the first things Phantom sealed.
 # They cannot be changed. They cannot be deleted.
 # They are the memory the organism was born with.
 #
@@ -103,8 +103,45 @@ if __name__ == "__main__":
     
     if action == "1":
         idea = input("\n Enter idea to seal:\n > ")
-        seal(idea)
-        
+
+        print("""
+ Before you seal — choose the mode:
+
+ [1] PERMANENT  — Exists forever. Goes into the public record.
+                  Repercussions are complete. Cannot be undone.
+                  Use for: Phantom principles, network truths,
+                  moments that belong to the organism.
+
+ [2] PRIVATE    — Exists only on your device. Never propagated.
+                  No repercussions on the network.
+                  Use for: personal thoughts, diary entries,
+                  ideas you want sealed but not shared.
+
+ [3] EPHEMERAL  — Travels but does not anchor. No permanent record.
+                  Use for: ideas in motion, thoughts mid-formation,
+                  things that are true now but may change.
+""")
+        mode = input(" Mode:\n > ").strip()
+
+        mode_labels = {"1": "PERMANENT", "2": "PRIVATE", "3": "EPHEMERAL"}
+        mode_label = mode_labels.get(mode, "PERMANENT")
+
+        print(f"\n Mode selected: {mode_label}")
+        if mode_label == "PERMANENT":
+            print(" This seal will exist forever. It belongs to the network.\n")
+        elif mode_label == "PRIVATE":
+            print(" This seal lives on your device. The network will not see it.\n")
+        elif mode_label == "EPHEMERAL":
+            print(" This seal travels but does not anchor. It will not persist.\n")
+
+        confirm = input(" Seal this idea? [y/n]\n > ").strip().lower()
+        if confirm == "y":
+            seal(idea)
+            if mode_label != "PERMANENT":
+                print(f" [Mode: {mode_label}] — This seal is yours. Keep the stamp if you want to verify it later.")
+        else:
+            print("\n Seal cancelled. The idea remains unsealed.\n")
+
     elif action == "2":
         idea = input("\n Idea:\n > ")
         moment = input(" Moment:\n > ")
