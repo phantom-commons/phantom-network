@@ -418,6 +418,38 @@ than cryptographic integrity — and it is not solved.
 
 ---
 
+### Vector 4 — Passphrase coercion and intimate access
+
+**What it is:**
+Encryption at rest protects against a stranger with a stolen phone.
+It does not protect against someone who knows you —
+or someone who can compel you to unlock your own device.
+
+A family member who demands to see your phone.
+An employer who requires device access.
+A partner who watches you enter your passphrase.
+A state actor who uses legal or physical coercion.
+
+Phantom cannot protect a thought that the person who holds it
+is forced to reveal. The encryption is real. The coercion is real.
+Both can be true at the same time.
+
+**What mitigates this today:** Nothing architectural.
+This is named here because a threat that is not named
+is a threat the user cannot prepare for.
+
+**What the user must know:** If someone has physical access to you —
+not just your device — the encryption on your device
+is not your primary protection. Your safety is.
+No tool can substitute for that.
+
+**What Phantom can build toward:** A plausible deniability mode —
+a secondary passphrase that reveals a decoy set of seals,
+not the real ones. This is documented as a future architectural goal,
+not a present capability.
+
+---
+
 ### The fourth question — added to the Lagos Protocol
 
 Before any major decision, the council now asks

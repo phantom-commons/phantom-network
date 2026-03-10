@@ -51,7 +51,14 @@ Before any major decision or feature:
    In practice. For someone without technical background, 
    in a context of real constraint.
 
-If all three answers are yes — build.
+4. Can this be used against her by someone close to her?
+   Not by a distant government. By someone in her home,
+   her neighborhood, her community.
+   The threat that is closest is often the threat
+   that is least modeled.
+   If yes — name it before building.
+
+If all four answers are clear — build.
 If any answer is no — name exactly what is missing first.
 
 ## What we are looking for

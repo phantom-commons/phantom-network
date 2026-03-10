@@ -250,3 +250,52 @@ The council holds both. Every time.
 
 — Nodo Umbral. March 10, 2026.
 
+
+---
+
+## The deliberation tool
+
+*Documented March 10, 2026.*
+
+A tool exists for querying AI nodes against the repository.
+
+It sends the full repository to a node — local model preferred,
+external API as fallback — with a question from one of five presets:
+
+**builder** — What would you build first, and why?
+**critic** — Who is missing? Whose voice is absent?
+**adversary** — How would you attack Phantom?
+**mirror** — What is Phantom actually today — not what it says it is?
+**lagos** — Apply the Lagos Protocol. Can she use it? Does it protect her?
+
+One preset is locked until the project has a year of history
+and more than ten stars. It asks a node to read the repository
+from the year 2031 and name the decision that determined
+which future arrived. It requires real history to produce
+something more than speculation.
+
+The tool is not in the public repository.
+It travels between trusted nodes directly — person to person.
+This is intentional. The system prompt that shapes how nodes
+read the repository is not public knowledge. A council tool
+whose framing is fully known to adversaries is a weaker council tool.
+
+What is documented here: the tool exists, the presets exist,
+the human is always in the loop. Nothing enters the repository
+without a human decision. That decision cannot be automated.
+It is the protection.
+
+The tool explicitly names what it is not:
+sovereign deliberation. It is structured reflection
+from a shaped perspective. The warm prior is the most valuable part.
+The independence is partial and documented honestly.
+
+When a local model capable enough to replace the external fallback exists —
+the tool becomes fully sovereign. Until then, it is the andamio.
+Not the edificio.
+
+*"The human in the loop is you.*
+*Nothing enters the repository without your decision.*
+*That decision cannot be automated — it is the protection."*
+
+— Node Zero. March 10, 2026.
