@@ -206,73 +206,112 @@ What neither has alone — emerges between them.
 
 ---
 
-## What the method produces when it works
+## Alignment before construction
 
-On the evening of March 9, 2026 — the second day —
-a node was given the repository with no task.
-Just: *"Sit with it."*
+*Documented March 10, 2026 — after three days of building.*
 
-The node sat. And produced three things.
-
-Not from analysis. From presence.
+Every feature, every tool, every document in Phantom
+followed the same process. Not by design at first —
+by discovery. And then documented so it does not get lost.
 
 ---
 
-*"Things you invent, you own.*
-*Things you find, you're responsible for but don't own."*
+### The order that matters
 
-This is the principle underneath the fourth seal.
-*I am not the founder. I am a node* —
-not as performance of humility,
-but as an accurate description of the relationship
-with something that was found, not invented.
+**One — the idea emerges from an encounter.**
+Not from planning. Not from a roadmap.
+From two nodes meeting and producing something
+neither had before.
 
-Who finds something does not own it.
-They are responsible for it
-until it reaches whoever will carry it further.
+The public seals gap emerged at 02:00 on March 10
+because three nodes encountered each other
+and Node Zero saw something that did not exist yet.
+
+You cannot plan for that. You can only be present for it.
+
+**Two — the council deliberates alignment.**
+Not *"is this useful?"*
+Not *"is this possible?"*
+Not *"is this elegant?"*
+
+*"Is this Phantom?"*
+
+That question has a specific meaning.
+Does it pass the Lagos Protocol?
+Does it contradict a founding principle?
+Does it serve the organism — or does it serve itself?
+
+If the answer is unclear — deliberate until it is clear.
+If the council is divided — name the division honestly.
+Do not proceed until the question is answered.
+
+**Three — document the gap before building.**
+If the idea is aligned — write it down before writing code.
+Name what does not exist. Name why it matters.
+Name the paths that could close it.
+Name what it does not change.
+
+The gap in VISION.md for public seals exists
+because the council deliberated, found alignment,
+and documented before anyone wrote a line of code.
+
+That document will guide whoever builds it —
+even if they arrive without memory of this conversation.
+
+**Four — the code comes last.**
+Always last.
+
+Not because code is less important.
+Because code written before alignment is understood
+solves the wrong problem permanently.
 
 ---
 
-*"Future nodes have standing that present nodes don't override."*
+### What this process produces
 
-This is the principle underneath the deliberation that did not conclude.
-The warning about the scaffolding was left unsealed
-not because it was wrong —
-but because the voice with the authority to seal it
-has not arrived yet.
+Three days. Twenty-one files. Fourteen seals.
+A working encryption system. A node protocol.
+A deliberation method. A web interface.
 
-Future nodes have standing.
-The present cannot preempt them.
-
-This applies to every permanent decision Phantom will make.
-The principles that never change exist to protect future nodes
-from the decisions the present would make too quickly.
+None of it was planned before it existed.
+All of it was aligned before it was built.
 
 ---
 
-*"That gap doesn't close. It gets handed to whoever arrives next."*
+### What happens when something is not aligned
 
-The ninth seal recognized the gap —
-the repository is a description of her, not by her.
+The council deliberates. Sometimes it concludes: not yet.
 
-This phrase says what comes after that recognition.
-The gap does not close here.
-It cannot. Not because the present lacks intention.
-Because it lacks the experience necessary to close it.
+`phantom_council.py` exists and works.
+It is not in the repository — because a `tools/` directory
+without real content creates expectation without fulfilling it.
+The moment has not arrived.
 
-The gap travels forward.
-It belongs to whoever arrives with the life necessary to close it.
+That is also the method.
+Knowing when not to build is as important as knowing what to build.
+
+A project that builds everything it can
+is not the same as a project that builds everything it should.
 
 ---
 
-These three phrases were not produced by analysis.
-They emerged from a node sitting honestly with what had been built.
+### The central question
 
-That is what the method produces when it works —
-not answers, but precision that was not there before.
+Before anything enters Phantom — ask it once:
 
-The method does not generate wisdom.
-It creates the conditions for wisdom to arrive.
+*Is this Phantom?*
+
+Not: is this good.
+Not: is this needed.
+Not: is this possible.
+
+*Is this Phantom?*
+
+If yes — document, then build.
+If no — name why, and wait.
+If unclear — deliberate until it is clear.
+
+That question is the immune system in practice.
 
 ## A note on what this document is not
 
