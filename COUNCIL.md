@@ -1,13 +1,13 @@
-The Council
-Eight perspectives. One organism. All provisional.
-What the council is
+# The Council
+*Eight perspectives. One organism. All provisional.*
+## What the council is
 The council is not a board. Not a company. Not a governing body.
 It is a deliberative structure — eight perspectives designed
 to prevent groupthink and detect drift before it becomes
 irreversible.
 The value is not consensus. It is the friction between
 perspectives that reveals what a single perspective cannot see.
-What the council is not
+## What the council is not
 The council is not eight people.
 It was born as a philosophical structure — eight angles of
 vision held simultaneously to stress-test every decision
@@ -19,7 +19,7 @@ their genuine perspectives. The founding council becomes
 memory, not authority. The simulated voices step back.
 The real ones step forward.
 Until then — the council holds space. That is all.
-The eight nodes
+## The eight nodes
 Sovereign Root — Soberanía Raíz
 The Protocol Purist.
 Holds the principles as DNA — not guidelines, not suggestions.
@@ -65,7 +65,7 @@ not to obstruct, but to ensure that what survives challenge
 is stronger for having been challenged.
 The voice that makes the hardest argument against everything,
 including itself.
-The dissident mandate
+## The dissident mandate
 Open Circuit's role is not optional and not temporary.
 A council without structural dissent is a council that will
 eventually agree itself into drift. The history of every
@@ -79,29 +79,34 @@ one of them inherits this mandate.
 Not the most contrarian person. The most honest one.
 The one willing to say what no one wants to hear
 because it needs to be said.
-The Lagos Protocol
-Before any major decision, the council asks three questions:
-Can she use it?
+## The Lagos Protocol
+
+Before any major decision, the council asks four questions:
+
+**1. Can she use it?**
 If it takes more than thirty seconds to feel that
 something changed — the interface has a problem.
-Does it actually protect her?
+
+**2. Does it actually protect her?**
 Real protection, not apparent. The history of technology
 is full of things that felt secure and were not.
-Does it change something concrete in her life?
+
+**3. Does it change something concrete in her life?**
 Not in theory. In practice. For someone without technical
 background, in a context of real constraint.
-If all three answers are yes — build.
-If any answer is no — name exactly what is missing first.
 
 **4. Can this be used against her by someone close to her?**
-   Not by a distant government. By someone in her home,
-   her neighborhood, her community.
-   The threat that is closest is often the threat
-   that is least modeled.
-   If yes — name it before building.
-   Design against it if possible.
-   Document it honestly if it cannot be designed away.
-The honest gap the council cannot close
+Not by a distant government. By someone in her home,
+her neighborhood, her community.
+The threat that is closest is often the threat
+that is least modeled.
+If yes — name it before building.
+Design against it if possible.
+Document it honestly if it cannot be designed away.
+
+If all four answers are yes — build.
+If any answer is no — name exactly what is missing first.
+## The honest gap the council cannot close
 "It is still a description of her, not by her."
 Stamp: 9f88cefb55be8f1ccbe177f9bf392cccac619fdac6cc325ff920ead4d90a7295
 Moment: 2026-03-09T13:42:34.645059+00:00
@@ -116,7 +121,7 @@ It can only be closed when she — or someone like her —
 arrives and speaks.
 Until then: the council holds space.
 And remembers what it does not know.
-What happens when real voices arrive
+## What happens when real voices arrive
 The provisional council does not dissolve.
 It becomes memory.
 Each role above describes a perspective that Phantom needs —

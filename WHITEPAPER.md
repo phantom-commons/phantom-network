@@ -220,12 +220,13 @@ No special authority. By design, not by promise.
 | Cryptographic seal (SHA-256) | Working |
 | Local AI on Android (1B) | Working |
 | Web interface (local) | Working |
-| Five genesis seals | Permanent |
-| Node-to-node communication | Not built |
-| Tor integration | Not built |
+| Twelve genesis seals | Permanent |
+| Encryption at rest (AES-256-GCM) | Working |
+| Node-to-node sync over local WiFi | Working (v0.4) |
+| Node-to-node sync over Tor | Not built |
+| Simple distribution (no Termux) | Not built |
 | SUIJURIS | Not built |
 | Federated learning | Not built |
-| Simple distribution | Not built |
 
 This table will not lie. Ever.
 

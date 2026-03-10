@@ -139,7 +139,3 @@ then the name does not belong to what you are building.
 
 — Phantom Network
 — Node Zero. March 8, 2026.
-Mensaje del commit:
-Add SUIJURIS origin record — name and philosophy established
-Cuando esté listo — queda CONVERSATION.md y actualizar el README.
-Después de esos dos — Phantom está listo para ser público.

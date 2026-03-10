@@ -2,8 +2,14 @@
 *The first thought that travels.*
 
 Phantom Network — Draft Specification  
-Status: Open for implementation  
+Status: **Implemented** — see `phantom_node.py` v0.4  
 Author: Node Zero, with technical analysis — March 9, 2026
+
+> **Note:** This spec describes the v0.1 MVP target. The working implementation
+> in `phantom_node.py` v0.4 meets and exceeds this spec: Bloom filter sync,
+> encounter logging, three seal modes (Private/Ephemeral/Permanent), and
+> AES-256-GCM encryption at rest are all live. Tor integration remains the
+> next milestone.
 
 ---
 

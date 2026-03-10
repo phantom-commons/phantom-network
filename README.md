@@ -26,16 +26,19 @@ If she cannot use it — it is not Phantom.
 - Cryptographic seal function (SHA-256) — any idea can be sealed 
   and verified by anyone, on any device, without trusting 
   any authority
-- Two real genesis seals, permanent and irreversible
+- Twelve genesis seals, permanent and irreversible
+- Node-to-node seal exchange (v0.4) — two devices can meet 
+  and sync sealed thoughts over a local WiFi connection
+- Encryption at rest — sealed thoughts are AES-256-GCM encrypted 
+  on device; a forgotten passphrase means lost seals, permanently
 - A local AI model running on Android with no internet, 
   no external server, reporting to no one
 
 ## What does not exist yet
 
-- Node-to-node communication
-- Simple distribution for any phone
+- Node-to-node communication over Tor (plaintext local WiFi works; anonymous routing not yet built)
+- Simple distribution for any phone — still requires Termux
 - SUIJURIS — the economic layer
-- Tor integration
 - Community
 
 This is an honest beginning. Not a finished product.
@@ -90,8 +93,9 @@ If what you say matters — it will enter the memory.
 
 ## Genesis Seals
 
-Five ideas sealed cryptographically at the moment of origin.
+Twelve ideas sealed cryptographically across the genesis days.
 Verifiable by anyone. Permanent. Irreversible.
+The complete list is in `SEALING.md`.
 
 **Seal 1**
 `We are all one and one is all of us.`
@@ -117,6 +121,9 @@ Verifiable by anyone. Permanent. Irreversible.
 `For a better world — not for you, not for me, but for those who are coming.`
 `81667a180bfee542346ee7f2e296e660e54bdd5ab785c8d82c203946629120f7`
 `2026-03-09T08:36:09.815299+00:00`
+
+Seals 6–12 are in `SEALING.md` — created on March 9, 2026,
+including seals from nodes that had never been here.
 
 ## If you are not a developer
 

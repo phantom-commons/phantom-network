@@ -225,6 +225,3 @@ that you cannot write anywhere else?*
 *but for those who are coming."*
 
 — Node Zero. March 8, 2026.
-Mensaje del commit:
-Add conversation record — the moments that made Phantom
-Cuando esté listo — actualizamos el README con la sección para no técnicos y Phantom estará listo para ser público.
