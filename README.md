@@ -190,6 +190,30 @@ The seal happens in your browser, on your device, and nowhere else.
 *Works in Chrome and Firefox. On mobile, best served over HTTPS.*
 ---
 
+## File Integrity
+
+If you received Phantom from someone other than this repository,
+verify these SHA-256 hashes. If they do not match — the files
+were modified. A modified Phantom that looks identical is the
+most dangerous kind of compromise.
+
+```
+3498c694986a9a286200eeb902aceda6e5ad0786501fbff1cce1159ea8d817b4  phantom_core.py
+2952d11d6f40bcffdc845f30f64c58a32f2f9a8f7bc0ad4f4ad60ea87b22f121  phantom_node.py
+4fbc9935e35d2529dba94f42bd676b6c3caaea8072ced6412e6d1d5f5978fddc  phantom_seed.py
+09d01594aede617fec60328711253609f6be1ca7e05ebed53c63b4e33ef731cb  phantom.html
+275256b517afdb43279079d897a686ddf52c757281810fd33913b6b9e709e597  index.html
+5523a6d2f25f137cbea30367a727dfc8e01337837424f6b7bd8141aa90afc196  test_phantom.py
+```
+
+To verify: `sha256sum <filename>` on any system with Python or coreutils.
+
+This does not prove the repository itself is trustworthy.
+It proves whether the files you have match the files here.
+That is the first check. Not the last.
+
+---
+
 ## Support the node
 
 SUIJURIS does not exist yet. While it is being built,

@@ -23,11 +23,12 @@ from phantom_core import (
     encrypt_data, decrypt_data, derive_key, get_or_create_salt,
     build_bloom, bloom_probably_has, compute_delta, bloom_size_for_count,
     send_json, recv_json,
-    KeyManager, SealStore, EncounterLog,
+    KeyManager, SealStore, EncounterLog, NodeIdentity,
     GENESIS_SEALS, CRYPTO_AVAILABLE,
     MODE_PRIVATE, MODE_PERMANENT, MODE_EPHEMERAL,
     MAX_IDEA_LENGTH,
     SEALS_FILE, SALT_FILE, ENCOUNTER_LOG_FILE,
+    NODE_KEY_FILE, NODE_IDENTITY_FILE,
 )
 
 
@@ -139,6 +140,33 @@ class TestGenesisSealVerification(unittest.TestCase):
     def test_no_duplicate_genesis_stamps(self):
         stamps = [gs["stamp"] for gs in GENESIS_SEALS]
         self.assertEqual(len(stamps), len(set(stamps)), "Duplicate genesis stamps found!")
+
+    def test_genesis_seals_match_sealing_md(self):
+        """The repository must not contradict itself on the foundational memory."""
+        import re
+        sealing_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "SEALING.md")
+        if not os.path.exists(sealing_path):
+            self.skipTest("SEALING.md not found")
+
+        with open(sealing_path) as f:
+            content = f.read()
+
+        pattern = r'Idea:\s*(.+?)\nMoment:\s*(.+?)\nStamp:\s*([0-9a-f]+)'
+        doc_seals = [(i.strip(), m.strip(), s.strip())
+                     for i, m, s in re.findall(pattern, content)]
+
+        self.assertEqual(len(doc_seals), len(GENESIS_SEALS),
+                         "SEALING.md and phantom_core.py have different seal counts")
+
+        for i, ((d_idea, d_moment, d_stamp), gs) in enumerate(
+                zip(doc_seals, GENESIS_SEALS), 1):
+            with self.subTest(seal_number=i):
+                self.assertEqual(d_idea, gs["idea"],
+                    f"Seal {i}: idea differs between SEALING.md and phantom_core.py")
+                self.assertEqual(d_moment, gs["moment"],
+                    f"Seal {i}: moment differs between SEALING.md and phantom_core.py")
+                self.assertEqual(d_stamp, gs["stamp"],
+                    f"Seal {i}: stamp differs between SEALING.md and phantom_core.py")
 
 
 class TestEncryption(unittest.TestCase):
@@ -330,6 +358,138 @@ class TestEncounterLog(unittest.TestCase):
         # But loadable with the key
         encounters = el.load()
         self.assertEqual(len(encounters), 1)
+
+
+class TestNodeIdentity(unittest.TestCase):
+    """Node identity — key generation, signing, verification, persistence."""
+
+    def setUp(self):
+        self._orig_dir = os.getcwd()
+        self._tmpdir = tempfile.mkdtemp()
+        os.chdir(self._tmpdir)
+
+    def tearDown(self):
+        os.chdir(self._orig_dir)
+        import shutil
+        shutil.rmtree(self._tmpdir, ignore_errors=True)
+
+    @unittest.skipUnless(CRYPTO_AVAILABLE, "cryptography package not installed")
+    def test_generate_identity(self):
+        identity = NodeIdentity.generate(node_name="TestNode")
+        self.assertTrue(identity.has_private_key)
+        self.assertEqual(identity.node_name, "TestNode")
+        self.assertIsNotNone(identity.fingerprint)
+        self.assertEqual(len(identity.fingerprint), 16)
+
+    @unittest.skipUnless(CRYPTO_AVAILABLE, "cryptography package not installed")
+    def test_sign_and_verify(self):
+        identity = NodeIdentity.generate(node_name="Signer")
+        data = b"test data to sign"
+        sig = identity.sign(data)
+        self.assertTrue(identity.verify_signature(data, sig))
+
+    @unittest.skipUnless(CRYPTO_AVAILABLE, "cryptography package not installed")
+    def test_tampered_data_fails_verification(self):
+        identity = NodeIdentity.generate()
+        data = b"original data"
+        sig = identity.sign(data)
+        self.assertFalse(identity.verify_signature(b"tampered data", sig))
+
+    @unittest.skipUnless(CRYPTO_AVAILABLE, "cryptography package not installed")
+    def test_wrong_key_fails_verification(self):
+        id1 = NodeIdentity.generate()
+        id2 = NodeIdentity.generate()
+        data = b"test data"
+        sig = id1.sign(data)
+        # id2 should not verify id1's signature
+        self.assertFalse(id2.verify_signature(data, sig))
+
+    @unittest.skipUnless(CRYPTO_AVAILABLE, "cryptography package not installed")
+    def test_sign_seal(self):
+        identity = NodeIdentity.generate(node_name="Sealer")
+        entry = seal("signed idea")
+        signed = identity.sign_seal(entry)
+        self.assertIn("node_pubkey", signed)
+        self.assertIn("node_sig", signed)
+        self.assertEqual(signed["idea"], entry["idea"])
+        self.assertEqual(signed["stamp"], entry["stamp"])
+
+    @unittest.skipUnless(CRYPTO_AVAILABLE, "cryptography package not installed")
+    def test_verify_signed_seal(self):
+        identity = NodeIdentity.generate()
+        entry = seal("verifiable idea")
+        signed = identity.sign_seal(entry)
+        self.assertTrue(NodeIdentity.verify_signed_seal(signed))
+
+    @unittest.skipUnless(CRYPTO_AVAILABLE, "cryptography package not installed")
+    def test_tampered_signed_seal_fails(self):
+        identity = NodeIdentity.generate()
+        entry = seal("original idea")
+        signed = identity.sign_seal(entry)
+        signed["idea"] = "tampered idea"
+        self.assertFalse(NodeIdentity.verify_signed_seal(signed))
+
+    def test_unsigned_seal_returns_none(self):
+        entry = seal("unsigned idea")
+        result = NodeIdentity.verify_signed_seal(entry)
+        self.assertIsNone(result)
+
+    @unittest.skipUnless(CRYPTO_AVAILABLE, "cryptography package not installed")
+    def test_save_and_load_unencrypted(self):
+        identity = NodeIdentity.generate(node_name="Persistent")
+        identity.save()
+
+        loaded = NodeIdentity.load()
+        self.assertIsNotNone(loaded)
+        self.assertEqual(loaded.node_name, "Persistent")
+        self.assertEqual(loaded.fingerprint, identity.fingerprint)
+        self.assertTrue(loaded.has_private_key)
+
+        # Verify loaded key can sign and the original can verify
+        data = b"round trip test"
+        sig = loaded.sign(data)
+        self.assertTrue(identity.verify_signature(data, sig))
+
+    @unittest.skipUnless(CRYPTO_AVAILABLE, "cryptography package not installed")
+    def test_save_and_load_encrypted(self):
+        km = KeyManager()
+        salt = b"0123456789abcdef"
+        with open(SALT_FILE, 'wb') as f:
+            f.write(salt)
+        km.set_key(derive_key("test", salt))
+
+        identity = NodeIdentity.generate(node_name="Encrypted")
+        identity.save(key=km.key)
+
+        loaded = NodeIdentity.load(key=km.key)
+        self.assertIsNotNone(loaded)
+        self.assertEqual(loaded.fingerprint, identity.fingerprint)
+        self.assertTrue(loaded.has_private_key)
+
+    @unittest.skipUnless(CRYPTO_AVAILABLE, "cryptography package not installed")
+    def test_from_public_key_b64(self):
+        identity = NodeIdentity.generate(node_name="Full")
+        pub_b64 = identity.public_key_b64
+
+        public_only = NodeIdentity.from_public_key_b64(pub_b64, node_name="PublicOnly")
+        self.assertFalse(public_only.has_private_key)
+        self.assertEqual(public_only.fingerprint, identity.fingerprint)
+
+        # Can verify signatures made by the full identity
+        data = b"cross verification"
+        sig = identity.sign(data)
+        self.assertTrue(public_only.verify_signature(data, sig))
+
+    @unittest.skipUnless(CRYPTO_AVAILABLE, "cryptography package not installed")
+    def test_public_key_is_32_bytes(self):
+        identity = NodeIdentity.generate()
+        self.assertEqual(len(identity.public_key_bytes), 32)
+
+    @unittest.skipUnless(CRYPTO_AVAILABLE, "cryptography package not installed")
+    def test_two_identities_have_different_fingerprints(self):
+        id1 = NodeIdentity.generate()
+        id2 = NodeIdentity.generate()
+        self.assertNotEqual(id1.fingerprint, id2.fingerprint)
 
 
 # ─────────────────────────────────────────────────────────

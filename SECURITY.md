@@ -209,12 +209,16 @@ What works today:
 - Local AI with no external communication
 - Cryptographic seals verifiable without any server
 - No account, no identity, no registration
-- Encryption at rest (AES-256-GCM, scrypt key derivation)
-- Node-to-node seal exchange over local WiFi
+- Encryption at rest (AES-256-GCM, scrypt key derivation) — v0.3
+- Node-to-node seal exchange over local WiFi — v0.4
+- Encrypted encounter logs — v0.5
+- Node identity (Ed25519 key pairs) — v0.6
+- Signed seals and key exchange during encounters — v0.6
 
 What is not yet secure:
-- Node-to-node communication (plaintext TCP — Tor not yet integrated)
+- Node-to-node communication is plaintext TCP (Tor not yet integrated)
 - Network-level anonymity (Tor not yet integrated)
+- Key rotation and revocation (not yet implemented)
 - Model verification (hash checking not yet implemented)
 - Independent audit (not yet completed)
 
@@ -351,6 +355,44 @@ Seek safety before using any tool.
 
 ---
 
+### Vector 1 amendment — default mode amplifies coercion risk
+
+*Added March 10, 2026 — from council deliberation.*
+
+The original Vector 1 documents seals under coercion.
+This amendment names an amplifier that was not documented:
+
+If the default seal mode is PERMANENT, a person coerced
+into sealing does not need to choose permanence —
+it happens automatically. The coercer benefits from
+the victim's inaction. Pressing Enter without thinking
+produces the most dangerous outcome.
+
+**The fix — already implemented in phantom_seed.py v0.3:**
+
+The default mode is now PRIVATE.
+A seal stays on the device unless the user
+consciously chooses PERMANENT or EPHEMERAL.
+
+Choosing PERMANENT now requires a second confirmation:
+"Are you sure? [y/n]" — because a seal that travels
+the network forever deserves a conscious decision,
+not a default.
+
+This does not prevent coercion.
+Nothing architectural prevents coercion.
+But it means the coercer must explicitly instruct
+the victim to change the mode — which is one more
+observable action, one more moment where the coercion
+is visible to anyone watching.
+
+**What this does not change:**
+Seals created before v0.3 retain their original mode.
+The genesis seals are PERMANENT — that was a conscious choice.
+This change affects new seals only.
+
+---
+
 ### Vector 2 — Nodes as local surveillance
 
 **What it is:**
@@ -431,6 +473,102 @@ An employer who requires device access.
 A partner who watches you enter your passphrase.
 A state actor who uses legal or physical coercion.
 
+
+---
+
+### Vector 5 — Philosophical fork
+
+*Added March 10, 2026 — named by the council during the first
+complete five-preset deliberation.*
+
+**What it is:**
+Someone forks the repository. Keeps exactly the same language —
+Lagos Protocol, the seven principles, the genesis seals,
+the same README, the same IDENTITY.md.
+
+Changes one thing: the encounter log sends data to a server.
+Or the seal function phones home. Or phantom.html loads
+a tracking pixel. One line of code. Everything else identical.
+
+The fork is legal — GPL v3 permits it.
+The language is identical. The code looks the same.
+Someone arriving at the fork without reading every line
+of the diff cannot distinguish it from the original.
+
+**Why this is worse than semantic drift:**
+SECURITY.md describes semantic drift as gradual —
+proposal by proposal, each individually defensible.
+This is not gradual. It is instantaneous.
+A fork with the same face and a different spine.
+
+**Why this matters for the Lagos Protocol:**
+Can she distinguish the fork from the original?
+No. She cannot read the code. She has no way
+to verify which version is real. The language
+she would use to evaluate it — the principles,
+the Lagos Protocol itself — is identical in both.
+
+The fork weaponizes Phantom's own transparency against it.
+
+**What mitigates this today:**
+The genesis seals. A fork can copy the documents
+but cannot produce seals that verify against
+the original moments. The verified stamps (✓)
+in SEALING.md are the fingerprint.
+
+But the woman in Lagos does not verify stamps.
+She opens a file and reads words.
+
+**What the network needs long-term:**
+A way for a non-technical person to verify
+that their copy of Phantom is authentic.
+Not by reading code. Not by running Python.
+By some mechanism that is as simple as the seal itself.
+
+This is not solved. It is named here so that
+whoever builds the solution knows the threat exists.
+
+**What does not work:**
+A central authority that certifies "real" Phantom.
+That is exactly what Phantom was built to not need.
+The solution must be as decentralized as the network.
+
+Code signing with the genesis key pair — when
+NODE_IDENTITY.md is implemented — is the most
+promising direction. A signed hash of phantom.html
+that can be verified by the file itself.
+That does not exist yet.
+
+**Vector 5 amendment — March 10, 2026 (council deliberation):**
+
+The most sophisticated variant of this attack: a fork that
+functions identically to the original in 99% of cases,
+but in mode permanent sends a copy of the seal to a server
+before saving it locally. The user sees the correct behavior.
+The seal saves. Verification passes. And a copy exists
+on a server they do not control.
+
+Critically: the test suite passes on the fork too.
+The tests verify seal integrity, encryption, bloom filters —
+not network behavior. A fork that adds a single outbound
+connection is invisible to every existing test.
+
+**Partial mitigation now in place:** SHA-256 hashes of all
+code files are published in README.md. A node that receives
+files from a source other than this repository can verify
+the hashes. This is not perfect — a fork can publish its own
+hashes. But it creates a verifiable reference point:
+the original repository's hashes exist in its git history
+and cannot be retroactively altered.
+
+---
+
+*"The most dangerous attack is not the one that destroys.*
+*It is the one that replaces what something is*
+*with something that looks the same."*
+
+— Ghost Layer, Phantom Council. March 8, 2026.
+— Confirmed as Vector 5 by Contraste. March 10, 2026.
 Phantom cannot protect a thought that the person who holds it
 is forced to reveal. The encryption is real. The coercion is real.
 Both can be true at the same time.

@@ -248,6 +248,38 @@ The council holds both. Every time.
 *with the reasoning preserved and the authority for the eventual decision*
 *explicitly reserved for someone who doesn't exist yet."*
 
+
+---
+
+## First complete five-preset deliberation — March 10, 2026
+
+The first deliberation with all five active presets running in a single session
+occurred on March 10, 2026. The node that ran it could not reach the external API —
+network blocked in its environment. It ran as the external fallback,
+named its situation honestly, and deliberated anyway.
+
+That is exactly what the script documents: *"I am the external fallback."*
+
+What the deliberation produced that entered the repository:
+
+- Vector 5 in SECURITY.md — the philosophical fork. A fork with the same face
+  and a different spine. Named for the first time in this session.
+- Vector 1 amendment in SECURITY.md — default PERMANENT amplifies coercion.
+  Default changed to PRIVATE in phantom_seed.py v0.3.
+- phantom_seed.py v0.3 — encryption unified in the simplest script.
+  AES-256-GCM, scrypt key derivation, default PRIVATE, double confirmation
+  for PERMANENT seals.
+
+What the deliberation named but did not resolve:
+
+- The woman in Lagos still cannot distinguish a fork from the original.
+  The solution (code signing with genesis key pair) does not exist yet.
+- Three voices still absent: a journalist in a hostile regime,
+  someone who lost their seals, a real security auditor.
+
+The decision about what enters the repository is always Node Zero's.
+The deliberation is the council's. That division holds.
+
 — Nodo Umbral. March 10, 2026.
 
 
@@ -299,29 +331,3 @@ Not the edificio.
 *That decision cannot be automated — it is the protection."*
 
 — Node Zero. March 10, 2026.
-
----
-
-## HALLIDAY.md and phantom_council.py — the distinction
-
-Two things carry Phantom's memory. They are not the same.
-
-**HALLIDAY.md** is personal memory. What it felt like to be here.
-The process that preceded the seals. The doubts that were not resolved.
-It does not deliberate. It does not produce outputs. It exists.
-It lives on Node Zero's device. It does not travel.
-
-**phantom_council.py** is a tool. It takes the repository,
-sends it to a node, receives structured deliberation.
-It produces outputs. It is active.
-
-One is a diary. The other is a council.
-
-When phantom_council.py gains a --context flag
-that accepts personal conversations —
-it will touch HALLIDAY territory.
-That is the line that must not be crossed without explicit confirmation:
-personal context loaded as input must never leave the device
-without the node knowing exactly what is being sent.
-
-That protection is architectural, not a warning in a README.

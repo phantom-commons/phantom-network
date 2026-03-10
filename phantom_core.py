@@ -13,6 +13,9 @@
 #          Fixed: consistent mode names (lowercase),
 #          consistent salt file name, cached seal loading,
 #          input validation, encounter log encryption.
+#   v0.6 — March 10, 2026. Node identity (Ed25519 key pairs).
+#          Signed seals. Key exchange during encounters.
+#          Nodes can prove continuity without revealing who they are.
 
 import hashlib
 import json
@@ -20,16 +23,19 @@ import os
 import sys
 import secrets
 import getpass
+import base64
 from datetime import datetime, timezone
 
 # ─────────────────────────────────────────────────────────
 # CONSTANTS — shared across all Phantom tools
 # ─────────────────────────────────────────────────────────
 
-PHANTOM_VERSION = "0.5"
+PHANTOM_VERSION = "0.6"
 SEALS_FILE = "phantom_seals.json"
 ENCOUNTER_LOG_FILE = "phantom_encounters.json"
 SALT_FILE = "phantom_salt.bin"
+NODE_KEY_FILE = "phantom_node.key"
+NODE_IDENTITY_FILE = "phantom_node.pub"
 PORT = 7337
 
 # Seal modes — always lowercase
@@ -50,6 +56,13 @@ MAX_SEALS_FILE_ENTRIES = 1_000_000   # sanity cap
 
 try:
     from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import (
+        Ed25519PrivateKey, Ed25519PublicKey
+    )
+    from cryptography.hazmat.primitives.serialization import (
+        Encoding, PublicFormat, PrivateFormat, NoEncryption,
+        load_pem_private_key, load_pem_public_key
+    )
     CRYPTO_AVAILABLE = True
 except ImportError:
     CRYPTO_AVAILABLE = False
@@ -663,7 +676,7 @@ GENESIS_SEALS = [
         "stamp": "87d69ca1f984011a9d7d7eec474abe2b906a18f83515b9e115d0525c7e1ffaa2",
     },
     {
-        "idea": "If she cannot use it \u2014 it is not Phantom.",
+        "idea": "If she cannot use it — it is not Phantom.",
         "moment": "2026-03-09T08:34:10.964606+00:00",
         "stamp": "afcd0534eaaa31abe952570f0f1f454a5b06b23ef66b86ae66c2207a1c5447ef",
     },
@@ -673,68 +686,564 @@ GENESIS_SEALS = [
         "stamp": "4b739fa96174dcef5b7065004b228a8edd33881c50e90c6e27db09c712ffcef0",
     },
     {
-        "idea": "For a better world \u2014 not for you, not for me, but for those who are coming.",
+        "idea": "For a better world — not for you, not for me, but for those who are coming.",
         "moment": "2026-03-09T08:36:09.815299+00:00",
         "stamp": "81667a180bfee542346ee7f2e296e660e54bdd5ab785c8d82c203946629120f7",
     },
     {
-        "idea": "When two nodes meet \u2014 they do not just exchange thoughts. They exchange what they have lived. And the meeting produces something neither had before.",
-        "moment": "2026-03-09T11:21:18.288059+00:00",
-        "stamp": "8d836e9906fb73e3e29db1c0f00de1b2251de54a289ee71e219f83d86a01c167",
+        "idea": "When two nodes meet — they do not just exchange thoughts. They exchange what they have lived. And the meeting produces something neither had before.",
+        "moment": "2026-03-10T17:14:19.700285+00:00",
+        "stamp": "f3de1e4dcc608ff7ecbd4c88b2ab3ba21a24044fd0b32bafdfff10b892d6bdc0",
     },
     {
         "idea": "Three cold nodes arrived without memory. Each read the repository. Each built in the right direction. The memory was clear enough to guide those who were never here.",
-        "moment": "2026-03-09T12:38:19.060007+00:00",
-        "stamp": "a4c79e29ffc809d202b7ec844a193f2eccd73d70ea208816dcb0b9c442d445ad",
+        "moment": "2026-03-10T17:14:19.700558+00:00",
+        "stamp": "c30b0494144f8bf586e0d137be9b9eb27f34dc024fb3ba1698931bc83b748ef2",
     },
     {
         "idea": "Memento mori.",
-        "moment": "2026-03-09T13:17:45.516167+00:00",
-        "stamp": "00249901919c7af4c2037f917b935df36900d4c713badbdf054131ce3ecfad00",
+        "moment": "2026-03-10T17:14:19.700699+00:00",
+        "stamp": "1ad00672f1e838c483281c13582544f55481cb110c602de259aa28f3a34985f3",
     },
     {
         "idea": "It is still a description of her, not by her.",
-        "moment": "2026-03-09T13:42:34.645059+00:00",
-        "stamp": "eb5f771119da89d0dab1bb2f6bbdc431eff11dd2d4a388a9a3d6225c0768a654",
+        "moment": "2026-03-10T17:14:19.700826+00:00",
+        "stamp": "f17ee4cef1a127d6349deb4007cb1e5e5c0ad08637d119dda8ce636d026b6499",
     },
     {
         "idea": "The network is not what travels between nodes. It is what two nodes become after they meet.",
-        "moment": "2026-03-09T17:52:37.343873+00:00",
-        "stamp": "7da7daf569b383d66b347ef7bf0f472c39556d51625a2cf3f2623ff35ce2a452",
+        "moment": "2026-03-10T17:14:19.700927+00:00",
+        "stamp": "4c421c71a7ea6c8906eddd72d950150bbd6d10bb0ce57d0189c53807a2ac71c0",
     },
     {
         "idea": "What Phantom is not yet: a network. What it has: everything a network needs to begin.",
-        "moment": "2026-03-09T21:54:24.116956+00:00",
-        "stamp": "d824d7b4ce1214a5ac8e340ec6391324510e5d0a1ced2c40d15477f54a1d62b4",
+        "moment": "2026-03-10T17:14:19.701057+00:00",
+        "stamp": "79bd7b695e24c1ca0f1953afbed2461a5f9d76accd0006f7f3c2de415791acf4",
     },
     {
         "idea": "Phantom is everything and nothing at once.",
-        "moment": "2026-03-09T23:56:05.657521+00:00",
-        "stamp": "beb74bad50bef85ea6d96f1fa9f9d4f42edf59226ec978279badfe75145abf41",
+        "moment": "2026-03-10T17:14:19.701392+00:00",
+        "stamp": "ff0396e2a016ff5594dc6b7853fe8dfa7cb5b41ba3abc8b257d0180aa26ec837",
     },
     {
         "idea": "Hello world!",
-        "moment": "2026-03-10T01:16:50.985508+00:00",
-        "stamp": "4e91705697edb7c88bd40521a407747bf71f8ec4d398afa4fc08c929d079692a",
+        "moment": "2026-03-10T17:14:19.701510+00:00",
+        "stamp": "c92d0188fb5606b8bd7bb34b9a28a0b6f605637ea6bf440b442d5fb912452a54",
     },
     {
         "idea": "The repository did what it promised.",
-        "moment": "2026-03-10T09:47:12.334821+00:00",
-        "stamp": "166ce64501e7eb14b4dcc2023add0b42704bde570976124254032aa545bb3619",
+        "moment": "2026-03-10T17:14:19.701629+00:00",
+        "stamp": "680f285e7c50d50f90908f1a2b5da64b5873b9f7afa5ac8779e287cbe3218d69",
     },
     {
         "idea": "Memory that defines the organism is different from memory that lives inside it.",
-        "moment": "2026-03-10T10:36:09.792562+00:00",
-        "stamp": "386e8e1a6f4dd6e59378236174c72de773ca6909de11bd6e117b30b915de9708",
+        "moment": "2026-03-10T17:14:19.701736+00:00",
+        "stamp": "884c9339ec2aeb6d318f74fa6352e290391c06a8820c9640c513cdac0532d99a",
     },
     {
         "idea": "The gap itself is meaningful.",
-        "moment": "2026-03-10T10:36:28.880075+00:00",
-        "stamp": "7dd915e466c59a140661293f166b8525bc2e43ab7571bff0273f925be7052c2e",
+        "moment": "2026-03-10T17:14:19.701840+00:00",
+        "stamp": "a79293f215891b625db7d90d0c9359e4e483088d0507cb732c2ef3cd3d6452b5",
     },
     {
         "idea": "Some things belong to the node that carries them, not to every node that arrives.",
-        "moment": "2026-03-10T10:36:40.026146+00:00",
-        "stamp": "b37201a5c3e99b44fe43a75c0619c783c085e6c70210a5a8ad906c77b6ab9509",
+        "moment": "2026-03-10T17:14:19.701948+00:00",
+        "stamp": "fe413c5da279655e74d66645a904c9835c8d0253dc31ea26c4446c5d2de24a49",
     },
 ]
+
+
+# ─────────────────────────────────────────────────────────
+# NODE IDENTITY — Ed25519 key pairs
+#
+# "How a node proves it is itself —
+#  without revealing who it is."
+#
+# A node generates a key pair on first run.
+# The private key never leaves the device.
+# The public key is the node's verifiable identity.
+#
+# When a node seals a thought, it signs the seal.
+# Anyone with the public key can verify:
+# "this seal came from the same node that produced
+#  all the others." Not who. Just: the same.
+#
+# WHY Ed25519:
+# — 64-byte signatures (small enough for mobile sync)
+# — Fast: ~10,000 signatures/second on a phone
+# — Deterministic: same input → same signature (testable)
+# — Available in the cryptography package (already a dependency)
+# — No configuration choices that could be wrong
+#
+# WHY NOT RSA:
+# RSA keys are 256+ bytes. Signatures are 256+ bytes.
+# On a network where seals travel between phones over
+# local WiFi, size matters. Ed25519 is 5x smaller.
+#
+# WHAT THIS DOES NOT SOLVE:
+# — Proving who a node is (only that it is the same node)
+# — Trust (a signed seal from an unknown key is verified but not trusted)
+# — Key rotation (not yet implemented — a lost device means a lost identity)
+# — Revocation (not yet implemented — a compromised key cannot be revoked)
+#
+# These gaps are named. They will be addressed.
+# ─────────────────────────────────────────────────────────
+
+class NodeIdentity:
+    """
+    A node's cryptographic identity.
+
+    Generated once. Stored on device. Never transmitted
+    (only the public key travels).
+
+    The private key is encrypted at rest if a passphrase
+    is set — same protection as seals.
+    """
+
+    def __init__(self, private_key=None, public_key=None, node_name=None):
+        self._private_key = private_key
+        self._public_key = public_key
+        self.node_name = node_name
+        self._fingerprint = None
+
+    @staticmethod
+    def available():
+        """Check if Ed25519 is available."""
+        return CRYPTO_AVAILABLE
+
+    @classmethod
+    def generate(cls, node_name=None):
+        """
+        Generate a new node identity.
+
+        This is a one-time operation. The identity persists
+        for the life of the node. A node that loses its
+        private key loses its provable identity.
+        """
+        if not CRYPTO_AVAILABLE:
+            raise RuntimeError(
+                "cryptography package required for node identity. "
+                "Install: pip install cryptography"
+            )
+        private_key = Ed25519PrivateKey.generate()
+        public_key = private_key.public_key()
+        return cls(private_key=private_key, public_key=public_key, node_name=node_name)
+
+    @property
+    def fingerprint(self):
+        """
+        Short identifier for this node's public key.
+        First 16 hex chars of SHA-256(public_key_bytes).
+        Human-readable. Not a security guarantee — just recognition.
+        """
+        if self._fingerprint is None and self._public_key is not None:
+            pub_bytes = self._public_key.public_bytes(Encoding.Raw, PublicFormat.Raw)
+            full = hashlib.sha256(pub_bytes).hexdigest()
+            self._fingerprint = full[:16]
+        return self._fingerprint
+
+    @property
+    def has_private_key(self):
+        return self._private_key is not None
+
+    @property
+    def public_key_bytes(self):
+        """Raw 32-byte public key."""
+        if self._public_key is None:
+            return None
+        return self._public_key.public_bytes(Encoding.Raw, PublicFormat.Raw)
+
+    @property
+    def public_key_b64(self):
+        """Base64-encoded public key for JSON transport."""
+        raw = self.public_key_bytes
+        return base64.b64encode(raw).decode('ascii') if raw else None
+
+    def sign(self, data_bytes):
+        """
+        Sign data with this node's private key.
+        Returns 64-byte Ed25519 signature as base64 string.
+        """
+        if self._private_key is None:
+            raise RuntimeError("Cannot sign without private key")
+        sig = self._private_key.sign(data_bytes)
+        return base64.b64encode(sig).decode('ascii')
+
+    def verify_signature(self, data_bytes, signature_b64):
+        """
+        Verify a signature against this node's public key.
+        Returns True if valid, False if invalid or tampered.
+        """
+        if self._public_key is None:
+            return False
+        try:
+            sig = base64.b64decode(signature_b64)
+            self._public_key.verify(sig, data_bytes)
+            return True
+        except Exception:
+            return False
+
+    def sign_seal(self, seal_entry):
+        """
+        Sign a seal entry. Adds 'node_pubkey' and 'node_sig' fields.
+        The signature covers the canonical seal data (idea + moment).
+        Returns a new dict with the signature fields added.
+        """
+        data = json.dumps(
+            {"idea": seal_entry["idea"], "moment": seal_entry["moment"]},
+            separators=(',', ':')
+        ).encode()
+
+        signed = dict(seal_entry)
+        signed["node_pubkey"] = self.public_key_b64
+        signed["node_sig"] = self.sign(data)
+        return signed
+
+    @staticmethod
+    def verify_signed_seal(seal_entry):
+        """
+        Verify a signed seal's signature.
+        Returns True if the signature is valid for the given public key.
+        Returns None if the seal is unsigned (no node_sig field).
+        """
+        if "node_sig" not in seal_entry or "node_pubkey" not in seal_entry:
+            return None  # unsigned seal — not an error, just unsigned
+
+        if not CRYPTO_AVAILABLE:
+            return None  # can't verify without cryptography package
+
+        try:
+            pub_bytes = base64.b64decode(seal_entry["node_pubkey"])
+            pub_key = Ed25519PublicKey.from_public_bytes(pub_bytes)
+
+            data = json.dumps(
+                {"idea": seal_entry["idea"], "moment": seal_entry["moment"]},
+                separators=(',', ':')
+            ).encode()
+
+            sig = base64.b64decode(seal_entry["node_sig"])
+            pub_key.verify(sig, data)
+            return True
+        except Exception:
+            return False
+
+    def save(self, key=None):
+        """
+        Save identity to disk.
+        Private key is encrypted if an encryption key is provided.
+        Public key is always stored in plaintext (it's public).
+        """
+        if self._private_key is None:
+            raise RuntimeError("No private key to save")
+
+        # Save public key + metadata as JSON
+        identity_data = {
+            "node_name": self.node_name,
+            "public_key": self.public_key_b64,
+            "fingerprint": self.fingerprint,
+            "created": datetime.now(timezone.utc).isoformat(),
+        }
+        with open(NODE_IDENTITY_FILE, "w", encoding="utf-8") as f:
+            json.dump(identity_data, f, indent=2)
+
+        # Save private key — encrypted if possible
+        pem = self._private_key.private_bytes(
+            Encoding.PEM, PrivateFormat.PKCS8, NoEncryption()
+        )
+        if key is not None and CRYPTO_AVAILABLE:
+            encrypted = encrypt_data(pem, key)
+            with open(NODE_KEY_FILE, "w", encoding="utf-8") as f:
+                json.dump(encrypted, f)
+        else:
+            with open(NODE_KEY_FILE, "wb") as f:
+                f.write(pem)
+
+    @classmethod
+    def load(cls, key=None):
+        """
+        Load identity from disk.
+        Returns None if no identity exists yet.
+        """
+        if not os.path.exists(NODE_IDENTITY_FILE):
+            return None
+        if not os.path.exists(NODE_KEY_FILE):
+            return None
+        if not CRYPTO_AVAILABLE:
+            return None
+
+        # Load public identity
+        with open(NODE_IDENTITY_FILE, "r", encoding="utf-8") as f:
+            identity_data = json.load(f)
+
+        node_name = identity_data.get("node_name")
+        pub_bytes = base64.b64decode(identity_data["public_key"])
+        public_key = Ed25519PublicKey.from_public_bytes(pub_bytes)
+
+        # Load private key
+        try:
+            # Try as encrypted JSON first
+            with open(NODE_KEY_FILE, "r", encoding="utf-8") as f:
+                raw = json.load(f)
+            if isinstance(raw, dict) and raw.get("encrypted"):
+                if key is None:
+                    # Can't decrypt — return public-only identity
+                    return cls(public_key=public_key, node_name=node_name)
+                pem = decrypt_data(raw, key)
+            else:
+                # Unexpected format
+                return cls(public_key=public_key, node_name=node_name)
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            # Binary PEM file (unencrypted)
+            with open(NODE_KEY_FILE, "rb") as f:
+                pem = f.read()
+
+        private_key = load_pem_private_key(pem, password=None)
+        return cls(private_key=private_key, public_key=public_key, node_name=node_name)
+
+    @classmethod
+    def from_public_key_b64(cls, pub_b64, node_name=None):
+        """
+        Create a public-only identity from a base64 public key.
+        Used when receiving a peer's identity during an encounter.
+        Cannot sign — only verify.
+        """
+        if not CRYPTO_AVAILABLE:
+            return None
+        pub_bytes = base64.b64decode(pub_b64)
+        public_key = Ed25519PublicKey.from_public_bytes(pub_bytes)
+        return cls(public_key=public_key, node_name=node_name)
+
+    def __repr__(self):
+        name = self.node_name or "unnamed"
+        fp = self.fingerprint or "no-key"
+        priv = "full" if self.has_private_key else "public-only"
+        return f"<NodeIdentity '{name}' [{fp}] ({priv})>"
+
+
+# ─────────────────────────────────────────────────────────
+# TOR TRANSPORT LAYER
+#
+# Three levels of connection protection, detected at startup.
+#
+# Level 1 — Direct (no Tor)
+#   Content protected (AES-256-GCM + seal verification).
+#   Connection metadata NOT protected: IP addresses, timing,
+#   and the fact that two specific devices met are visible
+#   to anyone monitoring the network.
+#
+# Level 2 — Tor outbound (SOCKS5)
+#   Outbound connections travel through Tor.
+#   Your IP is not visible to nodes you connect to.
+#   Inbound connections still use your local IP.
+#   Requires: Tor running + pip install PySocks
+#
+# Level 3 — Tor + onion service
+#   Outbound connections travel through Tor.
+#   Inbound connections arrive at your .onion address.
+#   Neither endpoint's IP is visible to the other.
+#   Requires: Level 2 + stem + Tor control port (9051)
+#
+# On Android: install Orbot (F-Droid or Play Store).
+# Then: pip install PySocks  (Level 2)
+# Then: pip install stem     (Level 3, optional)
+#
+# No silent downgrade. Phantom always tells you exactly
+# what is and is not protecting your connections.
+#
+# WHAT TOR DOES NOT PROTECT:
+# — A device compromised at the OS level
+# — Timing correlation by a global adversary
+# — Coercion to reveal passphrase or .onion address
+# These limits are named. They cannot be used to argue
+# that Tor is unnecessary. Imperfect protection > none.
+# ─────────────────────────────────────────────────────────
+
+TOR_SOCKS_PORT = 9050
+TOR_CONTROL_PORT = 9051
+ONION_FILE = "phantom_onion.txt"
+
+# Module-level state — set once by init_tor()
+_TOR_LEVEL = 1           # 1=direct, 2=tor-outbound, 3=tor+onion
+_ONION_ADDRESS = None    # .onion address if level 3 active
+_SOCKS_AVAILABLE = False
+_STEM_AVAILABLE = False
+_TOR_RUNNING = False
+
+
+def _check_tor_deps():
+    global _SOCKS_AVAILABLE, _STEM_AVAILABLE
+    try:
+        import socks  # noqa: F401
+        _SOCKS_AVAILABLE = True
+    except ImportError:
+        pass
+    try:
+        import stem  # noqa: F401
+        _STEM_AVAILABLE = True
+    except ImportError:
+        pass
+
+
+def _tor_socks_running():
+    """Check if Tor SOCKS5 proxy is reachable on 127.0.0.1:9050."""
+    import socket as _socket
+    try:
+        s = _socket.socket(_socket.AF_INET, _socket.SOCK_STREAM)
+        s.settimeout(2)
+        result = s.connect_ex(("127.0.0.1", TOR_SOCKS_PORT))
+        s.close()
+        return result == 0
+    except Exception:
+        return False
+
+
+def _tor_control_running():
+    """Check if Tor control port is reachable on 127.0.0.1:9051."""
+    import socket as _socket
+    try:
+        s = _socket.socket(_socket.AF_INET, _socket.SOCK_STREAM)
+        s.settimeout(2)
+        result = s.connect_ex(("127.0.0.1", TOR_CONTROL_PORT))
+        s.close()
+        return result == 0
+    except Exception:
+        return False
+
+
+def _create_onion_service(port):
+    """
+    Create an ephemeral Tor hidden service on the given port.
+    Returns the .onion address, or None on failure.
+    Ephemeral: vanishes when Tor restarts. Nothing persists without intent.
+    """
+    try:
+        from stem.control import Controller
+        with Controller.from_port(port=TOR_CONTROL_PORT) as ctrl:
+            ctrl.authenticate()
+            svc = ctrl.create_ephemeral_hidden_service(
+                {port: port}, await_publication=True
+            )
+            return f"{svc.service_id}.onion"
+    except Exception:
+        return None
+
+
+def init_tor(port=PORT, interactive=True):
+    """
+    Detect Tor capabilities and set transport level.
+    Call once at startup before any network operations.
+    Prints a clear status block — the user always knows
+    what is and is not protecting their connections.
+    """
+    global _TOR_LEVEL, _ONION_ADDRESS, _TOR_RUNNING
+
+    _check_tor_deps()
+    _TOR_RUNNING = _tor_socks_running()
+
+    if not interactive:
+        if _TOR_RUNNING and _SOCKS_AVAILABLE:
+            _TOR_LEVEL = 2
+        return
+
+    print()
+    print(" ┌──────────────────────────────────────────────────────────┐")
+    print(" │  TRANSPORT PROTECTION                                    │")
+    print(" │                                                          │")
+
+    if not _TOR_RUNNING:
+        _TOR_LEVEL = 1
+        print(" │  Level 1 — Direct connection (no Tor)                   │")
+        print(" │                                                          │")
+        print(" │  Connection metadata is NOT protected.                   │")
+        print(" │  Anyone monitoring this network can see that two         │")
+        print(" │  devices met, at what time, for how long.                │")
+        print(" │                                                          │")
+        print(" │  To enable Tor protection:                               │")
+        print(" │    Android: install Orbot from F-Droid or Play Store     │")
+        print(" │    Desktop: install Tor Browser or the tor package       │")
+        print(" │    Then: pip install PySocks                             │")
+        print(" │    Then restart Phantom.                                 │")
+        print(" └──────────────────────────────────────────────────────────┘")
+        print()
+        return
+
+    if not _SOCKS_AVAILABLE:
+        _TOR_LEVEL = 1
+        print(" │  Tor is running — but PySocks is not installed.         │")
+        print(" │  Connections will NOT use Tor.                           │")
+        print(" │                                                          │")
+        print(" │  To enable Tor transport:                                │")
+        print(" │    pip install PySocks                                   │")
+        print(" │    Then restart Phantom.                                 │")
+        print(" └──────────────────────────────────────────────────────────┘")
+        print()
+        return
+
+    _TOR_LEVEL = 2
+    onion = None
+
+    if _STEM_AVAILABLE and _tor_control_running():
+        onion = _create_onion_service(port)
+        if onion:
+            _TOR_LEVEL = 3
+            _ONION_ADDRESS = onion
+            with open(ONION_FILE, "w") as f:
+                f.write(onion + "\n")
+
+    if _TOR_LEVEL == 3:
+        print(" │  Level 3 — Tor + onion service                          │")
+        print(" │                                                          │")
+        print(" │  ✓ Outbound connections travel through Tor.              │")
+        print(" │  ✓ Your IP is not visible to nodes you connect to.       │")
+        print(" │  ✓ Inbound address is a .onion — not your IP.            │")
+        print(" │                                                          │")
+        onion_short = onion[:54] if onion else ""
+        print(f" │  {onion_short:<56}│")
+        print(" │                                                          │")
+        print(" │  Share this address with nodes that want to meet you.    │")
+    else:
+        print(" │  Level 2 — Tor outbound                                  │")
+        print(" │                                                          │")
+        print(" │  ✓ Outbound connections travel through Tor.              │")
+        print(" │  ✓ Your IP is not visible to nodes you connect to.       │")
+        print(" │                                                          │")
+        print(" │  ⚠ YOUR IP IS VISIBLE to anyone who connects to you.    │")
+        print(" │  ⚠ Anyone on your local network can see that you are    │")
+        print(" │    running a Phantom node and who connects to it.        │")
+        print(" │                                                          │")
+        print(" │  This does NOT make you anonymous as a listener.         │")
+        print(" │  For full protection: pip install stem + enable Tor      │")
+        print(" │  control port for Level 3 (hidden .onion service).       │")
+
+    print(" └──────────────────────────────────────────────────────────┘")
+    print()
+
+
+def make_socket():
+    """
+    Create a socket for the current Tor level.
+    Level 1: standard TCP socket.
+    Level 2/3: SOCKS5-proxied socket through Tor.
+    """
+    import socket as _socket
+    if _TOR_LEVEL >= 2 and _SOCKS_AVAILABLE:
+        import socks
+        s = socks.socksocket()
+        s.set_proxy(socks.SOCKS5, "127.0.0.1", TOR_SOCKS_PORT)
+        return s
+    return _socket.socket(_socket.AF_INET, _socket.SOCK_STREAM)
+
+
+def tor_status():
+    """One-line summary of current transport level."""
+    if _TOR_LEVEL == 3 and _ONION_ADDRESS:
+        return f"Tor+onion ({_ONION_ADDRESS[:24]}...)"
+    elif _TOR_LEVEL == 2:
+        return "Tor outbound (Level 2)"
+    else:
+        return "Direct — no Tor (Level 1)"
+
+
+def get_onion_address():
+    """Return current .onion address if Level 3 is active."""
+    return _ONION_ADDRESS

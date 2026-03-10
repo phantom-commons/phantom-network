@@ -223,6 +223,8 @@ No special authority. By design, not by promise.
 | Seventeen genesis seals | Permanent |
 | Encryption at rest (AES-256-GCM) | Working |
 | Node-to-node sync over local WiFi | Working (v0.4) |
+| Node identity (Ed25519 key pairs) | Working (v0.6) |
+| Signed seals | Working (v0.6) |
 | Node-to-node sync over Tor | Not built |
 | Simple distribution (no Termux) | Not built |
 | SUIJURIS | Not built |

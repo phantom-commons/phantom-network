@@ -5,8 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Phantom — Seal a Thought</title>
 <style>
-  /* No external font loading — every CDN request leaks your IP.
-     System fonts only. Privacy by architecture. */
+  /* No external font loading — every CDN request leaks your IP. System fonts only. */
 
   :root {
     --black: #0a0a0a;
@@ -28,7 +27,6 @@
     flex-direction: column;
   }
 
-  /* GRAIN OVERLAY */
   body::before {
     content: '';
     position: fixed;
@@ -55,13 +53,12 @@
     color: var(--dim);
   }
 
-  .logo span {
-    color: var(--white);
-  }
+  .logo span { color: var(--white); }
 
   nav {
     display: flex;
     gap: 2rem;
+    align-items: flex-end;
   }
 
   nav button {
@@ -78,10 +75,7 @@
     transition: all 0.2s;
   }
 
-  nav button.active, nav button:hover {
-    color: var(--white);
-    border-bottom-color: var(--accent);
-  }
+  nav button.active, nav button:hover { color: var(--white); border-bottom-color: var(--accent); }
 
   main {
     flex: 1;
@@ -94,7 +88,6 @@
   .panel { display: none; }
   .panel.active { display: block; }
 
-  /* SEAL PANEL */
   .panel-title {
     font-size: 0.65rem;
     font-family: 'SFMono-Regular', 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace;
@@ -104,10 +97,7 @@
     margin-bottom: 3rem;
   }
 
-  .thought-area {
-    position: relative;
-    margin-bottom: 2rem;
-  }
+  .thought-area { position: relative; margin-bottom: 2rem; }
 
   textarea {
     width: 100%;
@@ -125,14 +115,8 @@
     transition: border-color 0.3s;
   }
 
-  textarea::placeholder {
-    color: #2a2a2a;
-    font-style: italic;
-  }
-
-  textarea:focus {
-    border-bottom-color: var(--accent);
-  }
+  textarea::placeholder { color: #2a2a2a; font-style: italic; }
+  textarea:focus { border-bottom-color: var(--accent); }
 
   .char-count {
     position: absolute;
@@ -156,19 +140,14 @@
     cursor: pointer;
     transition: all 0.2s;
     margin-top: 1rem;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
 
-  .seal-btn:hover {
-    background: var(--accent);
-    color: var(--black);
-  }
+  .seal-btn:hover { background: var(--accent); color: var(--black); }
+  .seal-btn:active { background: var(--accent); color: var(--black); }
+  .seal-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
-  .seal-btn:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-  }
-
-  /* RESULT */
   .result {
     display: none;
     margin-top: 4rem;
@@ -225,12 +204,7 @@
     font-style: italic;
   }
 
-  .action-row {
-    display: flex;
-    gap: 1rem;
-    margin-top: 2.5rem;
-    flex-wrap: wrap;
-  }
+  .action-row { display: flex; gap: 1rem; margin-top: 2.5rem; flex-wrap: wrap; }
 
   .action-btn {
     background: none;
@@ -243,19 +217,13 @@
     padding: 0.7rem 1.5rem;
     cursor: pointer;
     transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
 
-  .action-btn:hover {
-    border-color: var(--white);
-    color: var(--white);
-  }
+  .action-btn:hover { border-color: var(--white); color: var(--white); }
+  .action-btn.copied { border-color: var(--verified); color: var(--verified); }
 
-  .action-btn.copied {
-    border-color: var(--verified);
-    color: var(--verified);
-  }
-
-  /* SHARE TEXT */
   .share-block {
     display: none;
     margin-top: 2rem;
@@ -276,10 +244,7 @@
     word-break: break-all;
   }
 
-  /* VERIFY PANEL */
-  .verify-group {
-    margin-bottom: 2rem;
-  }
+  .verify-group { margin-bottom: 2rem; }
 
   .verify-label {
     font-family: 'SFMono-Regular', 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace;
@@ -304,14 +269,8 @@
     transition: border-color 0.3s;
   }
 
-  .verify-input:focus {
-    border-bottom-color: var(--accent);
-  }
-
-  .verify-input.idea-input {
-    font-family: Georgia, 'Times New Roman', 'Palatino Linotype', serif;
-    font-size: 1.1rem;
-  }
+  .verify-input:focus { border-bottom-color: var(--accent); }
+  .verify-input.idea-input { font-family: Georgia, 'Times New Roman', 'Palatino Linotype', serif; font-size: 1.1rem; }
 
   .verify-result {
     display: none;
@@ -322,16 +281,8 @@
   }
 
   .verify-result.show { display: block; }
-
-  .verify-result.valid {
-    border-color: var(--verified);
-    background: rgba(42, 90, 58, 0.05);
-  }
-
-  .verify-result.invalid {
-    border-color: var(--red);
-    background: rgba(139, 58, 42, 0.05);
-  }
+  .verify-result.valid { border-color: var(--verified); background: rgba(42, 90, 58, 0.05); }
+  .verify-result.invalid { border-color: var(--red); background: rgba(139, 58, 42, 0.05); }
 
   .verify-status {
     font-family: 'SFMono-Regular', 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace;
@@ -343,26 +294,11 @@
 
   .verify-result.valid .verify-status { color: var(--verified); }
   .verify-result.invalid .verify-status { color: var(--red); }
+  .verify-message { font-size: 1rem; line-height: 1.7; color: var(--dim); }
 
-  .verify-message {
-    font-size: 1rem;
-    line-height: 1.7;
-    color: var(--dim);
-  }
-
-  /* ABOUT */
-  .about-text {
-    font-size: 1.1rem;
-    line-height: 1.9;
-    color: var(--dim);
-  }
-
+  .about-text { font-size: 1.1rem; line-height: 1.9; color: var(--dim); }
   .about-text p { margin-bottom: 1.5rem; }
-
-  .about-text strong {
-    color: var(--white);
-    font-weight: 500;
-  }
+  .about-text strong { color: var(--white); font-weight: 500; }
 
   .about-seal {
     margin: 2.5rem 0;
@@ -371,19 +307,8 @@
     padding-left: 2rem;
   }
 
-  .about-seal .idea {
-    font-style: italic;
-    font-size: 1.1rem;
-    color: var(--white);
-    margin-bottom: 0.5rem;
-  }
-
-  .about-seal .stamp {
-    font-family: 'SFMono-Regular', 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace;
-    font-size: 0.6rem;
-    color: var(--dim);
-    word-break: break-all;
-  }
+  .about-seal .idea { font-style: italic; font-size: 1.1rem; color: var(--white); margin-bottom: 0.5rem; }
+  .about-seal .stamp { font-family: 'SFMono-Regular', 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace; font-size: 0.6rem; color: var(--dim); word-break: break-all; }
 
   footer {
     padding: 2rem 4rem;
@@ -393,34 +318,30 @@
     align-items: center;
   }
 
-  .footer-text {
-    font-family: 'SFMono-Regular', 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace;
-    font-size: 0.6rem;
-    color: #2a2a2a;
-    letter-spacing: 0.2em;
-  }
-
-  .footer-quote {
-    font-style: italic;
-    font-size: 0.8rem;
-    color: #2a2a2a;
-  }
+  .footer-text { font-family: 'SFMono-Regular', 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace; font-size: 0.6rem; color: #2a2a2a; letter-spacing: 0.2em; }
+  .footer-quote { font-style: italic; font-size: 0.8rem; color: #2a2a2a; }
 
   @media (max-width: 600px) {
-    header { padding: 2rem; flex-direction: column; gap: 1.5rem; align-items: flex-start; }
+    header { padding: 2rem 1.5rem; flex-direction: column; gap: 1.5rem; align-items: flex-start; }
+    nav { flex-wrap: wrap; gap: 1rem; }
     main { padding: 3rem 1.5rem; }
-    footer { padding: 1.5rem 2rem; flex-direction: column; gap: 0.5rem; }
+    textarea { font-size: 1.2rem; }
+    footer { padding: 1.5rem; flex-direction: column; gap: 0.5rem; }
+    .action-row { flex-direction: column; }
+    .action-btn { text-align: center; }
+    .seal-btn { width: 100%; text-align: center; }
   }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="logo"><span>Phantom</span> — seal your thoughts</div>
+  <div class="logo"><span>Phantom</span> — <span data-i18n="header-subtitle">seal your thoughts</span></div>
   <nav>
-    <button class="active" onclick="showPanel('seal', this)">Seal</button>
-    <button onclick="showPanel('verify', this)">Verify</button>
-    <button onclick="showPanel('about', this)">About</button>
+    <button class="active" onclick="showPanel('seal', this)" data-i18n="nav-seal">Seal</button>
+    <button onclick="showPanel('verify', this)" data-i18n="nav-verify">Verify</button>
+    <button onclick="showPanel('about', this)" data-i18n="nav-about">About</button>
+    <!-- i18n architecture ready. Add language buttons here when needed. -->
   </nav>
 </header>
 
@@ -428,42 +349,42 @@
 
   <!-- SEAL PANEL -->
   <div class="panel active" id="panel-seal">
-    <div class="panel-title">— seal a thought</div>
+    <div class="panel-title" data-i18n="seal-title">— seal a thought</div>
 
     <div class="thought-area">
-      <textarea id="idea-input" placeholder="Write what you want to preserve..." rows="4"
+      <textarea id="idea-input" data-i18n-placeholder="seal-placeholder" placeholder="Write what you want to preserve..." rows="4"
         oninput="updateCount()"></textarea>
       <span class="char-count" id="char-count">0</span>
     </div>
 
-    <button class="seal-btn" id="seal-btn" onclick="sealIdea()" disabled>
+    <button class="seal-btn" id="seal-btn" onclick="sealIdea()" disabled data-i18n="seal-btn">
       Seal this thought
     </button>
 
     <div class="result" id="seal-result">
-      <div class="result-label">— sealed</div>
+      <div class="result-label" data-i18n="result-sealed">— sealed</div>
       <div class="result-idea" id="out-idea"></div>
 
-      <div class="result-label">moment</div>
+      <div class="result-label" data-i18n="result-moment">moment</div>
       <div class="result-moment" id="out-moment"></div>
 
       <div class="result-label" style="margin-top:1.5rem">stamp</div>
       <div class="result-stamp" id="out-stamp"></div>
 
-      <div class="result-footer">
+      <div class="result-footer" data-i18n="result-footer">
         This thought existed. No one can change it without breaking the seal.
       </div>
 
       <div class="action-row">
-        <button class="action-btn" onclick="copyStamp()">Copy stamp</button>
-        <button class="action-btn" onclick="toggleShare()">Share format</button>
-        <button class="action-btn" onclick="resetSeal()">New thought</button>
+        <button class="action-btn" onclick="copyStamp(this)" data-i18n="btn-copy-stamp">Copy stamp</button>
+        <button class="action-btn" onclick="toggleShare()" data-i18n="btn-share">Share format</button>
+        <button class="action-btn" onclick="resetSeal()" data-i18n="btn-new">New thought</button>
       </div>
 
       <div class="share-block" id="share-block">
         <div class="share-text" id="share-text"></div>
         <div class="action-row" style="margin-top:1rem">
-          <button class="action-btn" onclick="copyShare()">Copy to share</button>
+          <button class="action-btn" onclick="copyShare(this)" data-i18n="btn-copy-share">Copy to share</button>
         </div>
       </div>
     </div>
@@ -471,27 +392,27 @@
 
   <!-- VERIFY PANEL -->
   <div class="panel" id="panel-verify">
-    <div class="panel-title">— verify a seal</div>
+    <div class="panel-title" data-i18n="verify-title">— verify a seal</div>
 
     <div class="verify-group">
-      <label class="verify-label" for="v-idea">The idea — exactly as sealed</label>
+      <label class="verify-label" for="v-idea" data-i18n="verify-idea-label">The idea — exactly as sealed</label>
       <textarea id="v-idea" class="verify-input idea-input" rows="3"
-        placeholder="The thought, word for word..."></textarea>
+        data-i18n-placeholder="verify-idea-placeholder" placeholder="The thought, word for word..."></textarea>
     </div>
 
     <div class="verify-group">
-      <label class="verify-label" for="v-moment">Moment</label>
+      <label class="verify-label" for="v-moment" data-i18n="verify-moment-label">Moment</label>
       <input id="v-moment" class="verify-input"
         placeholder="2026-03-09T17:52:37.343873+00:00" />
     </div>
 
     <div class="verify-group">
-      <label class="verify-label" for="v-stamp">Stamp</label>
+      <label class="verify-label" for="v-stamp" data-i18n="verify-stamp-label">Stamp</label>
       <input id="v-stamp" class="verify-input"
         placeholder="6ed33a01c355395cfea4de5bf4e7baad..." />
     </div>
 
-    <button class="seal-btn" onclick="verifyIdea()">Verify seal</button>
+    <button class="seal-btn" onclick="verifyIdea()" data-i18n="verify-btn">Verify seal</button>
 
     <div class="verify-result" id="verify-result">
       <div class="verify-status" id="verify-status"></div>
@@ -501,183 +422,172 @@
 
   <!-- ABOUT PANEL -->
   <div class="panel" id="panel-about">
-    <div class="panel-title">— what this is</div>
-    <div class="about-text">
-
-      <p><strong>Your thoughts belong to you.</strong></p>
-
-      <p>Write something. Seal it with Phantom. From that moment —
-      it exists permanently, verifiably yours, on no server but your own device.
-      Anyone can confirm it is unchanged.
-      No one can alter it without breaking the seal.</p>
-
-      <p>A seal is <strong>mathematical proof that a thought existed,
-      at an exact moment, exactly as written.</strong>
-      Not a promise. Not a record in a database someone controls.
-      A cryptographic fact — verifiable by anyone, on any device,
-      without trusting any authority.</p>
-
-      <p>If the seal verifies — the thought existed exactly as written.<br>
-      If it does not — something was changed.</p>
-
-      <p style="margin-top: 2rem;"><strong>— What Phantom is</strong></p>
-
-      <p>Phantom is a network of nodes — devices, people, thoughts —
-      that share ideas without depending on any central authority.
-      No company owns it. No server controls it.
-      The network is what two nodes become after they meet.</p>
-
-      <p>It was built for a specific person: a woman in Lagos
-      with a secondhand Android phone, three children, and a small shop.
-      She pays 8% in fees because she has no alternative.
-      She learned to self-censor without anyone asking her to.</p>
-
-      <p><em>If she cannot use it — it is not Phantom.</em></p>
-
-      <p style="margin-top: 2rem;"><strong>— What exists today</strong></p>
-
-      <p>Cryptographic seals (this page). Encryption at rest.
-      Node-to-node sync over local WiFi. A local AI model on Android.
-      Seventeen genesis seals — permanent, irreversible, verified.</p>
-
-      <p>What does not exist yet: anonymous routing via Tor,
-      simple installation without Termux, SUIJURIS (the economic layer),
-      the full network. This is an honest beginning.</p>
-
-      <p style="margin-top: 2rem;"><strong>— The seventeen genesis seals</strong></p>
-
-      <div class="about-seal">
-        <div class="idea">"We are all one and one is all of us."</div>
-        <div class="stamp">175c7fc7bb067922f8628a43858eaabb249658cb4a4ffb621c6d48ff1bc3266d
-2026-03-08T15:54:13.597222</div>
-      </div>
-
-      <div class="about-seal">
-        <div class="idea">"If she cannot use it — it is not Phantom."</div>
-        <div class="stamp">afcd0534eaaa31abe952570f0f1f454a5b06b23ef66b86ae66c2207a1c5447ef
-2026-03-09T08:34:10.964606+00:00</div>
-      </div>
-
-      <div class="about-seal">
-        <div class="idea">"The network is not what travels between nodes. It is what two nodes become after they meet."</div>
-        <div class="stamp">6ed33a01c355395cfea4de5bf4e7baad307f9b583cd182839e4becc6dab1ad5d
-2026-03-09T17:52:37.343873+00:00</div>
-      </div>
-
-      <div class="about-seal">
-        <div class="idea">"Hello world!"</div>
-        <div class="stamp">fc22314aafde25d70307d1ff2ffcc2f9b1d0f2911736cc9e70a3afb9623beac3
-2026-03-10T01:16:50.985508+00:00</div>
-      </div>
-
-      <div class="about-seal">
-        <div class="idea">"The repository did what it promised."</div>
-        <div class="stamp">9518e3a29dbce4c597468d23927cb3cb055e09e0eb7b0c5ae6a6812d920517f1
-2026-03-10T02:19:47.278397+00:00</div>
-      </div>
-
-      <div class="about-seal">
-        <div class="idea">"The gap itself is meaningful."</div>
-        <div class="stamp">b379ec992bf2147a6b30e395d23c2b3820395a3024a6c00d598f9f2f7b103b6e
-2026-03-10T10:36:28.880075+00:00</div>
-      </div>
-
-      <p style="font-size: 0.85rem; color: #666; margin-top: 0.5rem;">
-        Full list of seventeen seals in SEALING.md
-      </p>
-
-      <p style="margin-top: 2rem;">This page seals and verifies thoughts using SHA-256 —
-      the same algorithm that runs on any device on earth.
-      <strong>Nothing leaves your device.</strong>
-      No account. No server. No log.</p>
-
-      <p style="margin-top: 1.5rem;">
-        <a href="https://github.com/phantom-commons/phantom-network"
-           style="color: #8a8478; font-family: monospace; font-size: 0.85rem;"
-           target="_blank">
-          github.com/phantom-commons/phantom-network
-        </a>
-      </p>
-
-      <p style="color: #444; font-size: 0.9rem; font-style: italic; margin-top: 1rem;">
-        Phantom Network — Node Zero — March 2026
-      </p>
-    </div>
+    <div class="panel-title" data-i18n="about-title">— what this is</div>
+    <div class="about-text" id="about-content"></div>
   </div>
 
 </main>
 
 <footer>
-  <div class="footer-text">phantom network — v0.2 web</div>
-  <div class="footer-quote">privacy is not for hiding — it is for being free</div>
+  <div class="footer-text">phantom network — v0.3 web</div>
+  <div class="footer-quote" data-i18n="footer-quote">privacy is not for hiding — it is for being free</div>
 </footer>
 
 <script>
 // ─────────────────────────────────────────────
-// SHA-256 — pure JS, no browser APIs, works offline
-// Works in any HTML viewer, file://, HTTPS, or HTTP
+// SHA-256 — pure JS, UTF-8 safe
+// Works on any browser, any protocol, offline
+// Handles em-dashes, accents, ñ, yoruba, any Unicode
 // ─────────────────────────────────────────────
-async function sha256(message) {
-  return sha256Pure(message);
+
+function utf8encode(str) {
+  const bytes = [];
+  for (let i = 0; i < str.length; i++) {
+    let c = str.charCodeAt(i);
+    if (c >= 0xD800 && c <= 0xDBFF && i + 1 < str.length) {
+      const c2 = str.charCodeAt(i + 1);
+      if (c2 >= 0xDC00 && c2 <= 0xDFFF) {
+        c = ((c - 0xD800) << 10) + (c2 - 0xDC00) + 0x10000;
+        i++;
+      }
+    }
+    if (c < 0x80) {
+      bytes.push(c);
+    } else if (c < 0x800) {
+      bytes.push(0xC0 | (c >> 6), 0x80 | (c & 0x3F));
+    } else if (c < 0x10000) {
+      bytes.push(0xE0 | (c >> 12), 0x80 | ((c >> 6) & 0x3F), 0x80 | (c & 0x3F));
+    } else {
+      bytes.push(0xF0 | (c >> 18), 0x80 | ((c >> 12) & 0x3F), 0x80 | ((c >> 6) & 0x3F), 0x80 | (c & 0x3F));
+    }
+  }
+  return bytes;
 }
 
-function sha256Pure(str) {
-  function rightRotate(value, amount) {
-    return (value >>> amount) | (value << (32 - amount));
-  }
-  const mathPow = Math.pow;
-  const maxWord = mathPow(2, 32);
-  let result = '';
-  const words = [];
-  const asciiBitLength = str.length * 8;
-  let hash = [], k = [];
-  let primeCounter = 0;
-  const isComposite = {};
-  for (let candidate = 2; primeCounter < 64; candidate++) {
-    if (!isComposite[candidate]) {
-      for (let i = 0; i < 313; i += candidate) isComposite[i] = candidate;
-      hash[primeCounter] = (mathPow(candidate, 0.5) * maxWord) | 0;
-      k[primeCounter++] = (mathPow(candidate, 1/3) * maxWord) | 0;
+function sha256(str) {
+  const bytes = utf8encode(str);
+  function rr(v, a) { return (v >>> a) | (v << (32 - a)); }
+  const K = [
+    0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
+  ];
+  let H = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  const bl = bytes.length * 8;
+  bytes.push(0x80);
+  while (bytes.length % 64 !== 56) bytes.push(0);
+  bytes.push(0,0,0,0);
+  bytes.push((bl >>> 24) & 0xff, (bl >>> 16) & 0xff, (bl >>> 8) & 0xff, bl & 0xff);
+  for (let off = 0; off < bytes.length; off += 64) {
+    const w = new Array(64);
+    for (let i = 0; i < 16; i++) {
+      w[i] = (bytes[off+i*4]<<24)|(bytes[off+i*4+1]<<16)|(bytes[off+i*4+2]<<8)|bytes[off+i*4+3];
     }
-  }
-  str += '\x80';
-  while (str.length % 64 - 56) str += '\x00';
-  for (let i = 0; i < str.length; i++) {
-    const j = str.charCodeAt(i);
-    if (j >> 8) return '';
-    words[i >> 2] |= j << ((3 - i) % 4) * 8;
-  }
-  words[words.length] = ((asciiBitLength / maxWord) | 0);
-  words[words.length] = (asciiBitLength | 0);
-  for (let j = 0; j < words.length;) {
-    const w = words.slice(j, j += 16);
-    const oldHash = hash.slice(0);
+    for (let i = 16; i < 64; i++) {
+      const s0 = rr(w[i-15],7) ^ rr(w[i-15],18) ^ (w[i-15]>>>3);
+      const s1 = rr(w[i-2],17) ^ rr(w[i-2],19) ^ (w[i-2]>>>10);
+      w[i] = (w[i-16]+s0+w[i-7]+s1)|0;
+    }
+    let [a,b,c,d,e,f,g,h] = H;
     for (let i = 0; i < 64; i++) {
-      const i2 = i + j - 16;
-      const w15 = w[i - 15], w2 = w[i - 2];
-      const a = hash[0], e = hash[4];
-      const temp1 = hash[7] +
-        (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25)) +
-        ((e & hash[5]) ^ (~e & hash[6])) + k[i] + (w[i] =
-          (i < 16) ? w[i] : (
-            w[i - 16] +
-            (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3)) +
-            w[i - 7] +
-            (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))
-          ) | 0);
-      const temp2 =
-        (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22)) +
-        ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
-      hash = [(temp1 + temp2) | 0].concat(hash);
-      hash[4] = (hash[4] + temp1) | 0;
-      hash.length = 8;
+      const S1 = rr(e,6)^rr(e,11)^rr(e,25);
+      const ch = (e&f)^(~e&g);
+      const t1 = (h+S1+ch+K[i]+w[i])|0;
+      const S0 = rr(a,2)^rr(a,13)^rr(a,22);
+      const maj = (a&b)^(a&c)^(b&c);
+      const t2 = (S0+maj)|0;
+      h=g; g=f; f=e; e=(d+t1)|0; d=c; c=b; b=a; a=(t1+t2)|0;
     }
-    hash = hash.map((x, i) => (x + oldHash[i]) | 0);
+    H = [H[0]+a|0,H[1]+b|0,H[2]+c|0,H[3]+d|0,H[4]+e|0,H[5]+f|0,H[6]+g|0,H[7]+h|0];
   }
-  hash.forEach(val => {
-    for (let i = 7; i >= 0; i--) {
-      result += ((val >>> (i * 4)) & 0xf).toString(16);
-    }
+  return H.map(v => (v>>>0).toString(16).padStart(8,'0')).join('');
+}
+
+// ─────────────────────────────────────────────
+// i18n — English. Architecture supports additional languages.
+// ─────────────────────────────────────────────
+const LANG = {
+  en: {
+    "header-subtitle": "seal your thoughts",
+    "nav-seal": "Seal", "nav-verify": "Verify", "nav-about": "About",
+    "seal-title": "— seal a thought",
+    "seal-placeholder": "Write what you want to preserve...",
+    "seal-btn": "Seal this thought",
+    "result-sealed": "— sealed",
+    "result-moment": "moment",
+    "result-footer": "This thought existed. No one can change it without breaking the seal.",
+    "btn-copy-stamp": "Copy stamp", "btn-share": "Share format",
+    "btn-new": "New thought", "btn-copy-share": "Copy to share",
+    "verify-title": "— verify a seal",
+    "verify-idea-label": "The idea — exactly as sealed",
+    "verify-idea-placeholder": "The thought, word for word...",
+    "verify-moment-label": "Moment", "verify-stamp-label": "Stamp",
+    "verify-btn": "Verify seal",
+    "verify-valid-status": "— verified",
+    "verify-valid-msg": "This thought existed, at this moment, exactly as written. The seal is intact. Nothing was changed.",
+    "verify-invalid-status": "— invalid seal",
+    "verify-invalid-msg": "The seal does not match. Either the idea, the moment, or the stamp was changed — or contains a transcription error. Check each field exactly.",
+    "about-title": "— what this is",
+    "footer-quote": "privacy is not for hiding — it is for being free",
+    "share-prefix": "Sealed with Phantom:",
+    "copied": "Copied",
+    "about-html": `
+      <p><strong>Your thoughts belong to you.</strong></p>
+      <p>Write something. Seal it with Phantom. From that moment — it exists permanently, verifiably yours, on no server but your own device. Anyone can confirm it is unchanged. No one can alter it without breaking the seal.</p>
+      <p>A seal is <strong>mathematical proof that a thought existed, at an exact moment, exactly as written.</strong> Not a promise. Not a record in a database someone controls. A cryptographic fact — verifiable by anyone, on any device, without trusting any authority.</p>
+      <p>If the seal verifies — the thought existed exactly as written.<br>If it does not — something was changed.</p>
+      <p style="margin-top:2rem"><strong>— What Phantom is</strong></p>
+      <p>Phantom is a network of nodes — devices, people, thoughts — that share ideas without depending on any central authority. No company owns it. No server controls it. The network is what two nodes become after they meet.</p>
+      <p>It was built for a specific person: a woman in Lagos with a secondhand Android phone, three children, and a small shop. She pays 8% in fees because she has no alternative. She learned to self-censor without anyone asking her to.</p>
+      <p><em>If she cannot use it — it is not Phantom.</em></p>
+      <p style="margin-top:2rem"><strong>— What exists today</strong></p>
+      <p>Cryptographic seals (this page). Encryption at rest. Node-to-node sync over local WiFi. A local AI model on Android. Seventeen genesis seals — permanent, irreversible, verified.</p>
+      <p>What does not exist yet: anonymous routing via Tor, simple installation without Termux, SUIJURIS (the economic layer), the full network. This is an honest beginning.</p>
+      <div class="about-seal"><div class="idea">"We are all one and one is all of us."</div><div class="stamp">175c7fc7bb067922f8628a43858eaabb249658cb4a4ffb621c6d48ff1bc3266d — 2026-03-08</div></div>
+      <div class="about-seal"><div class="idea">"If she cannot use it — it is not Phantom."</div><div class="stamp">afcd0534eaaa31abe952570f0f1f454a5b06b23ef66b86ae66c2207a1c5447ef — 2026-03-09</div></div>
+      <div class="about-seal"><div class="idea">"It is still a description of her, not by her."</div><div class="stamp">f17ee4cef1a127d6349deb4007cb1e5e5c0ad08637d119dda8ce636d026b6499 — 2026-03-10</div></div>
+      <p style="margin-top:2rem">This page seals and verifies thoughts using SHA-256 — the same algorithm that runs on any device on earth. <strong>Nothing leaves your device.</strong> No account. No server. No log.</p>
+      <p style="color:#444;font-size:0.9rem;font-style:italic;margin-top:1rem">Phantom Network — Node Zero — March 2026</p>
+    `
+  }
+  // i18n: add language blocks here when Phantom speaks more languages.
+  // The architecture supports it. The moment has not arrived yet.
+};
+
+let currentLang = 'en';
+
+function setLang(lang) {
+  currentLang = lang;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (LANG[lang][key]) el.textContent = LANG[lang][key];
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    if (LANG[lang][key]) el.placeholder = LANG[lang][key];
+  });
+  document.getElementById('about-content').innerHTML = LANG[lang]['about-html'];
+  document.documentElement.lang = lang;
+}
+
+// ─────────────────────────────────────────────
+// JSON encoding — match Python's json.dumps exactly
+// Python's default: ensure_ascii=True escapes non-ASCII to \uXXXX
+// JS JSON.stringify does NOT escape them. This function does.
+// Without this, seals created in the browser won't verify
+// against seals created by phantom_seed.py.
+// ─────────────────────────────────────────────
+function pythonJsonString(s) {
+  // JSON.stringify handles basic escaping (quotes, backslashes, control chars)
+  let result = JSON.stringify(s);
+  // Now escape any non-ASCII character to \uXXXX to match Python
+  result = result.replace(/[\u0080-\uffff]/g, function(c) {
+    return '\\u' + ('0000' + c.charCodeAt(0).toString(16)).slice(-4);
   });
   return result;
 }
@@ -694,25 +604,20 @@ function updateCount() {
   btn.disabled = len === 0;
 }
 
-async function sealIdea() {
+function sealIdea() {
   const idea = document.getElementById('idea-input').value.trim();
   if (!idea) return;
 
   const now = new Date();
   const moment = now.toISOString().replace('Z', '+00:00');
 
-  const modeEl = document.querySelector('input[name="seal-mode"]:checked');
-  const mode = modeEl ? modeEl.value.toUpperCase() : 'PERMANENT';
+  // Must match Python: json.dumps({"idea":idea,"moment":moment}, separators=(',',':'))
+  // Python's default ensure_ascii=True escapes non-ASCII to \uXXXX
+  const payloadExact = '{"idea":' + pythonJsonString(idea) + ',"moment":' + pythonJsonString(moment) + '}';
+  const stamp = sha256(payloadExact);
 
-  const payload = JSON.stringify({idea, moment});
-  let stamp;
-  try {
-    stamp = await sha256(payload);
-  } catch(e) {
-    stamp = sha256Pure(JSON.stringify({idea, moment}));
-  }
   if (!stamp) {
-    alert('Seal failed. Try a different browser.');
+    alert('Seal failed.');
     return;
   }
 
@@ -720,19 +625,8 @@ async function sealIdea() {
   document.getElementById('out-moment').textContent = moment;
   document.getElementById('out-stamp').textContent = stamp;
 
-  // Show mode note
-  const modeNote = document.getElementById('out-mode');
-  if (modeNote) {
-    const notes = {
-      'PERMANENT': 'This seal exists permanently. Share the stamp — anyone can verify it.',
-      'PRIVATE': 'This seal is yours. Keep the stamp if you want to verify it later. It does not travel.'
-    };
-    modeNote.textContent = notes[mode] || '';
-    modeNote.style.display = 'block';
-  }
-
-  // Build share text
-  const shareText = `Sealed with Phantom:\n\n"${idea}"\n\nMoment: ${moment}\nStamp:  ${stamp}\n\nVerify at: phantom.network`;
+  const L = LANG[currentLang];
+  const shareText = L['share-prefix'] + '\n\n"' + idea + '"\n\n' + (currentLang === 'es' ? 'Momento' : 'Moment') + ': ' + moment + '\nStamp:  ' + stamp + '\n\nPhantom Network';
   document.getElementById('share-text').textContent = shareText;
 
   document.getElementById('seal-result').classList.add('show');
@@ -749,64 +643,86 @@ function resetSeal() {
   document.getElementById('char-count').textContent = '0';
 }
 
-function copyStamp() {
+function copyStamp(btn) {
   const stamp = document.getElementById('out-stamp').textContent;
-  navigator.clipboard.writeText(stamp).then(() => {
-    const btn = event.target;
-    btn.textContent = 'Copied';
-    btn.classList.add('copied');
-    setTimeout(() => {
-      btn.textContent = 'Copy stamp';
-      btn.classList.remove('copied');
-    }, 2000);
-  });
+  copyText(stamp, btn, LANG[currentLang]['btn-copy-stamp']);
 }
 
 function toggleShare() {
-  const block = document.getElementById('share-block');
-  block.classList.toggle('show');
+  document.getElementById('share-block').classList.toggle('show');
 }
 
-function copyShare() {
+function copyShare(btn) {
   const text = document.getElementById('share-text').textContent;
-  navigator.clipboard.writeText(text).then(() => {
-    const btn = event.target;
-    btn.textContent = 'Copied';
-    btn.classList.add('copied');
-    setTimeout(() => {
-      btn.textContent = 'Copy to share';
-      btn.classList.remove('copied');
-    }, 2000);
-  });
+  copyText(text, btn, LANG[currentLang]['btn-copy-share']);
+}
+
+function copyText(text, btn, originalLabel) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() {
+      showCopied(btn, originalLabel);
+    }).catch(function() {
+      fallbackCopy(text, btn, originalLabel);
+    });
+  } else {
+    fallbackCopy(text, btn, originalLabel);
+  }
+}
+
+function fallbackCopy(text, btn, originalLabel) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand('copy');
+    showCopied(btn, originalLabel);
+  } catch(e) {
+    // silent fail
+  }
+  document.body.removeChild(ta);
+}
+
+function showCopied(btn, originalLabel) {
+  btn.textContent = LANG[currentLang]['copied'];
+  btn.classList.add('copied');
+  setTimeout(function() {
+    btn.textContent = originalLabel;
+    btn.classList.remove('copied');
+  }, 2000);
 }
 
 // ─────────────────────────────────────────────
 // VERIFY
 // ─────────────────────────────────────────────
-async function verifyIdea() {
+function verifyIdea() {
   const idea = document.getElementById('v-idea').value.trim();
   const moment = document.getElementById('v-moment').value.trim();
   const stamp = document.getElementById('v-stamp').value.trim();
 
   if (!idea || !moment || !stamp) return;
 
-  const payload = JSON.stringify({idea, moment});
-  const computed = await sha256(payload);
+  // Must match Python: json.dumps({"idea":idea,"moment":moment}, separators=(',',':'))
+  const payloadExact = '{"idea":' + pythonJsonString(idea) + ',"moment":' + pythonJsonString(moment) + '}';
+  const computed = sha256(payloadExact);
 
   const result = document.getElementById('verify-result');
   const status = document.getElementById('verify-status');
   const message = document.getElementById('verify-message');
 
+  const L = LANG[currentLang];
   result.classList.add('show');
 
-  if (computed === stamp.toLowerCase()) {
+  if (computed === stamp.toLowerCase().trim()) {
     result.className = 'verify-result show valid';
-    status.textContent = '— verified';
-    message.textContent = 'This thought existed, at this moment, exactly as written. The seal is intact. Nothing was changed.';
+    status.textContent = L['verify-valid-status'];
+    message.textContent = L['verify-valid-msg'];
   } else {
     result.className = 'verify-result show invalid';
-    status.textContent = '— invalid seal';
-    message.textContent = 'The seal does not match. Either the idea, the moment, or the stamp was changed — or contains a transcription error. Check each field exactly.';
+    status.textContent = L['verify-invalid-status'];
+    message.textContent = L['verify-invalid-msg'];
   }
 }
 
@@ -814,11 +730,14 @@ async function verifyIdea() {
 // NAVIGATION
 // ─────────────────────────────────────────────
 function showPanel(name, btn) {
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('nav button').forEach(function(b) { b.classList.remove('active'); });
   document.getElementById('panel-' + name).classList.add('active');
   btn.classList.add('active');
 }
+
+// Init
+setLang('en');
 </script>
 
 </body>

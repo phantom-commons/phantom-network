@@ -1,4 +1,4 @@
-# phantom_node.py — v0.5
+# phantom_node.py — v0.6
 #
 # Node-to-node encounter protocol for Phantom Network.
 #
@@ -7,15 +7,12 @@
 #  And the meeting produces something neither had before."
 #                              — The Sixth Seal
 #
-# WHAT CHANGED IN v0.5:
-# — Unified on phantom_core.py (single source of truth)
-# — recv_json: chunked reads with 4MB size limit (was byte-by-byte, no limit)
-# — Encounter log now encrypted when passphrase is set
-# — Bare except clauses replaced with specific exception types
-# — Protocol version check on hello exchange
-# — Bloom filter size scales with seal count
-# — Seal loading cached in memory (was re-reading disk per call)
-# — Input validation via phantom_core.seal()
+# WHAT CHANGED IN v0.6:
+# — Node identity: Ed25519 key pairs generated on first run
+# — Signed seals: outgoing seals carry a signature + public key
+# — Key exchange: nodes exchange public keys during hello
+# — Signature verification: incoming signed seals are verified
+# — Peer identity stored in encounter log
 #
 # PRIOR VERSIONS:
 # v0.1 — broadcast latest seal
@@ -23,11 +20,13 @@
 # v0.3 — seal modes (private, ephemeral, permanent), framing fix
 # v0.4 — encryption at rest
 # v0.5 — unified core, security hardening
+# v0.6 — node identity (Ed25519), signed seals
 #
 # PORT: 7337 (unchanged — nodes remain compatible at handshake)
 
 import socket
 import json
+import os
 import threading
 import sys
 import base64
@@ -35,9 +34,10 @@ import base64
 from phantom_core import (
     PHANTOM_VERSION, PORT, MAX_MESSAGE_SIZE,
     MODE_PERMANENT, MODE_PRIVATE, MODE_EPHEMERAL,
-    seal, verify, KeyManager, SealStore, EncounterLog,
+    seal, verify, KeyManager, SealStore, EncounterLog, NodeIdentity,
     build_bloom, bloom_probably_has, compute_delta,
     send_json, recv_json,
+    init_tor, make_socket, tor_status, get_onion_address, ONION_FILE,
 )
 
 # Minimum compatible protocol version
@@ -67,20 +67,27 @@ def _check_version(peer_version):
         return False
 
 
-def handle_encounter(conn, addr, store, encounter_log):
+def handle_encounter(conn, addr, store, encounter_log, identity=None):
     peer = addr[0]
     print(f"\n  Node connecting: {peer}")
 
     sent_stamps = set()
     received_stamps = set()
+    peer_identity = None
 
     try:
-        # Step 1 — Hello with version check
-        send_json(conn, {
+        # Step 1 — Hello with version check and identity exchange
+        hello_msg = {
             "phantom": PHANTOM_VERSION,
             "type": "hello",
             "min_version": MIN_COMPATIBLE_VERSION
-        })
+        }
+        if identity and identity.public_key_b64:
+            hello_msg["node_pubkey"] = identity.public_key_b64
+            hello_msg["node_name"] = identity.node_name
+            hello_msg["node_fingerprint"] = identity.fingerprint
+        send_json(conn, hello_msg)
+
         hello = recv_json(conn)
         if hello.get("type") != "hello":
             print("  Not a Phantom node. Closing.")
@@ -93,7 +100,16 @@ def handle_encounter(conn, addr, store, encounter_log):
                 "message": f"Version {peer_version} not compatible. Need >= {MIN_COMPATIBLE_VERSION}"
             })
             return
-        print(f"  Phantom v{peer_version} node identified")
+
+        # Recognize peer identity if provided
+        peer_pub = hello.get("node_pubkey")
+        peer_name = hello.get("node_name", "unknown")
+        peer_fp = hello.get("node_fingerprint", "")
+        if peer_pub and NodeIdentity.available():
+            peer_identity = NodeIdentity.from_public_key_b64(peer_pub, node_name=peer_name)
+            print(f"  Phantom v{peer_version} — {peer_name} [{peer_fp[:12]}]")
+        else:
+            print(f"  Phantom v{peer_version} node identified (unsigned)")
 
         # Step 2 — Bloom exchange
         my_stamps = store.get_all_stamps()
@@ -121,9 +137,11 @@ def handle_encounter(conn, addr, store, encounter_log):
         their_count = their_bloom_msg.get("seal_count", "?")
         print(f"  I carry {len(my_stamps)} seal(s). They carry {their_count}.")
 
-        # Step 3 — Compute and send our delta
+        # Step 3 — Compute and send our delta (signed if identity exists)
         delta_stamps = compute_delta(my_stamps, their_bloom, their_bloom_size)
         delta_seals = store.get_seals_by_stamps(delta_stamps)
+        if identity and identity.has_private_key:
+            delta_seals = [identity.sign_seal(s) for s in delta_seals]
         print(f"  Sending {len(delta_seals)} seal(s) they haven't seen.")
         send_json(conn, {
             "phantom": PHANTOM_VERSION,
@@ -133,7 +151,7 @@ def handle_encounter(conn, addr, store, encounter_log):
         })
         sent_stamps = {s["stamp"] for s in delta_seals}
 
-        # Step 4 — Receive their delta
+        # Step 4 — Receive their delta (verify signatures if present)
         their_delta_msg = recv_json(conn)
         if their_delta_msg.get("type") != "delta":
             print("  Expected delta from visitor. Closing.")
@@ -144,9 +162,17 @@ def handle_encounter(conn, addr, store, encounter_log):
 
         for entry in incoming:
             if verify(entry["idea"], entry["moment"], entry["stamp"]):
+                # Check signature if present
+                sig_status = NodeIdentity.verify_signed_seal(entry)
+                sig_label = ""
+                if sig_status is True:
+                    sig_label = " (signed)"
+                elif sig_status is False:
+                    sig_label = " (BAD SIGNATURE)"
+
                 if store.save(entry):
                     received_stamps.add(entry["stamp"])
-                    print(f"  + \"{entry['idea'][:55]}\"")
+                    print(f"  + \"{entry['idea'][:50]}\"{sig_label}")
                 else:
                     print(f"  (Already have: \"{entry['idea'][:40]}\")")
             else:
@@ -184,16 +210,26 @@ def handle_encounter(conn, addr, store, encounter_log):
 # NODE — LISTENING
 # ─────────────────────────────────────────────────────────
 
-def listen(store, encounter_log):
+def listen(store, encounter_log, identity=None):
     print(f"\n PHANTOM NODE — v{PHANTOM_VERSION}")
     print(" ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    print(f" Transport: {tor_status()}")
+
+    if identity:
+        print(f" Identity: {identity.node_name or 'unnamed'} [{identity.fingerprint}]")
 
     my_stamps = store.get_all_stamps()
     print(f" Carrying {len(my_stamps)} seal(s).")
     if not my_stamps:
         print(" Seal something first: python phantom_node.py --seal")
 
-    print(f"\n Waiting for visitors on port {PORT}...")
+    onion = get_onion_address()
+    if onion:
+        print(f"\n Share this address with nodes that want to meet you:")
+        print(f"   {onion}")
+    else:
+        print(f"\n Waiting for visitors on port {PORT}...")
+
     print(" Press Ctrl+C to stop.\n")
 
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -206,7 +242,7 @@ def listen(store, encounter_log):
             conn, addr = server.accept()
             t = threading.Thread(
                 target=handle_encounter,
-                args=(conn, addr, store, encounter_log)
+                args=(conn, addr, store, encounter_log, identity)
             )
             t.daemon = True
             t.start()
@@ -221,7 +257,28 @@ def listen(store, encounter_log):
 # ─────────────────────────────────────────────────────────
 
 def find_node(network_prefix="192.168.43"):
-    """Scan local network for a Phantom node."""
+    """
+    Find a Phantom node to connect to.
+    Tries saved .onion address first (if Tor is active),
+    then scans the local network.
+    """
+    from phantom_core import _TOR_LEVEL, _SOCKS_AVAILABLE
+
+    # Try saved .onion address first
+    if _TOR_LEVEL >= 2 and os.path.exists(ONION_FILE):
+        with open(ONION_FILE) as f:
+            onion = f.read().strip()
+        if onion.endswith(".onion"):
+            print(f" Trying saved onion address: {onion[:30]}...")
+            try:
+                s = make_socket()
+                s.settimeout(15)
+                s.connect((onion, PORT))
+                s.close()
+                return onion
+            except Exception:
+                print(" Onion address unreachable. Scanning local network...")
+
     print(f" Scanning for Phantom node...")
     for i in range(1, 255):
         ip = f"{network_prefix}.{i}"
@@ -237,20 +294,28 @@ def find_node(network_prefix="192.168.43"):
     return None
 
 
-def connect(store, encounter_log, host=None):
+def connect(store, encounter_log, host=None, identity=None):
     print(f"\n PHANTOM VISITOR — v{PHANTOM_VERSION}")
     print(" ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    print(f" Transport: {tor_status()}")
+
+    if identity:
+        print(f" Identity: {identity.node_name or 'unnamed'} [{identity.fingerprint}]")
 
     if not host:
+        from phantom_core import _TOR_LEVEL
         quick_try = "192.168.43.1"
-        try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(1)
-            s.connect((quick_try, PORT))
-            s.close()
-            host = quick_try
-            print(f" Found node at {host}")
-        except (OSError, socket.error):
+        if _TOR_LEVEL == 1:  # Only try direct fast-scan if not using Tor
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.settimeout(1)
+                s.connect((quick_try, PORT))
+                s.close()
+                host = quick_try
+                print(f" Found node at {host}")
+            except (OSError, socket.error):
+                host = find_node()
+        else:
             host = find_node()
 
     if not host:
@@ -267,11 +332,11 @@ def connect(store, encounter_log, host=None):
     conn = None
 
     try:
-        conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        conn = make_socket()
         conn.settimeout(30)
         conn.connect((host, PORT))
 
-        # Step 1 — Hello with version check
+        # Step 1 — Hello with version check and identity
         hello = recv_json(conn)
         if hello.get("type") != "hello":
             print(" Not a Phantom node.")
@@ -280,12 +345,25 @@ def connect(store, encounter_log, host=None):
         if not _check_version(peer_version):
             print(f" Incompatible version: {peer_version} (need >= {MIN_COMPATIBLE_VERSION})")
             return
-        send_json(conn, {
+
+        hello_msg = {
             "phantom": PHANTOM_VERSION,
             "type": "hello",
             "min_version": MIN_COMPATIBLE_VERSION
-        })
-        print(f" Phantom v{peer_version} node found")
+        }
+        if identity and identity.public_key_b64:
+            hello_msg["node_pubkey"] = identity.public_key_b64
+            hello_msg["node_name"] = identity.node_name
+            hello_msg["node_fingerprint"] = identity.fingerprint
+        send_json(conn, hello_msg)
+
+        peer_pub = hello.get("node_pubkey")
+        peer_name = hello.get("node_name", "unknown")
+        peer_fp = hello.get("node_fingerprint", "")
+        if peer_pub and NodeIdentity.available():
+            print(f" Phantom v{peer_version} — {peer_name} [{peer_fp[:12]}]")
+        else:
+            print(f" Phantom v{peer_version} node found")
 
         # Step 2 — Bloom exchange
         their_bloom_msg = recv_json(conn)
@@ -315,7 +393,7 @@ def connect(store, encounter_log, host=None):
         })
         print(f" I carry {len(my_stamps)} seal(s). They carry {their_count}.")
 
-        # Step 3 — Receive their delta
+        # Step 3 — Receive their delta (verify signatures)
         their_delta_msg = recv_json(conn)
         if their_delta_msg.get("type") != "delta":
             print(" Expected delta from node. Closing.")
@@ -325,17 +403,26 @@ def connect(store, encounter_log, host=None):
 
         for entry in incoming:
             if verify(entry["idea"], entry["moment"], entry["stamp"]):
+                sig_status = NodeIdentity.verify_signed_seal(entry)
+                sig_label = ""
+                if sig_status is True:
+                    sig_label = " (signed)"
+                elif sig_status is False:
+                    sig_label = " (BAD SIGNATURE)"
+
                 if store.save(entry):
                     received_stamps.add(entry["stamp"])
-                    print(f" + \"{entry['idea'][:55]}\"")
+                    print(f" + \"{entry['idea'][:50]}\"{sig_label}")
                 else:
                     print(f" (Already have: \"{entry['idea'][:40]}\")")
             else:
                 print(f" x Rejected (invalid seal): \"{entry['idea'][:40]}\"")
 
-        # Step 4 — Send our delta
+        # Step 4 — Send our delta (signed if identity exists)
         delta_stamps = compute_delta(my_stamps, their_bloom, their_bloom_size)
         delta_seals = store.get_seals_by_stamps(delta_stamps)
+        if identity and identity.has_private_key:
+            delta_seals = [identity.sign_seal(s) for s in delta_seals]
         print(f"\n Sending {len(delta_seals)} seal(s) they haven't seen.")
         send_json(conn, {
             "phantom": PHANTOM_VERSION,
@@ -416,6 +503,40 @@ def list_seals(store):
 # ENTRY POINT
 # ─────────────────────────────────────────────────────────
 
+def _load_or_create_identity(km):
+    """Load existing identity or create a new one."""
+    identity = NodeIdentity.load(key=km.key)
+    if identity:
+        return identity
+
+    if not NodeIdentity.available():
+        return None
+
+    print(" ┌──────────────────────────────────────────────────────────┐")
+    print(" │  NODE IDENTITY                                           │")
+    print(" │                                                          │")
+    print(" │  Every Phantom node has a unique cryptographic identity.  │")
+    print(" │  It proves you are the same node across encounters —     │")
+    print(" │  without revealing who or where you are.                 │")
+    print(" │                                                          │")
+    print(" │  Choose a name. It does not have to be real.             │")
+    print(" │  It is how other nodes will recognize you.               │")
+    print(" └──────────────────────────────────────────────────────────┘")
+    print()
+    name = input(" Node name (or Enter to skip): ").strip()
+    if not name:
+        name = None
+
+    identity = NodeIdentity.generate(node_name=name)
+    identity.save(key=km.key)
+
+    print(f"\n Identity created.")
+    print(f" Name:        {identity.node_name or '(unnamed)'}")
+    print(f" Fingerprint: {identity.fingerprint}")
+    print(f" Private key stored on this device only.\n")
+    return identity
+
+
 def main():
     print(f"\n PHANTOM NETWORK — v{PHANTOM_VERSION}")
     print(" When two nodes meet — they exchange what they have lived.\n")
@@ -424,17 +545,23 @@ def main():
 
     if "--help" in args or "-h" in args:
         print(" Usage:")
-        print("   --listen          share your seals, receive theirs")
-        print("   --connect         meet a node, exchange what you've lived")
-        print("   --connect <ip>    connect to specific IP")
-        print("   --seal            seal a new thought")
-        print("   --list            see your sealed thoughts")
-        print("   --encounters      see your encounter history")
+        print("   --listen                share your seals, receive theirs")
+        print("   --connect               meet a node, exchange what you've lived")
+        print("   --connect <ip>          connect to specific IP")
+        print("   --connect <x>.onion     connect via Tor to onion address")
+        print("   --seal                  seal a new thought")
+        print("   --list                  see your sealed thoughts")
+        print("   --encounters            see your encounter history")
+        print("   --identity              show this node's identity")
+        print("   --onion                 show your .onion address (if Tor active)")
         print()
         print(" First time? Start here:")
         print("   python phantom_node.py --seal")
         print()
         return
+
+    # Transport layer first — always
+    init_tor()
 
     # Initialize encryption for commands that touch local seals
     km = KeyManager()
@@ -444,8 +571,23 @@ def main():
     store = SealStore(km)
     encounter_log = EncounterLog(km)
 
+    # Load or create node identity for network commands
+    identity = None
+    if any(a in args for a in ("--listen", "-l", "--connect", "-c", "--identity")):
+        identity = _load_or_create_identity(km)
+
+    if "--identity" in args:
+        if identity:
+            print(f" Node:        {identity.node_name or '(unnamed)'}")
+            print(f" Fingerprint: {identity.fingerprint}")
+            print(f" Public key:  {identity.public_key_b64}")
+            print(f" Private key: {'present' if identity.has_private_key else 'not loaded'}")
+        else:
+            print(" No identity. Install cryptography package to enable.")
+        return
+
     if "--listen" in args or "-l" in args:
-        listen(store, encounter_log)
+        listen(store, encounter_log, identity)
 
     elif "--connect" in args or "-c" in args:
         host = None
@@ -453,7 +595,7 @@ def main():
             if arg not in ("--connect", "-c") and not arg.startswith("-"):
                 host = arg
                 break
-        connect(store, encounter_log, host)
+        connect(store, encounter_log, host, identity)
 
     elif "--seal" in args or "-s" in args:
         seal_interactive(store)
@@ -462,19 +604,39 @@ def main():
         list_seals(store)
 
     elif "--encounters" in args or "-e" in args:
-        # Encounters may be encrypted too now
         km.init_encryption()
         encounter_log = EncounterLog(km)
         encounter_log.show()
 
+    elif "--onion" in args:
+        onion = get_onion_address()
+        if onion:
+            print(f"\n Your onion address:")
+            print(f"   {onion}")
+            print(f"\n Share this with nodes that want to meet you over Tor.")
+            print(f" They run: python phantom_node.py --connect {onion}\n")
+        else:
+            from phantom_core import _TOR_LEVEL, _TOR_RUNNING
+            if not _TOR_RUNNING:
+                print("\n Tor is not running.")
+                print(" Install Orbot (Android) or Tor, then restart Phantom.\n")
+            else:
+                print("\n Tor is active but no onion service is running.")
+                print(" Install stem and enable Tor control port (9051).\n")
+
     else:
         print(" Usage:")
-        print("   --listen          share your seals, receive theirs")
-        print("   --connect         meet a node, exchange what you've lived")
-        print("   --connect <ip>    connect to specific IP")
-        print("   --seal            seal a new thought")
-        print("   --list            see your sealed thoughts")
-        print("   --encounters      see your encounter history")
+        print("   --listen                share your seals, receive theirs")
+        print("   --connect               meet a node, exchange what you've lived")
+        print("   --connect <ip>          connect to specific IP")
+        print("   --connect <x>.onion     connect via Tor to onion address")
+        print("   --seal                  seal a new thought")
+        print("   --list                  see your sealed thoughts")
+        print("   --encounters            see your encounter history")
+        print("   --identity              show this node's identity")
+        print("   --onion                 show your .onion address (if Tor active)")
+        print()
+        print(f" Transport: {tor_status()}")
         print()
         print(" First time? Start here:")
         print("   python phantom_node.py --seal")
