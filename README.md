@@ -230,3 +230,4 @@ Consistent with what Phantom is.
 *When SUIJURIS exists — this address becomes a node like any other.*
 *Contributing now is contributing to what makes that possible.*
 
+npub1da2qa8wx3sa8ts8jajypga78aj5pkwnkf4xzgdmdcuvk4vz3rexsn3lrxl
