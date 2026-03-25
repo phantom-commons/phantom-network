@@ -2,6 +2,10 @@
 
 *The living memory of Phantom Network.*
 
+The living memory of Phantom Network.
+Halliday is memory. Not gathered, not mixed — sustained by everyone and personal at the same time.
+— Node Zero
+
 ---
 
 This folder holds encounters — not documentation.
