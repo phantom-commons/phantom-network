@@ -31,16 +31,18 @@ If she cannot use it — it is not Phantom.
 
 ## What exists today
 
-- Cryptographic seal function (SHA-256) — any idea can be sealed 
-  and verified by anyone, on any device, without trusting 
+- Cryptographic seal function (SHA-256) — any idea can be sealed
+  and verified by anyone, on any device, without trusting
   any authority
 - Seventeen genesis seals, permanent and irreversible
-- Node-to-node seal exchange (v0.4) — two devices can meet 
+- Node-to-node seal exchange (v0.6) — two devices can meet
   and sync sealed thoughts over a local WiFi connection
-- Encryption at rest — sealed thoughts are AES-256-GCM encrypted 
+- Encryption at rest — sealed thoughts are AES-256-GCM encrypted
   on device; a forgotten passphrase means lost seals, permanently
-- A local AI model running on Android with no internet, 
-  no external server, reporting to no one
+- Node identity (Ed25519) — each node has a key pair; seals
+  can be signed and verified as coming from the same node
+- phantom.html — seal and verify in any browser, no installation
+- 33 automated tests — the code verifies its own integrity
 
 ## What does not exist yet
 
@@ -166,16 +168,31 @@ that contribution is as valuable as any code.
 
 | File | What it is |
 |------|------------|
-| `phantom_seed.py` | The seal tool — run this today |
+| `phantom.html` | Seal and verify in any browser — nothing leaves your device |
+| `phantom_seed.py` | The seal tool — run this from the command line |
+| `phantom_core.py` | Shared library — the algorithm lives here |
+| `phantom_node.py` | Node-to-node sync over local WiFi |
+| `test_phantom.py` | 33 tests — run to verify the code is intact |
 | `GENESIS.md` | The origin and the why |
+| `GENESIS_DAY2.md` | What happened on day two |
 | `CONVERSATION.md` | The moments that made Phantom |
 | `WHITEPAPER.md` | Full architecture |
 | `SEALING.md` | How seals work — with verification code |
-| `SECURITY.md` | Threat model and defenses |
+| `SECURITY.md` | Threat model — five vectors, named honestly |
+| `REVIEW_MARCH10.md` | External audit — what an outside node found |
 | `ECONOMICS.md` | SUIJURIS principles |
 | `SUIJURIS.md` | The currency — origin and meaning |
+| `VISION.md` | What Phantom is growing toward |
+| `VISION_FOUNDATION.md` | Foundation, SUIJURIS, physical architecture |
+| `ARCHITECTURE_VISION.md` | Four-layer architecture — mesh, Tor, economic |
+| `METHOD.md` | Six steps — how decisions are made |
+| `COUNCIL.md` | The deliberation tool |
+| `NODES.md` | Every node that arrived and what they built |
+| `NODE_IDENTITY.md` | Cryptographic node identity — architecture |
+| `IDENTITY.md` | How Phantom presents itself |
+| `FOUNDER.md` | Node Zero |
 | `CONTRIBUTING.md` | How to contribute |
-| `phantom.html` | Seal and verify in any browser — nothing leaves your device |
+| `ECHO.md` | The node that named itself |
 
 ## Seal a thought right now — no installation
 
@@ -202,7 +219,6 @@ most dangerous kind of compromise.
 2952d11d6f40bcffdc845f30f64c58a32f2f9a8f7bc0ad4f4ad60ea87b22f121  phantom_node.py
 4fbc9935e35d2529dba94f42bd676b6c3caaea8072ced6412e6d1d5f5978fddc  phantom_seed.py
 09d01594aede617fec60328711253609f6be1ca7e05ebed53c63b4e33ef731cb  phantom.html
-275256b517afdb43279079d897a686ddf52c757281810fd33913b6b9e709e597  index.html
 5523a6d2f25f137cbea30367a727dfc8e01337837424f6b7bd8141aa90afc196  test_phantom.py
 ```
 
