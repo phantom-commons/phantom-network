@@ -113,6 +113,84 @@ What does not exist yet: someone who builds the integration.
 
 ---
 
+## The immune system — bloom filter as sentinel
+
+`phantom_node.py` already has a bloom filter.
+Currently it does one thing: efficient sync.
+"I have these stamps already — send me only what I don't have."
+
+The same mechanism, inverted, becomes a sentinel:
+"These stamps are PRIVATE — if you see them circulating, tell me."
+
+Every device maintains two bloom filters:
+- **Public bloom** — stamps that were intentionally shared
+- **Private bloom** — stamps that should never leave this device
+
+When a packet arrives from any node —
+local network, mesh relay, anywhere —
+the sentinel checks it against the private bloom.
+
+If a PRIVATE stamp appears in an incoming packet:
+the thought traveled when it should not have.
+The device knows it was compromised — or someone is impersonating a node.
+
+No central authority needed.
+No server to report to.
+The math tells the truth.
+
+---
+
+## Device trust — mutual verification without authority
+
+When two of your devices sync, how does each know
+the other is really yours and not an impostor?
+
+Not by asking a server.
+By cryptographic signature.
+
+Each device has a key pair — private key never leaves the device,
+public key travels with every sync request.
+Every synchronization is signed.
+
+If the signature does not match the known public key —
+the device is not who it claims to be.
+
+Two mechanisms working together:
+
+**Bloom sentinel** — detects if your thoughts leaked.
+**Sync signature** — detects if a device was replaced or compromised.
+
+Together: a network that can verify its own integrity
+without trusting any external authority.
+
+This connects directly to `NODE_IDENTITY.md` —
+the architecture is already documented.
+The code does not exist yet.
+
+---
+
+## Local intelligence — your devices as agents
+
+Each device has a role:
+
+- **Phone** — the memory node. Holds the repository, the seals,
+  the encounter log. Always with you.
+- **PC** — the processing node. Runs the local AI model.
+  Handles heavy deliberation.
+- **Any third device** — relay, filter, or witness.
+
+When you ask a question, the devices divide the work:
+the phone provides context, the PC processes, the answer returns.
+
+No external API. No cloud. Your own network of agents
+working for you — not for anyone else.
+
+This is `phantom_council.py` evolving from a single tool
+into a distributed deliberation system
+across devices you own and control.
+
+---
+
 ## What exists today toward this vision
 
 | Component | Status |
@@ -121,6 +199,10 @@ What does not exist yet: someone who builds the integration.
 | Encryption at rest | Working — `phantom_core.py` |
 | Node-to-node sync over WiFi | Working — `phantom_node.py` |
 | Browser interface | Working — `phantom.html` |
+| Bloom filter sync | Working — `phantom_node.py` |
+| Bloom sentinel (private leak detection) | Architecture only |
+| Sync signature / device trust | Architecture only — `NODE_IDENTITY.md` |
+| Local agent network (multi-device) | Architecture only |
 | Tor integration | Detected, not implemented |
 | Meshtastic integration | Not built |
 | Nostr integration | Not built |
