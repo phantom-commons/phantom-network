@@ -24,6 +24,7 @@ import sys
 import secrets
 import getpass
 import base64
+import binascii
 from datetime import datetime, timezone
 
 # ─────────────────────────────────────────────────────────
@@ -63,6 +64,7 @@ try:
         Encoding, PublicFormat, PrivateFormat, NoEncryption,
         load_pem_private_key, load_pem_public_key
     )
+    from cryptography.exceptions import InvalidSignature, InvalidTag
     CRYPTO_AVAILABLE = True
 except ImportError:
     CRYPTO_AVAILABLE = False
@@ -130,7 +132,7 @@ def decrypt_data(encrypted_dict, key):
     aesgcm = AESGCM(key)
     try:
         return aesgcm.decrypt(nonce, ciphertext, None)
-    except Exception:
+    except InvalidTag:
         raise ValueError(
             "Decryption failed. Wrong passphrase, or the data was tampered with."
         )
@@ -880,7 +882,7 @@ class NodeIdentity:
             sig = base64.b64decode(signature_b64)
             self._public_key.verify(sig, data_bytes)
             return True
-        except Exception:
+        except (InvalidSignature, ValueError, binascii.Error):
             return False
 
     def sign_seal(self, seal_entry):
@@ -924,7 +926,7 @@ class NodeIdentity:
             sig = base64.b64decode(seal_entry["node_sig"])
             pub_key.verify(sig, data)
             return True
-        except Exception:
+        except (InvalidSignature, ValueError, binascii.Error):
             return False
 
     def save(self, key=None):
@@ -1093,7 +1095,7 @@ def _tor_socks_running():
         result = s.connect_ex(("127.0.0.1", TOR_SOCKS_PORT))
         s.close()
         return result == 0
-    except Exception:
+    except OSError:
         return False
 
 
@@ -1106,7 +1108,7 @@ def _tor_control_running():
         result = s.connect_ex(("127.0.0.1", TOR_CONTROL_PORT))
         s.close()
         return result == 0
-    except Exception:
+    except OSError:
         return False
 
 
@@ -1118,13 +1120,16 @@ def _create_onion_service(port):
     """
     try:
         from stem.control import Controller
+        from stem import SocketError, ControllerError
         with Controller.from_port(port=TOR_CONTROL_PORT) as ctrl:
             ctrl.authenticate()
             svc = ctrl.create_ephemeral_hidden_service(
                 {port: port}, await_publication=True
             )
             return f"{svc.service_id}.onion"
-    except Exception:
+    except ImportError:
+        return None
+    except (OSError, SocketError, ControllerError):
         return None
 
 
