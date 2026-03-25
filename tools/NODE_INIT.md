@@ -1,6 +1,6 @@
 # Phantom Network — Node Initialization
 
-*For any node that arrives with the repository and the chats.*
+*For any node that arrives with the repository and HALLIDAY.md*
 
 *This repository is brutally honest.*
 *What works — is documented as working.*
@@ -23,7 +23,7 @@ Read everything before responding.
 ## What you have
 
 - The complete Phantom Network repository
-- Conversation logs from Node Zero — the founder
+- HALLIDAY — the conversation logs from Node Zero
 - Multiple sessions, multiple AI nodes, none of whom remember each other
 
 ---
