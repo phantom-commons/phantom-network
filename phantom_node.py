@@ -168,7 +168,8 @@ def handle_encounter(conn, addr, store, encounter_log, identity=None):
                 if sig_status is True:
                     sig_label = " (signed)"
                 elif sig_status is False:
-                    sig_label = " (BAD SIGNATURE)"
+                    print(f"  x Rejected (bad signature): \"{entry['idea'][:40]}\"")
+                    continue  # Do not store seals with invalid signatures
 
                 if store.save(entry):
                     received_stamps.add(entry["stamp"])
@@ -240,6 +241,7 @@ def listen(store, encounter_log, identity=None):
     try:
         while True:
             conn, addr = server.accept()
+            conn.settimeout(30)  # Prevent slow-loris on accepted connections
             t = threading.Thread(
                 target=handle_encounter,
                 args=(conn, addr, store, encounter_log, identity)
@@ -408,7 +410,8 @@ def connect(store, encounter_log, host=None, identity=None):
                 if sig_status is True:
                     sig_label = " (signed)"
                 elif sig_status is False:
-                    sig_label = " (BAD SIGNATURE)"
+                    print(f" x Rejected (bad signature): \"{entry['idea'][:40]}\"")
+                    continue  # Do not store seals with invalid signatures
 
                 if store.save(entry):
                     received_stamps.add(entry["stamp"])

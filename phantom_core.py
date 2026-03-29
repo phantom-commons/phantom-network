@@ -18,6 +18,7 @@
 #          Nodes can prove continuity without revealing who they are.
 
 import hashlib
+import hmac
 import json
 import os
 import sys
@@ -196,7 +197,7 @@ def verify(idea, moment, stamp):
         separators=(',', ':')
     )
     expected = hashlib.sha256(data.encode()).hexdigest()
-    return expected == stamp
+    return hmac.compare_digest(expected, stamp)
 
 
 def compute_stamp(idea, moment):
@@ -521,12 +522,22 @@ class EncounterLog:
                 json.dump(encounters, f, indent=2)
 
     def log(self, peer_addr, sent_count, received_count, received_stamps):
-        """Seal the encounter and append to the log."""
+        """Seal the encounter and append to the log.
+
+        If encryption is not available, peer address is hashed
+        to prevent storing a plaintext social graph on disk.
+        """
         encounters = self.load()
         moment = datetime.now(timezone.utc).isoformat()
 
+        # Hash peer address if no encryption — never store plaintext IPs
+        if self.key is None or not CRYPTO_AVAILABLE:
+            stored_peer = hashlib.sha256(peer_addr.encode()).hexdigest()[:16]
+        else:
+            stored_peer = peer_addr
+
         encounter_data = {
-            "peer": peer_addr,
+            "peer": stored_peer,
             "moment": moment,
             "sent": sent_count,
             "received": received_count,
@@ -638,26 +649,32 @@ def send_json(conn, obj):
     conn.sendall(data)
 
 
-def recv_json(conn):
+def recv_json(conn, timeout=30):
     """
     Receive a newline-delimited JSON message with size limit.
     Reads in chunks for efficiency. Enforces MAX_MESSAGE_SIZE.
+    Enforces timeout to prevent slow-loris attacks.
     """
+    old_timeout = conn.gettimeout()
+    conn.settimeout(timeout)
     data = b""
-    while True:
-        chunk = conn.recv(4096)
-        if not chunk:
-            raise ConnectionError("Connection closed mid-message")
-        data += chunk
-        if len(data) > MAX_MESSAGE_SIZE:
-            raise ValueError(
-                f"Message exceeds {MAX_MESSAGE_SIZE} bytes. "
-                "Possible denial-of-service attempt."
-            )
-        if b"\n" in data:
-            # Take only up to the first newline
-            line, _ = data.split(b"\n", 1)
-            return json.loads(line.decode().strip())
+    try:
+        while True:
+            chunk = conn.recv(4096)
+            if not chunk:
+                raise ConnectionError("Connection closed mid-message")
+            data += chunk
+            if len(data) > MAX_MESSAGE_SIZE:
+                raise ValueError(
+                    f"Message exceeds {MAX_MESSAGE_SIZE} bytes. "
+                    "Possible denial-of-service attempt."
+                )
+            if b"\n" in data:
+                # Take only up to the first newline
+                line, _ = data.split(b"\n", 1)
+                return json.loads(line.decode().strip())
+    finally:
+        conn.settimeout(old_timeout)
 
 
 # ─────────────────────────────────────────────────────────
@@ -956,9 +973,11 @@ class NodeIdentity:
             encrypted = encrypt_data(pem, key)
             with open(NODE_KEY_FILE, "w", encoding="utf-8") as f:
                 json.dump(encrypted, f)
+            os.chmod(NODE_KEY_FILE, 0o600)
         else:
             with open(NODE_KEY_FILE, "wb") as f:
                 f.write(pem)
+            os.chmod(NODE_KEY_FILE, 0o600)
 
     @classmethod
     def load(cls, key=None):

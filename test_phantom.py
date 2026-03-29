@@ -338,7 +338,9 @@ class TestEncounterLog(unittest.TestCase):
         self.assertEqual(len(stamp), 64)
         encounters = el.load()
         self.assertEqual(len(encounters), 1)
-        self.assertEqual(encounters[0]["peer"], "192.168.1.1")
+        # Without encryption, peer IP is hashed (never stored in plaintext)
+        self.assertNotEqual(encounters[0]["peer"], "192.168.1.1")
+        self.assertEqual(len(encounters[0]["peer"]), 16)  # truncated hash
 
     @unittest.skipUnless(CRYPTO_AVAILABLE, "cryptography package not installed")
     def test_encrypted_encounter_log(self):
@@ -355,9 +357,10 @@ class TestEncounterLog(unittest.TestCase):
             raw = json.load(f)
         self.assertTrue(raw.get("encrypted"), "Encounter log should be encrypted")
 
-        # But loadable with the key
+        # But loadable with the key — and real IP preserved when encrypted
         encounters = el.load()
         self.assertEqual(len(encounters), 1)
+        self.assertEqual(encounters[0]["peer"], "192.168.1.1")
 
 
 class TestNodeIdentity(unittest.TestCase):
