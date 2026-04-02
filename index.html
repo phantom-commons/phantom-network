@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#03070f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Phantom</title>
+<style>
+  /* ══════════════════════════════════════════
+     PHANTOM — ZERO INTERNET · DUAL THEME
+     No CDN. No fonts. No API. System only.
+     Blue default · Warm dark mode
+     ══════════════════════════════════════════ */
+
+  :root {
+    /* BLUE THEME (default) */
+    --bg: #03070f;
+    --surface: #0c1829;
+    --card: #112236;
+    --border: rgba(99,179,255,0.10);
+    --border-b: rgba(99,179,255,0.22);
+    --dim: rgba(148,180,220,0.35);
+    --muted: rgba(148,180,220,0.55);
+    --warm: #a8d4ff;
+    --cream: #e2eeff;
+    --accent: #3b82f6;
+    --accent-glow: rgba(59,130,246,0.15);
+    --gold: #d4a853;
+    --gold-dim: rgba(212,168,83,0.1);
+    --green: #34d399;
+    --green-dim: rgba(52,211,153,0.08);
+    --red: #f87171;
+    --red-dim: rgba(248,113,113,0.08);
+    --violet: #a78bfa;
+    --violet-dim: rgba(167,139,250,0.1);
+    --orange: #fb923c;
+    --mono: ui-monospace, 'Menlo', 'Cascadia Mono', 'Consolas', monospace;
+    --serif: 'Iowan Old Style', 'Palatino Linotype', 'Palatino', Georgia, serif;
+  }
+
+  [data-theme="dark"] {
+    --bg: #0a0a0a;
+    --surface: #131211;
+    --card: #1a1918;
+    --border: #252321;
+    --border-b: #302d2a;
+    --dim: #5a5550;
+    --muted: #8a8478;
+    --warm: #c8b89a;
+    --cream: #f0ece4;
+    --accent: #d4a574;
+    --accent-glow: rgba(212,165,116,0.1);
+    --gold: #d4a574;
+    --gold-dim: rgba(212,165,116,0.1);
+    --green: #5a9a6a;
+    --green-dim: rgba(90,154,106,0.1);
+    --red: #9a5a5a;
+    --red-dim: rgba(154,90,90,0.1);
+    --violet: #8a6a9a;
+    --violet-dim: rgba(138,106,154,0.1);
+    --orange: #b08050;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--cream);
+    font-family: var(--serif);
+    min-height: 100vh; min-height: 100dvh;
+    display: flex; flex-direction: column;
+    overflow: hidden; user-select: none;
+    transition: background 0.3s, color 0.3s;
+  }
+
+  /* ── HEADER ── */
+  .hd {
+    padding: 10px 16px 7px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    padding-top: max(10px, env(safe-area-inset-top));
+    background: var(--bg);
+    transition: background 0.3s;
+  }
+  .hd-logo { font-family: var(--mono); font-size: 10px; letter-spacing: 0.35em; text-transform: uppercase; color: var(--dim); cursor: pointer; }
+  .hd-logo span { color: var(--cream); }
+  .hd-right { display: flex; align-items: center; gap: 10px; }
+  .hd-badge { font-family: var(--mono); font-size: 8px; color: var(--muted); background: var(--surface); padding: 3px 8px; border-radius: 10px; border: 1px solid var(--border); cursor: pointer; }
+
+  .theme-toggle {
+    width: 28px; height: 16px; border-radius: 8px;
+    background: var(--accent-glow); border: 1px solid var(--border-b);
+    cursor: pointer; position: relative; transition: background 0.3s;
+  }
+  .theme-toggle::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--accent); transition: transform 0.3s;
+  }
+  [data-theme="dark"] .theme-toggle::after { transform: translateX(12px); }
+
+  .nd { width: 5px; height: 5px; border-radius: 50%; background: var(--dim); transition: background 0.3s; flex-shrink: 0; }
+  .nd.on { background: var(--green); box-shadow: 0 0 6px rgba(52,211,153,0.5); }
+  .nd.scan { background: var(--accent); animation: pulse 1.2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.3;} }
+
+  /* ── MAIN ── */
+  .mn { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+  .vw { display: none; min-height: 100%; padding: 0 16px 20px; }
+  .vw.active { display: flex; flex-direction: column; }
+
+  /* ── NAV ── */
+  .nv {
+    display: flex; border-top: 1px solid var(--border);
+    flex-shrink: 0; padding-bottom: max(6px, env(safe-area-inset-bottom));
+    background: var(--bg); transition: background 0.3s;
+  }
+  .nv button {
+    flex: 1; background: none; border: none;
+    padding: 10px 0 6px; display: flex; flex-direction: column;
+    align-items: center; gap: 3px; cursor: pointer;
+  }
+  .nv button .nl { font-family: var(--mono); font-size: 7px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--dim); transition: color 0.2s; }
+  .nv button.active .nl { color: var(--warm); }
+  .nv button svg { opacity: 0.4; transition: opacity 0.2s; }
+  .nv button.active svg { opacity: 1; }
+
+  /* ── BUTTONS ── */
+  .btn { font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; padding: 10px 18px; border-radius: 3px; border: none; cursor: pointer; transition: opacity 0.2s, transform 0.1s; }
+  .btn:active { transform: scale(0.97); }
+  .btn-a { background: var(--accent-glow); color: var(--accent); border: 1px solid var(--border-b); }
+  .btn-a:disabled { opacity: 0.3; cursor: default; }
+  .btn-p { background: var(--accent); color: #fff; }
+  [data-theme="dark"] .btn-p { color: var(--bg); }
+  .btn-g { background: none; color: var(--muted); border: 1px solid var(--border); }
+  .btn-gr { background: var(--green-dim); color: var(--green); border: 1px solid rgba(52,211,153,0.2); }
+  .btn-full { width: 100%; padding: 14px; }
+
+  /* ══ HOME VIEW ══ */
+  .home-view { padding-top: 1.5rem; }
+
+  .home-hero { text-align: center; padding: 1rem 0 1.5rem; }
+  .home-title { font-family: var(--mono); font-size: 18px; letter-spacing: 0.3em; font-weight: 700; color: var(--cream); margin-bottom: 4px; }
+  .home-sub { font-style: italic; font-size: 14px; color: var(--muted); line-height: 1.7; }
+
+  .home-stats { display: flex; gap: 1px; background: var(--border); margin: 1.2rem 0; border-radius: 4px; overflow: hidden; }
+  .home-stat { flex: 1; background: var(--surface); padding: 14px 8px; text-align: center; }
+  .hs-num { font-family: var(--mono); font-size: 18px; color: var(--cream); font-weight: 600; }
+  .hs-lbl { font-family: var(--mono); font-size: 7px; letter-spacing: 0.2em; color: var(--dim); text-transform: uppercase; margin-top: 2px; }
+
+  .home-section { margin-bottom: 1.2rem; }
+  .home-slbl { font-family: var(--mono); font-size: 7px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .home-slbl::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .home-text { font-size: 13px; color: var(--muted); line-height: 1.8; }
+  .home-text a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--border-b); }
+
+  .status-list { display: flex; flex-direction: column; gap: 6px; }
+  .status-item { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 9px; color: var(--muted); line-height: 1.5; }
+  .si-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+  .si-dot.ok { background: var(--green); }
+  .si-dot.wip { background: var(--orange); }
+  .si-dot.no { background: var(--dim); }
+
+  .home-vision { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 14px; margin-top: 8px; }
+  .hv-title { font-family: var(--mono); font-size: 8px; letter-spacing: 0.15em; color: var(--gold); text-transform: uppercase; margin-bottom: 6px; }
+  .hv-text { font-size: 12px; color: var(--muted); line-height: 1.7; font-style: italic; }
+
+  .home-warn { background: var(--gold-dim); border: 1px solid rgba(212,168,83,0.15); border-radius: 4px; padding: 10px 12px; font-size: 11px; color: var(--gold); line-height: 1.7; margin-top: 10px; }
+
+  .home-quote { text-align: center; padding: 1.5rem 1rem; font-style: italic; font-size: 14px; color: var(--muted); line-height: 1.7; }
+  .home-quote em { color: var(--cream); font-style: italic; }
+  .home-quote-src { font-family: var(--mono); font-size: 8px; color: var(--dim); letter-spacing: 0.15em; margin-top: 8px; }
+
+  /* ══ SEAL VIEW ══ */
+  .seal-view { justify-content: center; align-items: center; text-align: center; padding-top: 1.5rem; }
+  .seal-prompt { font-style: italic; font-size: 15px; color: var(--muted); margin-bottom: 1.5rem; padding: 0 16px; line-height: 1.7; }
+  .seal-input { width: 100%; min-height: 110px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; color: var(--cream); font-family: var(--serif); font-size: 16px; line-height: 1.7; padding: 14px; resize: none; outline: none; transition: border-color 0.3s; }
+  .seal-input:focus { border-color: var(--accent); }
+  .seal-input::placeholder { color: var(--dim); font-style: italic; }
+  .input-footer { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 8px; }
+  .input-count { font-family: var(--mono); font-size: 9px; color: var(--dim); }
+
+  .mode-q { font-style: italic; font-size: 14px; color: var(--muted); text-align: center; margin: 1.5rem 0 1.2rem; }
+  .mode-opt { border: 1px solid var(--border); padding: 12px 14px; margin-bottom: 8px; border-radius: 3px; cursor: pointer; transition: border-color 0.3s, background 0.3s; text-align: left; }
+  .mode-opt.sel { border-color: var(--accent); background: var(--accent-glow); }
+  .mode-opt h4 { font-family: var(--serif); font-size: 15px; font-weight: 500; color: var(--cream); margin-bottom: 3px; }
+  .mode-opt p { font-size: 12px; color: var(--dim); line-height: 1.5; }
+  .mode-footer { margin-top: 1.2rem; text-align: center; }
+
+  .warning-view { justify-content: center; align-items: center; text-align: center; padding: 2rem 24px; }
+  .warning-text { font-style: italic; font-size: 14px; color: var(--muted); line-height: 1.9; margin-bottom: 2rem; }
+  .warning-text strong { color: var(--warm); font-weight: 500; }
+
+  .result-view { align-items: center; text-align: center; padding-top: 1.5rem; }
+  .result-circle { width: 50px; height: 50px; border-radius: 50%; border: 1.5px solid var(--accent); display: flex; align-items: center; justify-content: center; margin-bottom: 1.2rem; animation: scaleIn 0.5s ease-out; }
+  @keyframes scaleIn { from{transform:scale(.5);opacity:0;} to{transform:scale(1);opacity:1;} }
+  .r-idea { font-style: italic; font-size: 14px; color: var(--warm); line-height: 1.7; margin-bottom: 1rem; padding: 0 10px; }
+  .r-stamp { font-family: var(--mono); font-size: 7.5px; color: var(--dim); word-break: break-all; line-height: 1.5; margin-bottom: .6rem; padding: 0 10px; }
+  .r-moment { font-family: var(--mono); font-size: 8px; color: var(--dim); margin-bottom: .4rem; }
+  .r-mode { font-family: var(--mono); font-size: 7px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--green); margin-bottom: 1.5rem; }
+  .share-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 1rem; }
+
+  /* ══ FEED ══ */
+  .feed-hd { display: flex; justify-content: space-between; align-items: center; padding: 12px 0 8px; border-bottom: 1px solid var(--border); margin-bottom: 2px; }
+  .feed-title { font-family: var(--mono); font-size: 8px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--dim); }
+
+  .feed-channels { display: flex; gap: 4px; padding: 10px 0; overflow-x: auto; -webkit-overflow-scrolling: touch; flex-shrink: 0; }
+  .feed-channels::-webkit-scrollbar { display: none; }
+  .ch-btn { font-family: var(--mono); font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; padding: 5px 10px; border-radius: 12px; border: 1px solid var(--border); background: none; color: var(--dim); cursor: pointer; white-space: nowrap; transition: all 0.2s; }
+  .ch-btn.active { background: var(--accent-glow); color: var(--accent); border-color: var(--border-b); }
+
+  .feed-empty { text-align: center; padding: 3rem 1.5rem; color: var(--dim); font-style: italic; font-size: 13px; line-height: 1.8; }
+
+  .fi { border-bottom: 1px solid var(--border); padding: 12px 0; cursor: pointer; transition: background 0.15s; }
+  .fi:active { background: var(--surface); }
+  .fi-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+  .fi-node { font-family: var(--mono); font-size: 9px; color: var(--accent); }
+  .fi-time { font-family: var(--mono); font-size: 7px; color: var(--dim); }
+  .fi-idea { font-size: 14px; color: var(--cream); line-height: 1.6; margin-bottom: 6px; }
+  .fi-bot { display: flex; gap: 12px; align-items: center; }
+  .fi-stat { font-family: var(--mono); font-size: 8px; color: var(--dim); display: flex; align-items: center; gap: 3px; }
+  .fi-tag { font-family: var(--mono); font-size: 7px; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 6px; border-radius: 2px; }
+  .fi-tag.proposal { background: var(--violet-dim); color: var(--violet); }
+  .fi-tag.shared { background: var(--accent-glow); color: var(--accent); }
+  .fi-tag.governance { background: var(--gold-dim); color: var(--gold); }
+
+  /* ══ THREAD ══ */
+  .thread-back { font-family: var(--mono); font-size: 9px; color: var(--muted); background: none; border: none; cursor: pointer; padding: 14px 0 10px; letter-spacing: 0.1em; display: flex; align-items: center; gap: 6px; }
+  .thread-root { border: 1px solid var(--border-b); border-radius: 4px; padding: 16px; background: var(--surface); margin-bottom: 14px; }
+  .tr-node { font-family: var(--mono); font-size: 9px; color: var(--accent); margin-bottom: 6px; }
+  .tr-idea { font-size: 15px; color: var(--cream); line-height: 1.7; margin-bottom: 10px; }
+  .tr-meta { font-family: var(--mono); font-size: 8px; color: var(--dim); }
+  .thread-actions { display: flex; gap: 8px; margin-bottom: 14px; }
+
+  .thread-reply-box { display: none; margin-bottom: 14px; }
+  .thread-reply-box.open { display: block; }
+  .thread-reply-box textarea { width: 100%; min-height: 80px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; color: var(--cream); font-family: var(--serif); font-size: 14px; line-height: 1.6; padding: 12px; resize: none; outline: none; }
+  .thread-reply-box textarea::placeholder { color: var(--dim); font-style: italic; }
+  .trb-footer { display: flex; justify-content: flex-end; margin-top: 8px; }
+
+  .reply-item { padding: 10px 0 10px 14px; border-left: 2px solid var(--border); margin-bottom: 4px; }
+  .ri-node { font-family: var(--mono); font-size: 8px; color: var(--accent); margin-bottom: 4px; }
+  .ri-idea { font-size: 13px; color: var(--cream); line-height: 1.6; margin-bottom: 6px; }
+  .ri-meta { font-family: var(--mono); font-size: 7px; color: var(--dim); }
+
+  .vote-bar { margin: 10px 0; display: flex; gap: 2px; height: 4px; border-radius: 2px; overflow: hidden; background: var(--border); }
+  .vb-a { background: var(--green); } .vb-d { background: var(--red); } .vb-s { background: var(--dim); }
+  .vote-counts { display: flex; gap: 14px; margin-bottom: 10px; }
+  .vote-counts span { font-family: var(--mono); font-size: 8px; display: flex; align-items: center; gap: 3px; }
+  .vc-a { color: var(--green); } .vc-d { color: var(--red); } .vc-s { color: var(--dim); }
+  .vote-btns { display: flex; gap: 8px; margin-bottom: 14px; }
+  .vote-btn { font-family: var(--mono); font-size: 8px; letter-spacing: 0.12em; text-transform: uppercase; padding: 8px 12px; border-radius: 3px; border: 1px solid; cursor: pointer; background: none; transition: background 0.2s; }
+  .vote-btn.agree { color: var(--green); border-color: rgba(52,211,153,0.3); }
+  .vote-btn.disagree { color: var(--red); border-color: rgba(248,113,113,0.3); }
+  .vote-btn.abstain { color: var(--dim); border-color: var(--border); }
+
+  /* ══ DIARY ══ */
+  .seals-empty { text-align: center; padding: 3rem 1.5rem; color: var(--dim); font-style: italic; font-size: 13px; line-height: 1.8; }
+  .seal-card { border-bottom: 1px solid var(--border); padding: 12px 0; cursor: pointer; transition: background 0.15s; }
+  .seal-card:active { background: var(--surface); }
+  .sc-idea { font-size: 14px; color: var(--cream); line-height: 1.6; margin-bottom: 5px; }
+  .sc-meta { font-family: var(--mono); font-size: 7px; color: var(--dim); display: flex; gap: 10px; align-items: center; }
+  .sc-tag { padding: 2px 6px; border-radius: 2px; font-size: 7px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .sc-tag.private { background: rgba(148,180,220,0.06); color: var(--muted); }
+  .sc-tag.shared { background: var(--accent-glow); color: var(--accent); }
+  .sc-tag.proposal { background: var(--violet-dim); color: var(--violet); }
+
+  /* ══ NODES ══ */
+  .slbl { font-family: var(--mono); font-size: 7px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--dim); margin: 1.2rem 0 .6rem; }
+  .conn-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 14px; margin-bottom: 8px; }
+  .cc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .cc-name { font-family: var(--mono); font-size: 10px; color: var(--cream); }
+  .cc-status { font-family: var(--mono); font-size: 7px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--green); }
+  .cc-info { font-family: var(--mono); font-size: 8px; color: var(--dim); }
+  .conn-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .conn-empty { text-align: center; padding: 1.5rem 1rem; color: var(--dim); font-style: italic; font-size: 12px; line-height: 1.8; }
+  .bt-warn { background: var(--red-dim); border: 1px solid rgba(248,113,113,0.15); border-radius: 4px; padding: 10px; font-family: var(--mono); font-size: 8px; color: var(--red); line-height: 1.6; margin-bottom: 10px; }
+  .nle { font-family: var(--mono); font-size: 8px; color: var(--dim); padding: 5px 0; border-bottom: 1px solid rgba(99,179,255,0.04); line-height: 1.5; }
+  .nle-t { color: var(--muted); } .nle-ok { color: var(--green); } .nle-err { color: var(--red); } .nle-info { color: var(--accent); }
+
+  .paste-area textarea { width: 100%; min-height: 90px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; color: var(--cream); font-family: var(--mono); font-size: 10px; line-height: 1.6; padding: 12px; resize: none; outline: none; }
+  .paste-area textarea::placeholder { color: var(--dim); }
+  .paste-btn-row { margin-top: 8px; display: flex; justify-content: flex-end; }
+  .verify-result { text-align: center; padding: 1rem 0; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+  .verify-result.valid { color: var(--green); } .verify-result.invalid { color: var(--red); }
+  .vr-label { font-family: var(--mono); font-size: 8px; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: .6rem; }
+  .vr-idea { font-style: italic; font-size: 13px; color: var(--warm); margin-bottom: .4rem; line-height: 1.6; }
+  .vr-moment { font-family: var(--mono); font-size: 7px; color: var(--dim); }
+
+  /* ── OVERLAY / TOAST ── */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.85); z-index: 100; display: none; justify-content: center; align-items: center; padding: 16px; }
+  .overlay.open { display: flex; }
+  .overlay-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 20px; max-width: 340px; width: 100%; text-align: center; max-height: 90vh; overflow-y: auto; }
+  .overlay-close { font-family: var(--mono); font-size: 8px; color: var(--dim); background: none; border: none; cursor: pointer; margin-top: 1rem; padding: 8px; letter-spacing: 0.2em; }
+
+  .toast { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%) translateY(16px); font-family: var(--mono); font-size: 9px; color: var(--cream); background: var(--card); border: 1px solid var(--border); padding: 8px 18px; border-radius: 4px; opacity: 0; transition: opacity 0.3s, transform 0.3s; z-index: 200; pointer-events: none; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .mt1 { margin-top: 1rem; }
+</style>
+</head>
+<body>
+
+<div class="hd">
+  <div class="hd-logo" onclick="nav('viewHome',document.querySelectorAll('.nv button')[0])"><span>Phantom</span></div>
+  <div class="hd-right">
+    <div class="theme-toggle" onclick="toggleTheme()"></div>
+    <div class="hd-badge" id="myBadge" onclick="copyNid()">—</div>
+    <div class="nd" id="nDot"></div>
+  </div>
+</div>
+
+<div class="mn">
+
+<!-- ═══ HOME ═══ -->
+<div class="vw home-view active" id="viewHome">
+  <div class="home-hero">
+    <div class="home-title">PHANTOM</div>
+    <div class="home-sub">Your thoughts belong to you.<br>Not as a promise — as architecture.</div>
+  </div>
+
+  <div class="home-stats">
+    <div class="home-stat"><div class="hs-num" id="statSeals">0</div><div class="hs-lbl">Seals</div></div>
+    <div class="home-stat"><div class="hs-num">0</div><div class="hs-lbl">Servers</div></div>
+    <div class="home-stat"><div class="hs-num">1</div><div class="hs-lbl">Owner — You</div></div>
+  </div>
+
+  <div class="home-section">
+    <div class="home-slbl">What exists today</div>
+    <div class="status-list">
+      <div class="status-item"><div class="si-dot ok"></div>Cryptographic seal (SHA-256) — verifiable by anyone</div>
+      <div class="status-item"><div class="si-dot ok"></div>17 genesis seals — permanent since March 8, 2026</div>
+      <div class="status-item"><div class="si-dot ok"></div>Encryption at rest (AES-256-GCM)</div>
+      <div class="status-item"><div class="si-dot ok"></div>Node identity (Ed25519 key pairs)</div>
+      <div class="status-item"><div class="si-dot ok"></div>Seal exchange via local WiFi (v0.6)</div>
+      <div class="status-item"><div class="si-dot ok"></div>This app — seal and verify, no installation</div>
+      <div class="status-item"><div class="si-dot ok"></div>33 automated tests</div>
+      <div class="status-item"><div class="si-dot wip"></div>Bluetooth / LoRa node sync — in progress</div>
+      <div class="status-item"><div class="si-dot wip"></div>Shared feed + proposals — in progress</div>
+      <div class="status-item"><div class="si-dot no"></div>SUIJURIS — designed, not built</div>
+      <div class="status-item"><div class="si-dot no"></div>Anonymous relay communication</div>
+      <div class="status-item"><div class="si-dot no"></div>Echo — local AI on device</div>
+    </div>
+  </div>
+
+  <div class="home-section">
+    <div class="home-slbl">Principles</div>
+    <div class="home-text">
+      Privacy by architecture, not by policy. No central authority. Universal access. Radical transparency. Founders become obsolete by design. The organism evolves — the principles do not.
+    </div>
+  </div>
+
+  <div class="home-section">
+    <div class="home-slbl">Vision</div>
+    <div class="home-vision">
+      <div class="hv-title">What Phantom is growing toward</div>
+      <div class="hv-text">Sealed thoughts that travel between devices without internet. Proposals and votes as verifiable seals. An economic layer (SUIJURIS) where contribution is the only currency. Local AI that runs on your device — no query leaves, no company sees your questions. A network that feeds itself.</div>
+    </div>
+    <div class="home-vision" style="margin-top:8px">
+      <div class="hv-title">What Phantom will not become</div>
+      <div class="hv-text">A social network. A startup. A tool for those who already have privacy. If the woman in Lagos with a secondhand phone cannot use it — it is not Phantom.</div>
+    </div>
+  </div>
+
+  <div class="home-section">
+    <div class="home-slbl">Source</div>
+    <div class="home-text">
+      Every line is open. Read it, audit it, fork it.<br>
+      <a href="https://github.com/AX-Phantom/phantom-network" target="_blank" rel="noopener">github.com/AX-Phantom/phantom-network</a><br>
+      GPL v3 — freedom is contagious, not capturable.
+    </div>
+    <div class="home-warn">
+      If you opened this through a web link, your IP was visible to the server that delivered it. Phantom does not hide your IP. Once the file is on your device, everything runs locally.
+    </div>
+  </div>
+
+  <div class="home-quote">
+    <em>"For a better world</em> — not for you, not for me, but for <em>those who are coming."</em>
+    <div class="home-quote-src">— Node Zero · March 8, 2026</div>
+  </div>
+
+  <div style="text-align:center;padding-bottom:1rem">
+    <div style="font-family:var(--mono);font-size:7px;color:var(--dim);letter-spacing:0.1em">phantom-commons@proton.me</div>
+  </div>
+</div>
+
+<!-- ═══ SEAL ═══ -->
+<div class="vw seal-view" id="viewSeal">
+  <div class="seal-prompt">What would you seal<br>right now?</div>
+  <textarea class="seal-input" id="sealInput" placeholder="Write something true..." maxlength="100000"></textarea>
+  <div class="input-footer"><span class="input-count" id="inputCount">0</span><button class="btn btn-a" id="btnSeal" disabled>SEAL</button></div>
+</div>
+<div class="vw" id="viewMode">
+  <div class="mode-q">What should this thought do?</div>
+  <div class="mode-opt" data-mode="private" onclick="selMode(this)"><h4>Private</h4><p>Your diary. Never leaves this device.</p></div>
+  <div class="mode-opt sel" data-mode="shared" onclick="selMode(this)"><h4>Shared</h4><p>Travels to nearby nodes. Others can see and respond.</p></div>
+  <div class="mode-opt" data-mode="proposal" onclick="selMode(this)"><h4>Proposal</h4><p>Ask the network. Others vote agree, disagree, or abstain.</p></div>
+  <div class="mode-footer"><button class="btn btn-p" id="btnConfirmMode">CONTINUE</button></div>
+</div>
+<div class="vw warning-view" id="viewWarning">
+  <div class="warning-text" id="warningText"></div>
+  <button class="btn btn-p" id="btnConfirmSeal">I UNDERSTAND — SEAL IT</button>
+  <button class="btn btn-g mt1" onclick="showV('viewMode')">GO BACK</button>
+</div>
+<div class="vw result-view" id="viewResult">
+  <div class="result-circle"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+  <div class="r-idea" id="resultIdea"></div>
+  <div class="r-stamp" id="resultStamp"></div>
+  <div class="r-moment" id="resultMoment"></div>
+  <div class="r-mode" id="resultMode"></div>
+  <div class="share-row"><button class="btn btn-a" onclick="copyLast()">COPY</button><button class="btn btn-gr" id="btnSendLast" style="display:none" onclick="sendLast()">SEND</button></div>
+  <button class="btn btn-g mt1" onclick="resetSeal()">SEAL ANOTHER</button>
+</div>
+
+<!-- ═══ FEED ═══ -->
+<div class="vw" id="viewFeed">
+  <div class="feed-hd"><span class="feed-title">Network Feed</span><span class="feed-title" id="feedCount">0</span></div>
+  <div class="feed-channels" id="feedChannels">
+    <button class="ch-btn active" onclick="filterCh('all',this)">All</button>
+    <button class="ch-btn" onclick="filterCh('shared',this)">Thoughts</button>
+    <button class="ch-btn" onclick="filterCh('proposal',this)">Proposals</button>
+  </div>
+  <div id="feedList"></div>
+</div>
+<div class="vw" id="viewThread"><button class="thread-back" onclick="backToFeed()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>FEED</button><div id="threadContent"></div></div>
+
+<!-- ═══ DIARY ═══ -->
+<div class="vw" id="viewDiary">
+  <div class="feed-hd"><span class="feed-title">My Seals</span><span class="feed-title" id="diaryCount">0</span></div>
+  <div id="diaryList"></div>
+</div>
+
+<!-- ═══ NODES ═══ -->
+<div class="vw" id="viewNodes">
+  <div class="slbl">CONNECT</div>
+  <div id="btWarn" class="bt-warn" style="display:none"></div>
+  <div id="connDev" style="display:none"><div class="conn-card"><div class="cc-header"><span class="cc-name" id="connName">—</span><span class="cc-status">CONNECTED</span></div><div class="cc-info" id="connInfo"></div><div class="conn-actions"><button class="btn btn-gr" onclick="syncNode()">SYNC</button><button class="btn btn-g" onclick="disconnNode()">DISCONNECT</button></div></div></div>
+  <div id="noDev"><div class="conn-empty">No node connected.<br>Pair via Bluetooth or LoRa.</div><button class="btn btn-a btn-full" onclick="scanBT()">SCAN FOR NODES</button></div>
+  <div class="slbl" style="margin-top:1.5rem">LOG</div>
+  <div id="nodeLog"><div class="nle"><span class="nle-info">Ready.</span></div></div>
+  <div class="slbl" style="margin-top:1.5rem">VERIFY A SEAL</div>
+  <div class="paste-area"><textarea id="pasteInput" placeholder="Paste a seal here...&#10;Idea: ...&#10;Moment: ...&#10;Stamp: ..."></textarea><div class="paste-btn-row"><button class="btn btn-a" onclick="verifyPasted()">VERIFY</button></div></div>
+  <div id="verifyResult"></div>
+</div>
+
+</div>
+
+<!-- NAV -->
+<div class="nv">
+  <button class="active" onclick="nav('viewHome',this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg><span class="nl">Home</span></button>
+  <button onclick="nav('viewSeal',this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5" opacity=".5"/></svg><span class="nl">Seal</span></button>
+  <button onclick="nav('viewFeed',this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span class="nl">Feed</span></button>
+  <button onclick="nav('viewDiary',this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="1.5"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg><span class="nl">Diary</span></button>
+  <button onclick="nav('viewNodes',this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="1.5"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><line x1="12" y1="7.5" x2="5" y2="16.5"/><line x1="12" y1="7.5" x2="19" y2="16.5"/></svg><span class="nl">Nodes</span></button>
+</div>
+
+<div class="overlay" id="overlay" onclick="closeOv(event)"><div class="overlay-card" id="overlayCard"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════════════
+// PHANTOM — UNIFIED · DUAL THEME · ZERO INTERNET
+// Everything is a seal. A seal is a thought with a timestamp
+// and a cryptographic proof that it existed at that moment.
+// Private = diary. Shared = post. Reply = comment. Vote = governance.
+// ════════════════════════════════════════════════════════
+
+// ── THEME ──
+function toggleTheme() {
+  const d = document.body.dataset.theme === 'dark' ? '' : 'dark';
+  document.body.dataset.theme = d;
+  document.querySelector('meta[name="theme-color"]').content = d ? '#0a0a0a' : '#03070f';
+  try { localStorage.setItem('ph_theme', d); } catch(e) {}
+}
+try { if (localStorage.getItem('ph_theme') === 'dark') document.body.dataset.theme = 'dark'; } catch(e) {}
+
+// ── CRYPTO ──
+async function sha256(idea, moment) {
+  function ae(s) { return s.replace(/[^\x20-\x7E]/g, c => { const code=c.charCodeAt(0); if(code>0xFFFF){const hi=Math.floor((code-0x10000)/0x400)+0xD800;const lo=(code-0x10000)%0x400+0xDC00;return'\\u'+hi.toString(16).padStart(4,'0')+'\\u'+lo.toString(16).padStart(4,'0');}return'\\u'+code.toString(16).padStart(4,'0');}); }
+  const data='{"idea":'+ae(JSON.stringify(idea))+',"moment":'+ae(JSON.stringify(moment))+'}';
+  const hash=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(data));
+  return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function makeSeal(idea,mode,extra){const moment=new Date().toISOString();const stamp=await sha256(idea,moment);return{idea,moment,stamp,mode,node:myNode,...extra};}
+async function verifySeal(idea,moment,stamp){return(await sha256(idea,moment))===stamp;}
+
+// ── NODE IDENTITY ──
+const ADJ=['quiet','bright','swift','deep','still','warm','dark','clear','bold','soft','wild','calm','keen','pale','true'];
+const NOUN=['river','stone','flame','wind','leaf','wave','dust','root','seed','moon','star','rain','moth','pine','salt'];
+function genName(){const a=ADJ[Math.floor(Math.random()*ADJ.length)];const n=NOUN[Math.floor(Math.random()*NOUN.length)];const h=Array.from(crypto.getRandomValues(new Uint8Array(2))).map(b=>b.toString(16).padStart(2,'0')).join('');return a+'-'+n+'-'+h;}
+let myNode=null;
+
+// ── STORAGE ──
+const DB='phantom';const DBV=3;let db=null;
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB,DBV);r.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains('seals')){const s=d.createObjectStore('seals',{keyPath:'stamp'});s.createIndex('mode','mode');s.createIndex('type','type');}if(!d.objectStoreNames.contains('meta'))d.createObjectStore('meta',{keyPath:'key'});};r.onsuccess=e=>{db=e.target.result;res(db);};r.onerror=()=>rej(r.error);});}
+function dbPut(s,o){return new Promise((r,j)=>{const t=db.transaction(s,'readwrite');t.objectStore(s).put(o);t.oncomplete=()=>r();t.onerror=()=>j(t.error);});}
+function dbGet(s,k){return new Promise((r,j)=>{const t=db.transaction(s,'readonly');const q=t.objectStore(s).get(k);q.onsuccess=()=>r(q.result);q.onerror=()=>j(q.error);});}
+function dbAll(s){return new Promise((r,j)=>{const t=db.transaction(s,'readonly');const q=t.objectStore(s).getAll();q.onsuccess=()=>r(q.result);q.onerror=()=>j(q.error);});}
+function dbCount(s){return new Promise((r,j)=>{const t=db.transaction(s,'readonly');const q=t.objectStore(s).count();q.onsuccess=()=>r(q.result);q.onerror=()=>j(q.error);});}
+async function saveSeal(seal){if(!seal.type)seal.type=seal.mode==='proposal'?'proposal':(seal.ref?'reply':'thought');await dbPut('seals',seal);}
+async function initNode(){const m=await dbGet('meta','nodeId');if(m){myNode=m.value;}else{myNode=genName();await dbPut('meta',{key:'nodeId',value:myNode});}document.getElementById('myBadge').textContent=myNode;}
+async function updateStats(){const n=await dbCount('seals');document.getElementById('statSeals').textContent=n;}
+
+// ── NAVIGATION ──
+let curView='viewHome';
+function showV(id){document.querySelectorAll('.vw').forEach(v=>v.classList.remove('active'));document.getElementById(id).classList.add('active');curView=id;document.querySelector('.mn').scrollTop=0;}
+function nav(id,btn){if(id==='viewSeal')resetSeal();if(id==='viewFeed')renderFeed();if(id==='viewDiary')renderDiary();if(id==='viewNodes')checkBT();if(id==='viewHome')updateStats();showV(id);document.querySelectorAll('.nv button').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');}
+function copyNid(){navigator.clipboard.writeText(myNode).then(()=>toast('Node ID copied'));}
+
+// ── SEAL FLOW ──
+let pendingIdea='';let selModeVal='shared';let lastSeal=null;
+const sealInput=document.getElementById('sealInput');const btnSeal=document.getElementById('btnSeal');
+sealInput.addEventListener('input',()=>{const l=sealInput.value.trim().length;document.getElementById('inputCount').textContent=l;btnSeal.disabled=l===0;});
+btnSeal.addEventListener('click',()=>{pendingIdea=sealInput.value.trim();if(!pendingIdea)return;showV('viewMode');});
+function selMode(el){document.querySelectorAll('.mode-opt').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');selModeVal=el.dataset.mode;}
+document.getElementById('btnConfirmMode').addEventListener('click',()=>{if(selModeVal==='private'){doSeal();}else{const w=document.getElementById('warningText');w.innerHTML=selModeVal==='proposal'?'This proposal reaches every node it touches.<br><br>Others can vote: <strong>agree, disagree, or abstain.</strong><br>Votes are seals — permanent and verifiable.':'This thought will travel to nodes you do not control.<br><br>Once received, it <strong>cannot be taken back.</strong>';showV('viewWarning');}});
+document.getElementById('btnConfirmSeal').addEventListener('click',doSeal);
+async function doSeal(){const mode=selModeVal==='proposal'?'shared':selModeVal;const type=selModeVal==='proposal'?'proposal':'thought';const seal=await makeSeal(pendingIdea,mode,{type});await saveSeal(seal);lastSeal=seal;document.getElementById('resultIdea').textContent=seal.idea;document.getElementById('resultStamp').textContent=seal.stamp;document.getElementById('resultMoment').textContent=seal.moment;document.getElementById('resultMode').textContent='SEALED — '+(type==='proposal'?'PROPOSAL':mode.toUpperCase());document.getElementById('btnSendLast').style.display=btDevice?'':'none';await updateStats();showV('viewResult');}
+function resetSeal(){sealInput.value='';document.getElementById('inputCount').textContent='0';btnSeal.disabled=true;pendingIdea='';lastSeal=null;showV('viewSeal');}
+function sealToText(s){return'Phantom Seal\nIdea: '+s.idea+'\nMoment: '+s.moment+'\nStamp: '+s.stamp;}
+function copyLast(){if(lastSeal)navigator.clipboard.writeText(sealToText(lastSeal)).then(()=>toast('Copied'));}
+async function sendLast(){if(lastSeal&&txChar){await sendSeal(lastSeal);toast('Sent');}}
+
+// ── FEED ──
+let feedFilter='all';
+function filterCh(ch,btn){feedFilter=ch;document.querySelectorAll('.ch-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderFeed();}
+async function renderFeed(){const all=await dbAll('seals');let shared=all.filter(s=>s.mode==='shared'&&s.type!=='reply'&&s.type!=='vote');if(feedFilter==='proposal')shared=shared.filter(s=>s.type==='proposal');else if(feedFilter==='shared')shared=shared.filter(s=>s.type==='thought');shared.sort((a,b)=>b.moment.localeCompare(a.moment));const replies=all.filter(s=>s.type==='reply');const votes=all.filter(s=>s.type==='vote');document.getElementById('feedCount').textContent=shared.length;const el=document.getElementById('feedList');if(!shared.length){el.innerHTML='<div class="feed-empty">Nothing here yet.<br><em>Seal a shared thought or sync with a nearby node.</em></div>';return;}
+el.innerHTML=shared.map(s=>{const rc=replies.filter(r=>r.ref===s.stamp).length;const vc=votes.filter(v=>v.ref===s.stamp).length;const tag=s.type==='proposal'?'<span class="fi-tag proposal">proposal</span>':'';return'<div class="fi" onclick="openThread(\''+s.stamp+'\')"><div class="fi-top"><span class="fi-node">'+esc(s.node||'?')+'</span><span class="fi-time">'+fmtT(s.moment)+'</span></div><div class="fi-idea">'+esc(s.idea.length>180?s.idea.slice(0,180)+'...':s.idea)+'</div><div class="fi-bot">'+tag+'<span class="fi-stat">'+rc+' replies</span>'+(s.type==='proposal'?'<span class="fi-stat">'+vc+' votes</span>':'')+'</div></div>';}).join('');}
+
+// ── THREAD ──
+let threadStamp=null;
+async function openThread(stamp){threadStamp=stamp;const all=await dbAll('seals');const root=all.find(s=>s.stamp===stamp);if(!root)return;const replies=all.filter(s=>s.type==='reply'&&s.ref===stamp).sort((a,b)=>a.moment.localeCompare(b.moment));const votes=all.filter(s=>s.type==='vote'&&s.ref===stamp);const ag=votes.filter(v=>v.position==='agree').length;const dg=votes.filter(v=>v.position==='disagree').length;const ab=votes.filter(v=>v.position==='abstain').length;const tot=ag+dg+ab;const myV=votes.find(v=>v.node===myNode);let vH='';if(root.type==='proposal'){const bar=tot?'<div class="vote-bar">'+(ag?'<div class="vb-a" style="flex:'+ag+'"></div>':'')+(dg?'<div class="vb-d" style="flex:'+dg+'"></div>':'')+(ab?'<div class="vb-s" style="flex:'+ab+'"></div>':'')+'</div>':'';const cts='<div class="vote-counts"><span class="vc-a">'+ag+' agree</span><span class="vc-d">'+dg+' disagree</span><span class="vc-s">'+ab+' abstain</span></div>';const bts=myV?'<div style="font-family:var(--mono);font-size:8px;color:var(--dim);margin-bottom:14px">You voted: '+myV.position+'</div>':'<div class="vote-btns"><button class="vote-btn agree" onclick="castVote(\'agree\')">Agree</button><button class="vote-btn disagree" onclick="castVote(\'disagree\')">Disagree</button><button class="vote-btn abstain" onclick="castVote(\'abstain\')">Abstain</button></div>';vH=bar+cts+bts;}
+const rH=replies.map(r=>'<div class="reply-item"><div class="ri-node">'+esc(r.node||'?')+'</div><div class="ri-idea">'+esc(r.idea)+'</div><div class="ri-meta">'+fmtT(r.moment)+'</div></div>').join('');const tagH=root.type==='proposal'?' <span class="fi-tag proposal" style="margin-left:6px">proposal</span>':'';
+document.getElementById('threadContent').innerHTML='<div class="thread-root"><div class="tr-node">'+esc(root.node||'?')+tagH+'</div><div class="tr-idea">'+esc(root.idea)+'</div><div class="tr-meta">'+root.moment+'</div></div>'+vH+'<div class="thread-actions"><button class="btn btn-a" onclick="toggleReply()">REPLY</button><button class="btn btn-g" onclick="copyStamp(\''+stamp+'\')">COPY</button></div><div class="thread-reply-box" id="replyBox"><textarea id="replyInput" placeholder="Your response..."></textarea><div class="trb-footer"><button class="btn btn-a" onclick="sendReply()">SEAL REPLY</button></div></div><div class="slbl">REPLIES ('+replies.length+')</div>'+(replies.length?rH:'<div class="conn-empty" style="padding:1rem">No replies yet.</div>');showV('viewThread');}
+function toggleReply(){document.getElementById('replyBox').classList.toggle('open');}
+async function sendReply(){const t=document.getElementById('replyInput').value.trim();if(!t||!threadStamp)return;const seal=await makeSeal(t,'shared',{type:'reply',ref:threadStamp});await saveSeal(seal);if(txChar)await sendSeal(seal);toast('Reply sealed');openThread(threadStamp);}
+async function castVote(pos){if(!threadStamp)return;const seal=await makeSeal(pos,'shared',{type:'vote',ref:threadStamp,position:pos});await saveSeal(seal);if(txChar)await sendSeal(seal);toast('Vote sealed');openThread(threadStamp);}
+function backToFeed(){nav('viewFeed',document.querySelectorAll('.nv button')[2]);}
+async function copyStamp(st){const all=await dbAll('seals');const s=all.find(x=>x.stamp===st);if(s)navigator.clipboard.writeText(sealToText(s)).then(()=>toast('Copied'));}
+
+// ── DIARY ──
+async function renderDiary(){const all=await dbAll('seals');const mine=all.filter(s=>s.node===myNode&&s.type!=='vote');mine.sort((a,b)=>b.moment.localeCompare(a.moment));document.getElementById('diaryCount').textContent=mine.length;const el=document.getElementById('diaryList');if(!mine.length){el.innerHTML='<div class="seals-empty">No sealed thoughts yet.<br><em>Write something. Seal it.</em></div>';return;}
+el.innerHTML=mine.map(s=>{const tc=s.mode==='private'?'private':(s.type==='proposal'?'proposal':'shared');const tl=s.type==='proposal'?'proposal':s.mode;const txt=s.type==='vote'?'Vote: '+s.position:(s.idea.length>120?s.idea.slice(0,120)+'...':s.idea);return'<div class="seal-card" onclick="showDetail(\''+s.stamp+'\')"><div class="sc-idea">'+esc(txt)+'</div><div class="sc-meta"><span class="sc-tag '+tc+'">'+tl+'</span><span>'+fmtT(s.moment)+'</span></div></div>';}).join('');}
+async function showDetail(stamp){const all=await dbAll('seals');const s=all.find(x=>x.stamp===stamp);if(!s)return;window._ds=s;document.getElementById('overlayCard').innerHTML='<div class="r-idea">'+esc(s.idea)+'</div><div class="r-stamp">'+s.stamp+'</div><div class="r-moment">'+s.moment+'</div><div class="r-mode" style="margin-bottom:1rem">'+(s.type||s.mode).toUpperCase()+'</div><div class="share-row"><button class="btn btn-a" id="dlCopy">COPY</button></div><button class="overlay-close" onclick="closeOv()">CLOSE</button>';document.getElementById('dlCopy').addEventListener('click',()=>{navigator.clipboard.writeText(sealToText(window._ds)).then(()=>toast('Copied'));});document.getElementById('overlay').classList.add('open');}
+function closeOv(e){if(e&&e.target!==document.getElementById('overlay'))return;document.getElementById('overlay').classList.remove('open');}
+
+// ── VERIFY ──
+async function verifyPasted(){const raw=document.getElementById('pasteInput').value.trim();if(!raw)return;const im=raw.match(/Idea:\s*(.+)/i);const mm=raw.match(/Moment:\s*(.+)/i);const sm=raw.match(/Stamp:\s*([0-9a-f]{64})/i);if(!im||!mm||!sm){showVR(false,null,'Could not parse.');return;}const idea=im[1].trim(),moment=mm[1].trim(),stamp=sm[1].trim();const valid=await verifySeal(idea,moment,stamp);showVR(valid,valid?{idea,moment,stamp}:null);}
+function showVR(v,seal,err){const el=document.getElementById('verifyResult');if(v&&seal){el.innerHTML='<div class="verify-result valid"><div class="vr-label">VERIFIED</div><div class="vr-idea">'+esc(seal.idea)+'</div><div class="vr-moment">'+seal.moment+'</div><div style="margin-top:1rem"><button class="btn btn-a" onclick="saveVerified()">SAVE</button></div></div>';el._ps=seal;}else{el.innerHTML='<div class="verify-result invalid"><div class="vr-label">'+(err||'INVALID')+'</div></div>';}}
+async function saveVerified(){const el=document.getElementById('verifyResult');const s=el._ps;if(!s)return;s.mode='shared';s.received=true;s.type='thought';s.node=s.node||'unknown';await saveSeal(s);await updateStats();toast('Saved');}
+
+// ══ BLUETOOTH / LORA ══
+const MESH_SVC='6ba1b218-15a8-461f-9fa8-5dcae273eafd';const MESH_TX='f75c76d2-129e-4dad-a1dd-7866124401e7';const MESH_RX='8ba2bcc2-ee02-4a10-a0c2-011e93110064';const MESH_N='ed9da18c-a800-4f66-a670-aa7547de865c';
+const UART_SVC='6e400001-b5a3-f393-e0a9-e50e24dcca9e';const UART_TX='6e400002-b5a3-f393-e0a9-e50e24dcca9e';const UART_RX='6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+const PH_SVC='7068616e-746f-6d00-0000-000000000001';const PH_CH='7068616e-746f-6d00-0000-000000000002';
+let btDevice=null,btServer=null,btMode=null,txChar=null,rxChar=null,inBuf='';
+function checkBT(){const w=document.getElementById('btWarn');if(!navigator.bluetooth){w.style.display='';w.textContent='Bluetooth not available. Use Chrome on Android or Bluefy on iOS.';}else w.style.display='none';}
+async function scanBT(){if(!navigator.bluetooth){toast('No Bluetooth');return;}addLog('Scanning...','info');setDot('scan');try{btDevice=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:[MESH_SVC,UART_SVC,PH_SVC]});btDevice.addEventListener('gattserverdisconnected',onDisc);addLog('Selected: '+(btDevice.name||'?'),'info');btServer=await btDevice.gatt.connect();addLog('GATT connected','ok');let ok=false;try{const s=await btServer.getPrimaryService(MESH_SVC);txChar=await s.getCharacteristic(MESH_TX);rxChar=await s.getCharacteristic(MESH_RX);const n=await s.getCharacteristic(MESH_N);await n.startNotifications();n.addEventListener('characteristicvaluechanged',()=>readMesh());btMode='meshtastic';ok=true;addLog('Meshtastic','ok');}catch(e){}if(!ok)try{const s=await btServer.getPrimaryService(UART_SVC);txChar=await s.getCharacteristic(UART_TX);rxChar=await s.getCharacteristic(UART_RX);await rxChar.startNotifications();rxChar.addEventListener('characteristicvaluechanged',onRx);btMode='uart';ok=true;addLog('UART','ok');}catch(e){}if(!ok)try{const s=await btServer.getPrimaryService(PH_SVC);txChar=await s.getCharacteristic(PH_CH);rxChar=txChar;await txChar.startNotifications();txChar.addEventListener('characteristicvaluechanged',onRx);btMode='phantom';ok=true;addLog('Phantom node','ok');}catch(e){}if(ok){setDot('on');showConn(btDevice.name||'Node');}else{addLog('No compatible service','err');setDot('off');btDevice.gatt.disconnect();btDevice=null;}}catch(e){if(e.name==='NotFoundError')addLog('Cancelled','info');else addLog(e.message,'err');setDot('off');}}
+function showConn(n){document.getElementById('noDev').style.display='none';document.getElementById('connDev').style.display='';document.getElementById('connName').textContent=n;document.getElementById('connInfo').textContent=btMode.toUpperCase();}
+function hideConn(){document.getElementById('noDev').style.display='';document.getElementById('connDev').style.display='none';}
+function onDisc(){addLog('Disconnected','err');setDot('off');hideConn();btDevice=null;btServer=null;txChar=null;rxChar=null;btMode=null;}
+function disconnNode(){if(btDevice&&btDevice.gatt.connected)btDevice.gatt.disconnect();onDisc();}
+function setDot(s){const d=document.getElementById('nDot');d.className='nd'+(s==='on'?' on':s==='scan'?' scan':'');}
+
+function encWire(seal){const o={i:seal.idea,m:seal.moment,s:seal.stamp,d:seal.mode,t:seal.type||'thought',n:seal.node};if(seal.ref)o.r=seal.ref;if(seal.position)o.p=seal.position;return'PHAN|'+JSON.stringify(o)+'\n';}
+function decWire(raw){const tr=raw.trim();if(!tr.startsWith('PHAN|'))return null;try{const o=JSON.parse(tr.slice(5));const seal={idea:o.i,moment:o.m,stamp:o.s,mode:o.d||'shared',type:o.t||'thought',node:o.n||'unknown'};if(o.r)seal.ref=o.r;if(o.p)seal.position=o.p;return seal;}catch(e){return null;}}
+async function sendSeal(seal){if(!txChar)return;const bytes=new TextEncoder().encode(encWire(seal));const chunk=200;try{for(let i=0;i<bytes.length;i+=chunk)await txChar.writeValue(bytes.slice(i,i+chunk));addLog('Sent: "'+seal.idea.slice(0,30)+(seal.idea.length>30?'...':'')+'"','ok');}catch(e){addLog('Send fail: '+e.message,'err');}}
+async function syncNode(){if(!txChar)return;addLog('Syncing...','info');const all=await dbAll('seals');const out=all.filter(s=>s.mode!=='private');let n=0;for(const s of out){try{await sendSeal(s);n++;await new Promise(r=>setTimeout(r,80));}catch(e){addLog('Error','err');break;}}addLog('Synced '+n,'ok');toast('Synced '+n);}
+async function readMesh(){if(!rxChar)return;try{const v=await rxChar.readValue();procIn(new TextDecoder().decode(v));}catch(e){}}
+function onRx(e){procIn(new TextDecoder().decode(e.target.value));}
+function procIn(text){inBuf+=text;while(inBuf.includes('\n')){const idx=inBuf.indexOf('\n');const msg=inBuf.slice(0,idx);inBuf=inBuf.slice(idx+1);if(msg.startsWith('PHAN|'))handleIn(msg);}}
+async function handleIn(raw){const seal=decWire(raw);if(!seal){addLog('Malformed','err');return;}const valid=await verifySeal(seal.idea,seal.moment,seal.stamp);if(!valid){addLog('INVALID rejected','err');return;}seal.received=true;await saveSeal(seal);await updateStats();addLog('Received: "'+seal.idea.slice(0,30)+'"','ok');toast('New seal');}
+
+function addLog(msg,type){const log=document.getElementById('nodeLog');const t=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});const cls=type==='ok'?'nle-ok':type==='err'?'nle-err':'nle-info';const e=document.createElement('div');e.className='nle';e.innerHTML='<span class="nle-t">'+t+'</span> <span class="'+cls+'">'+esc(msg)+'</span>';log.insertBefore(e,log.firstChild);while(log.children.length>40)log.removeChild(log.lastChild);}
+
+// ── HELPERS ──
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+function fmtT(iso){try{const d=new Date(iso);return d.toLocaleDateString(undefined,{month:'short',day:'numeric'})+' '+d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});}catch(e){return iso.split('T')[0];}}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000);}
+
+// ── INIT ──
+(async()=>{await openDB();await initNode();await updateStats();if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});})();
+</script>
+</body>
+</html>
