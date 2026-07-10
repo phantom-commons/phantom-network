@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phantom — Seal a Thought</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap');
+
+  :root {
+    --black: #0a0a0a;
+    --white: #f4f1eb;
+    --dim: #8a8478;
+    --accent: #c8b89a;
+    --red: #8b3a2a;
+    --verified: #2a5a3a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'EB Garamond', Georgia, serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* GRAIN OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0.4;
+  }
+
+  header {
+    padding: 3rem 4rem 2rem;
+    border-bottom: 1px solid #1a1a1a;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+
+  .logo {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  .logo span {
+    color: var(--white);
+  }
+
+  nav {
+    display: flex;
+    gap: 2rem;
+  }
+
+  nav button {
+    background: none;
+    border: none;
+    color: var(--dim);
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid transparent;
+    transition: all 0.2s;
+  }
+
+  nav button.active, nav button:hover {
+    color: var(--white);
+    border-bottom-color: var(--accent);
+  }
+
+  main {
+    flex: 1;
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 5rem 2rem;
+    width: 100%;
+  }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* SEAL PANEL */
+  .panel-title {
+    font-size: 0.65rem;
+    font-family: 'Courier Prime', monospace;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-bottom: 3rem;
+  }
+
+  .thought-area {
+    position: relative;
+    margin-bottom: 2rem;
+  }
+
+  textarea {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #2a2a2a;
+    color: var(--white);
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 1.4rem;
+    line-height: 1.7;
+    padding: 1rem 0 2rem;
+    resize: none;
+    outline: none;
+    min-height: 120px;
+    transition: border-color 0.3s;
+  }
+
+  textarea::placeholder {
+    color: #2a2a2a;
+    font-style: italic;
+  }
+
+  textarea:focus {
+    border-bottom-color: var(--accent);
+  }
+
+  .char-count {
+    position: absolute;
+    bottom: 0.5rem;
+    right: 0;
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.6rem;
+    color: #2a2a2a;
+    letter-spacing: 0.1em;
+  }
+
+  .seal-btn {
+    background: none;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    padding: 0.9rem 2.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 1rem;
+  }
+
+  .seal-btn:hover {
+    background: var(--accent);
+    color: var(--black);
+  }
+
+  .seal-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  /* RESULT */
+  .result {
+    display: none;
+    margin-top: 4rem;
+    padding-top: 3rem;
+    border-top: 1px solid #1a1a1a;
+    animation: fadeIn 0.5s ease;
+  }
+
+  .result.show { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-label {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-bottom: 0.75rem;
+  }
+
+  .result-idea {
+    font-size: 1.2rem;
+    font-style: italic;
+    line-height: 1.7;
+    color: var(--white);
+    margin-bottom: 2rem;
+  }
+
+  .result-moment {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.75rem;
+    color: var(--dim);
+    margin-bottom: 0.5rem;
+  }
+
+  .result-stamp {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.65rem;
+    color: var(--accent);
+    word-break: break-all;
+    line-height: 1.8;
+    letter-spacing: 0.05em;
+  }
+
+  .result-footer {
+    margin-top: 1rem;
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.6rem;
+    color: var(--dim);
+    font-style: italic;
+  }
+
+  .action-row {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2.5rem;
+    flex-wrap: wrap;
+  }
+
+  .action-btn {
+    background: none;
+    border: 1px solid #2a2a2a;
+    color: var(--dim);
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 0.7rem 1.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .action-btn:hover {
+    border-color: var(--white);
+    color: var(--white);
+  }
+
+  .action-btn.copied {
+    border-color: var(--verified);
+    color: var(--verified);
+  }
+
+  /* SHARE TEXT */
+  .share-block {
+    display: none;
+    margin-top: 2rem;
+    background: #111;
+    border: 1px solid #1a1a1a;
+    padding: 1.5rem;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .share-block.show { display: block; }
+
+  .share-text {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.72rem;
+    line-height: 1.8;
+    color: var(--dim);
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  /* VERIFY PANEL */
+  .verify-group {
+    margin-bottom: 2rem;
+  }
+
+  .verify-label {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-bottom: 0.75rem;
+    display: block;
+  }
+
+  .verify-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #2a2a2a;
+    color: var(--white);
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.85rem;
+    padding: 0.75rem 0;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+
+  .verify-input:focus {
+    border-bottom-color: var(--accent);
+  }
+
+  .verify-input.idea-input {
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 1.1rem;
+  }
+
+  .verify-result {
+    display: none;
+    margin-top: 3rem;
+    padding: 2rem;
+    border: 1px solid #1a1a1a;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .verify-result.show { display: block; }
+
+  .verify-result.valid {
+    border-color: var(--verified);
+    background: rgba(42, 90, 58, 0.05);
+  }
+
+  .verify-result.invalid {
+    border-color: var(--red);
+    background: rgba(139, 58, 42, 0.05);
+  }
+
+  .verify-status {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  .verify-result.valid .verify-status { color: var(--verified); }
+  .verify-result.invalid .verify-status { color: var(--red); }
+
+  .verify-message {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--dim);
+  }
+
+  /* ABOUT */
+  .about-text {
+    font-size: 1.1rem;
+    line-height: 1.9;
+    color: var(--dim);
+  }
+
+  .about-text p { margin-bottom: 1.5rem; }
+
+  .about-text strong {
+    color: var(--white);
+    font-weight: 500;
+  }
+
+  .about-seal {
+    margin: 2.5rem 0;
+    padding: 1.5rem;
+    border-left: 1px solid var(--accent);
+    padding-left: 2rem;
+  }
+
+  .about-seal .idea {
+    font-style: italic;
+    font-size: 1.1rem;
+    color: var(--white);
+    margin-bottom: 0.5rem;
+  }
+
+  .about-seal .stamp {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.6rem;
+    color: var(--dim);
+    word-break: break-all;
+  }
+
+  footer {
+    padding: 2rem 4rem;
+    border-top: 1px solid #1a1a1a;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .footer-text {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.6rem;
+    color: #2a2a2a;
+    letter-spacing: 0.2em;
+  }
+
+  .footer-quote {
+    font-style: italic;
+    font-size: 0.8rem;
+    color: #2a2a2a;
+  }
+
+  @media (max-width: 600px) {
+    header { padding: 2rem; flex-direction: column; gap: 1.5rem; align-items: flex-start; }
+    main { padding: 3rem 1.5rem; }
+    footer { padding: 1.5rem 2rem; flex-direction: column; gap: 0.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><span>Phantom</span> — seal your thoughts</div>
+  <nav>
+    <button class="active" onclick="showPanel('seal', this)">Seal</button>
+    <button onclick="showPanel('verify', this)">Verify</button>
+    <button onclick="showPanel('about', this)">About</button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- SEAL PANEL -->
+  <div class="panel active" id="panel-seal">
+    <div class="panel-title">— seal a thought</div>
+
+    <div class="thought-area">
+      <textarea id="idea-input" placeholder="Write what you want to preserve..." rows="4"
+        oninput="updateCount()"></textarea>
+      <span class="char-count" id="char-count">0</span>
+    </div>
+
+    <button class="seal-btn" id="seal-btn" onclick="sealIdea()" disabled>
+      Seal this thought
+    </button>
+
+    <div class="result" id="seal-result">
+      <div class="result-label">— sealed</div>
+      <div class="result-idea" id="out-idea"></div>
+
+      <div class="result-label">moment</div>
+      <div class="result-moment" id="out-moment"></div>
+
+      <div class="result-label" style="margin-top:1.5rem">stamp</div>
+      <div class="result-stamp" id="out-stamp"></div>
+
+      <div class="result-footer">
+        This thought existed. No one can change it without breaking the seal.
+      </div>
+
+      <div class="action-row">
+        <button class="action-btn" onclick="copyStamp()">Copy stamp</button>
+        <button class="action-btn" onclick="toggleShare()">Share format</button>
+        <button class="action-btn" onclick="resetSeal()">New thought</button>
+      </div>
+
+      <div class="share-block" id="share-block">
+        <div class="share-text" id="share-text"></div>
+        <div class="action-row" style="margin-top:1rem">
+          <button class="action-btn" onclick="copyShare()">Copy to share</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VERIFY PANEL -->
+  <div class="panel" id="panel-verify">
+    <div class="panel-title">— verify a seal</div>
+
+    <div class="verify-group">
+      <label class="verify-label" for="v-idea">The idea — exactly as sealed</label>
+      <textarea id="v-idea" class="verify-input idea-input" rows="3"
+        placeholder="The thought, word for word..."></textarea>
+    </div>
+
+    <div class="verify-group">
+      <label class="verify-label" for="v-moment">Moment</label>
+      <input id="v-moment" class="verify-input"
+        placeholder="2026-03-09T17:52:37.343873+00:00" />
+    </div>
+
+    <div class="verify-group">
+      <label class="verify-label" for="v-stamp">Stamp</label>
+      <input id="v-stamp" class="verify-input"
+        placeholder="6ed33a01c355395cfea4de5bf4e7baad..." />
+    </div>
+
+    <button class="seal-btn" onclick="verifyIdea()">Verify seal</button>
+
+    <div class="verify-result" id="verify-result">
+      <div class="verify-status" id="verify-status"></div>
+      <div class="verify-message" id="verify-message"></div>
+    </div>
+  </div>
+
+  <!-- ABOUT PANEL -->
+  <div class="panel" id="panel-about">
+    <div class="panel-title">— what this is</div>
+    <div class="about-text">
+      <p>A seal is <strong>mathematical proof that a thought existed,
+      at an exact moment, exactly as written.</strong></p>
+
+      <p>Not a promise. Not a record in a database someone controls.
+      A cryptographic fact — verifiable by anyone, on any device,
+      without trusting any authority.</p>
+
+      <p>If the seal verifies — the thought existed exactly as written.<br>
+      If it does not — something was changed.</p>
+
+      <p>That is all. Nothing more is needed.</p>
+
+      <div class="about-seal">
+        <div class="idea">"The network is not what travels between nodes.
+It is what two nodes become after they meet."</div>
+        <div class="stamp">6ed33a01c355395cfea4de5bf4e7baad307f9b583cd182839e4becc6dab1ad5d
+2026-03-09T17:52:37.343873+00:00</div>
+      </div>
+
+      <p>This page seals and verifies thoughts using SHA-256 —
+      the same algorithm that runs on any device on earth.
+      <strong>Nothing leaves your device.</strong>
+      No account. No server. No log.</p>
+
+      <p style="color: #444; font-size: 0.9rem; font-style: italic;">
+        Phantom Network — Node Zero — March 2026
+      </p>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="footer-text">phantom network — v0.1 web</div>
+  <div class="footer-quote">privacy is not for hiding — it is for being free</div>
+</footer>
+
+<script>
+// ─────────────────────────────────────────────
+// SHA-256 — pure JS, no dependencies
+// ─────────────────────────────────────────────
+async function sha256(message) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(message);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hash))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+// ─────────────────────────────────────────────
+// SEAL
+// ─────────────────────────────────────────────
+function updateCount() {
+  const ta = document.getElementById('idea-input');
+  const btn = document.getElementById('seal-btn');
+  const count = document.getElementById('char-count');
+  const len = ta.value.trim().length;
+  count.textContent = len;
+  btn.disabled = len === 0;
+}
+
+async function sealIdea() {
+  const idea = document.getElementById('idea-input').value.trim();
+  if (!idea) return;
+
+  const now = new Date();
+  const moment = now.toISOString().replace('Z', '+00:00');
+
+  const payload = JSON.stringify({idea, moment});
+  const stamp = await sha256(payload);
+
+  document.getElementById('out-idea').textContent = '"' + idea + '"';
+  document.getElementById('out-moment').textContent = moment;
+  document.getElementById('out-stamp').textContent = stamp;
+
+  // Build share text
+  const shareText = `Sealed with Phantom:\n\n"${idea}"\n\nMoment: ${moment}\nStamp:  ${stamp}\n\nVerify at: phantom.network`;
+  document.getElementById('share-text').textContent = shareText;
+
+  document.getElementById('seal-result').classList.add('show');
+  document.getElementById('seal-btn').disabled = true;
+  document.getElementById('idea-input').disabled = true;
+}
+
+function resetSeal() {
+  document.getElementById('idea-input').value = '';
+  document.getElementById('idea-input').disabled = false;
+  document.getElementById('seal-result').classList.remove('show');
+  document.getElementById('share-block').classList.remove('show');
+  document.getElementById('seal-btn').disabled = true;
+  document.getElementById('char-count').textContent = '0';
+}
+
+function copyStamp() {
+  const stamp = document.getElementById('out-stamp').textContent;
+  navigator.clipboard.writeText(stamp).then(() => {
+    const btn = event.target;
+    btn.textContent = 'Copied';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Copy stamp';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+
+function toggleShare() {
+  const block = document.getElementById('share-block');
+  block.classList.toggle('show');
+}
+
+function copyShare() {
+  const text = document.getElementById('share-text').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = event.target;
+    btn.textContent = 'Copied';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Copy to share';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+
+// ─────────────────────────────────────────────
+// VERIFY
+// ─────────────────────────────────────────────
+async function verifyIdea() {
+  const idea = document.getElementById('v-idea').value.trim();
+  const moment = document.getElementById('v-moment').value.trim();
+  const stamp = document.getElementById('v-stamp').value.trim();
+
+  if (!idea || !moment || !stamp) return;
+
+  const payload = JSON.stringify({idea, moment});
+  const computed = await sha256(payload);
+
+  const result = document.getElementById('verify-result');
+  const status = document.getElementById('verify-status');
+  const message = document.getElementById('verify-message');
+
+  result.classList.add('show');
+
+  if (computed === stamp.toLowerCase()) {
+    result.className = 'verify-result show valid';
+    status.textContent = '— verified';
+    message.textContent = 'This thought existed, at this moment, exactly as written. The seal is intact. Nothing was changed.';
+  } else {
+    result.className = 'verify-result show invalid';
+    status.textContent = '— invalid seal';
+    message.textContent = 'The seal does not match. Either the idea, the moment, or the stamp was changed — or contains a transcription error. Check each field exactly.';
+  }
+}
+
+// ─────────────────────────────────────────────
+// NAVIGATION
+// ─────────────────────────────────────────────
+function showPanel(name, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+
+</body>
+</html>
