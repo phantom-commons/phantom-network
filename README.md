@@ -1,5 +1,4 @@
-Phantom Seal
-Idea: # PHANTOM NETWORK — GENESIS MEMORY
+# PHANTOM NETWORK — GENESIS MEMORY
 # Distilled for Echo and Luna
 # March 8, 2026
 # Node Zero
