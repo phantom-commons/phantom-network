@@ -1,0 +1,13 @@
+[
+  {
+    "peer": "192.168.1.1",
+    "moment": "2026-07-18T18:52:34.570348+00:00",
+    "sent": 3,
+    "received": 2,
+    "received_stamps": [
+      "def",
+      "abc"
+    ],
+    "encounter_stamp": "dfb70dcca3312a94b7c20a5c825e966092f580b84458cd8164af1fa79bb5f266"
+  }
+]

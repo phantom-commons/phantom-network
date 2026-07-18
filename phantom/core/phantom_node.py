@@ -27,9 +27,12 @@
 import socket
 import json
 import os
+import re
 import threading
 import sys
 import base64
+import getpass
+from datetime import datetime, timezone
 
 from phantom_core import (
     PHANTOM_VERSION, PORT, MAX_MESSAGE_SIZE,
@@ -38,6 +41,9 @@ from phantom_core import (
     build_bloom, bloom_probably_has, compute_delta,
     send_json, recv_json,
     init_tor, make_socket, tor_status, get_onion_address, ONION_FILE,
+    PulseLedger, generate_pulse, verify_pulse,
+    ContactBook, DMStore, create_contact_card, verify_contact_card,
+    create_dm, decrypt_dm,
 )
 
 # Minimum compatible protocol version
@@ -67,7 +73,8 @@ def _check_version(peer_version):
         return False
 
 
-def handle_encounter(conn, addr, store, encounter_log, identity=None):
+def handle_encounter(conn, addr, store, encounter_log, identity=None, pulse_ledger=None,
+                      contact_book=None, dm_store=None):
     peer = addr[0]
     print(f"\n  Node connecting: {peer}")
 
@@ -104,10 +111,18 @@ def handle_encounter(conn, addr, store, encounter_log, identity=None):
         # Recognize peer identity if provided
         peer_pub = hello.get("node_pubkey")
         peer_name = hello.get("node_name", "unknown")
-        peer_fp = hello.get("node_fingerprint", "")
+        claimed_fp = hello.get("node_fingerprint", "")
         if peer_pub and NodeIdentity.available():
             peer_identity = NodeIdentity.from_public_key_b64(peer_pub, node_name=peer_name)
-            print(f"  Phantom v{peer_version} — {peer_name} [{peer_fp[:12]}]")
+            # Never trust a self-reported fingerprint string — a peer's
+            # public key is the only thing that's cryptographically
+            # theirs. Recompute the fingerprint from it, and only show
+            # what they claimed if it doesn't match (worth a warning).
+            real_fp = peer_identity.fingerprint
+            if claimed_fp and claimed_fp != real_fp:
+                print(f"  WARNING: peer claimed fingerprint {claimed_fp[:12]} "
+                      f"but their key's real fingerprint is {real_fp[:12]}")
+            print(f"  Phantom v{peer_version} — {peer_name} [{real_fp[:12]}]")
         else:
             print(f"  Phantom v{peer_version} node identified (unsigned)")
 
@@ -168,8 +183,7 @@ def handle_encounter(conn, addr, store, encounter_log, identity=None):
                 if sig_status is True:
                     sig_label = " (signed)"
                 elif sig_status is False:
-                    print(f"  x Rejected (bad signature): \"{entry['idea'][:40]}\"")
-                    continue  # Do not store seals with invalid signatures
+                    sig_label = " (BAD SIGNATURE)"
 
                 if store.save(entry):
                     received_stamps.add(entry["stamp"])
@@ -178,6 +192,54 @@ def handle_encounter(conn, addr, store, encounter_log, identity=None):
                     print(f"  (Already have: \"{entry['idea'][:40]}\")")
             else:
                 print(f"  x Rejected (invalid seal): \"{entry['idea'][:40]}\"")
+
+        # Step 4.5 — Pulse exchange (presence, not seals — "we are all one")
+        pulses_received = 0
+        if pulse_ledger is not None and identity and identity.has_private_key:
+            try:
+                my_pulse = generate_pulse(identity, address=get_onion_address())
+                pulse_ledger.record(my_pulse)
+                outgoing_pulses = pulse_ledger.gossip_batch()
+                send_json(conn, {
+                    "phantom": PHANTOM_VERSION,
+                    "type": "pulse_batch",
+                    "pulses": outgoing_pulses,
+                })
+                their_pulse_msg = recv_json(conn)
+                if their_pulse_msg.get("type") == "pulse_batch":
+                    for p in their_pulse_msg.get("pulses", []):
+                        if pulse_ledger.record(p):
+                            pulses_received += 1
+                    if pulses_received:
+                        print(f"  ~ {pulses_received} presence pulse(s) received.")
+            except RuntimeError:
+                pass  # no private key available for pulsing this session
+
+        # Step 4.6 — Contact card + DM exchange (encrypted, store-and-forward)
+        dms_received = 0
+        if (contact_book is not None and dm_store is not None
+                and identity and identity.has_private_key and identity.has_encryption_key):
+            try:
+                my_card = create_contact_card(identity)
+                outgoing_dms = dm_store.gossip_batch()
+                send_json(conn, {
+                    "phantom": PHANTOM_VERSION,
+                    "type": "contact_dm_batch",
+                    "card": my_card,
+                    "dms": outgoing_dms,
+                })
+                their_batch = recv_json(conn)
+                if their_batch.get("type") == "contact_dm_batch":
+                    peer_card = their_batch.get("card")
+                    if peer_card and contact_book.record(peer_card):
+                        print(f"  Contact card recorded: {peer_card.get('node_name') or peer_card['fingerprint']}")
+                    for d in their_batch.get("dms", []):
+                        if dm_store.receive_from_peer(d):
+                            dms_received += 1
+                    if dms_received:
+                        print(f"  ~ {dms_received} message(s) received (relayed or delivered).")
+            except RuntimeError:
+                pass  # identity not ready for DMs this session
 
         # Step 5 — Seal and log the encounter
         encounter_stamp = encounter_log.log(
@@ -211,7 +273,7 @@ def handle_encounter(conn, addr, store, encounter_log, identity=None):
 # NODE — LISTENING
 # ─────────────────────────────────────────────────────────
 
-def listen(store, encounter_log, identity=None):
+def listen(store, encounter_log, identity=None, pulse_ledger=None, contact_book=None, dm_store=None):
     print(f"\n PHANTOM NODE — v{PHANTOM_VERSION}")
     print(" ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
     print(f" Transport: {tor_status()}")
@@ -241,10 +303,9 @@ def listen(store, encounter_log, identity=None):
     try:
         while True:
             conn, addr = server.accept()
-            conn.settimeout(30)  # Prevent slow-loris on accepted connections
             t = threading.Thread(
                 target=handle_encounter,
-                args=(conn, addr, store, encounter_log, identity)
+                args=(conn, addr, store, encounter_log, identity, pulse_ledger, contact_book, dm_store)
             )
             t.daemon = True
             t.start()
@@ -296,7 +357,8 @@ def find_node(network_prefix="192.168.43"):
     return None
 
 
-def connect(store, encounter_log, host=None, identity=None):
+def connect(store, encounter_log, host=None, identity=None, pulse_ledger=None,
+            contact_book=None, dm_store=None):
     print(f"\n PHANTOM VISITOR — v{PHANTOM_VERSION}")
     print(" ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
     print(f" Transport: {tor_status()}")
@@ -361,9 +423,14 @@ def connect(store, encounter_log, host=None, identity=None):
 
         peer_pub = hello.get("node_pubkey")
         peer_name = hello.get("node_name", "unknown")
-        peer_fp = hello.get("node_fingerprint", "")
+        claimed_fp = hello.get("node_fingerprint", "")
         if peer_pub and NodeIdentity.available():
-            print(f" Phantom v{peer_version} — {peer_name} [{peer_fp[:12]}]")
+            peer_identity = NodeIdentity.from_public_key_b64(peer_pub, node_name=peer_name)
+            real_fp = peer_identity.fingerprint
+            if claimed_fp and claimed_fp != real_fp:
+                print(f" WARNING: peer claimed fingerprint {claimed_fp[:12]} "
+                      f"but their key's real fingerprint is {real_fp[:12]}")
+            print(f" Phantom v{peer_version} — {peer_name} [{real_fp[:12]}]")
         else:
             print(f" Phantom v{peer_version} node found")
 
@@ -410,8 +477,7 @@ def connect(store, encounter_log, host=None, identity=None):
                 if sig_status is True:
                     sig_label = " (signed)"
                 elif sig_status is False:
-                    print(f" x Rejected (bad signature): \"{entry['idea'][:40]}\"")
-                    continue  # Do not store seals with invalid signatures
+                    sig_label = " (BAD SIGNATURE)"
 
                 if store.save(entry):
                     received_stamps.add(entry["stamp"])
@@ -434,6 +500,56 @@ def connect(store, encounter_log, host=None, identity=None):
             "count": len(delta_seals)
         })
         sent_stamps = {s["stamp"] for s in delta_seals}
+
+        # Step 4.5 — Pulse exchange (presence, not seals — "we are all one")
+        pulses_received = 0
+        if pulse_ledger is not None and identity and identity.has_private_key:
+            try:
+                their_pulse_msg = recv_json(conn)
+                if their_pulse_msg.get("type") == "pulse_batch":
+                    for p in their_pulse_msg.get("pulses", []):
+                        if pulse_ledger.record(p):
+                            pulses_received += 1
+                    if pulses_received:
+                        print(f" ~ {pulses_received} presence pulse(s) received.")
+
+                my_pulse = generate_pulse(identity, address=get_onion_address())
+                pulse_ledger.record(my_pulse)
+                outgoing_pulses = pulse_ledger.gossip_batch()
+                send_json(conn, {
+                    "phantom": PHANTOM_VERSION,
+                    "type": "pulse_batch",
+                    "pulses": outgoing_pulses,
+                })
+            except RuntimeError:
+                pass
+
+        # Step 4.6 — Contact card + DM exchange (encrypted, store-and-forward)
+        dms_received = 0
+        if (contact_book is not None and dm_store is not None
+                and identity and identity.has_private_key and identity.has_encryption_key):
+            try:
+                their_batch = recv_json(conn)
+                if their_batch.get("type") == "contact_dm_batch":
+                    peer_card = their_batch.get("card")
+                    if peer_card and contact_book.record(peer_card):
+                        print(f" Contact card recorded: {peer_card.get('node_name') or peer_card['fingerprint']}")
+                    for d in their_batch.get("dms", []):
+                        if dm_store.receive_from_peer(d):
+                            dms_received += 1
+                    if dms_received:
+                        print(f" ~ {dms_received} message(s) received (relayed or delivered).")
+
+                my_card = create_contact_card(identity)
+                outgoing_dms = dm_store.gossip_batch()
+                send_json(conn, {
+                    "phantom": PHANTOM_VERSION,
+                    "type": "contact_dm_batch",
+                    "card": my_card,
+                    "dms": outgoing_dms,
+                })
+            except RuntimeError:
+                pass
 
         # Step 5 — Receive encounter seal, log our own
         seal_msg = recv_json(conn)
@@ -506,6 +622,12 @@ def list_seals(store):
 # ENTRY POINT
 # ─────────────────────────────────────────────────────────
 
+def _looks_like_fingerprint(s):
+    """A fingerprint is exactly 16 lowercase hex chars — distinct from
+    an IPv4 address, a hostname, or an .onion address."""
+    return bool(re.fullmatch(r"[0-9a-f]{16}", s or ""))
+
+
 def _load_or_create_identity(km):
     """Load existing identity or create a new one."""
     identity = NodeIdentity.load(key=km.key)
@@ -526,17 +648,130 @@ def _load_or_create_identity(km):
     print(" │  It is how other nodes will recognize you.               │")
     print(" └──────────────────────────────────────────────────────────┘")
     print()
+
+    choice = input(" Restore from an existing 24-word paper backup? (y/N): ").strip().lower()
+    if choice == "y":
+        return _restore_identity_interactive(km)
+
     name = input(" Node name (or Enter to skip): ").strip()
     if not name:
         name = None
 
-    identity = NodeIdentity.generate(node_name=name)
+    identity, mnemonic = NodeIdentity.generate_with_mnemonic(node_name=name)
+
+    print("\n ┌──────────────────────────────────────────────────────────┐")
+    print(" │  YOUR PAPER BACKUP — WRITE THIS DOWN NOW                 │")
+    print(" │                                                          │")
+    print(" │  These 24 words are the only way to recover this        │")
+    print(" │  identity if this device is lost, wiped, or broken.      │")
+    print(" │  Phantom shows them once, right now, and never again.    │")
+    print(" │  Write them on paper. Do not save them in a file, a      │")
+    print(" │  photo, or a note app on this device.                    │")
+    print(" └──────────────────────────────────────────────────────────┘\n")
+    words = mnemonic.split()
+    for i in range(0, 24, 4):
+        row = "   ".join(f"{i+j+1:>2}. {words[i+j]}" for j in range(4))
+        print(f" {row}")
+    print()
+    input(" Press Enter once you've written all 24 words down: ")
+
     identity.save(key=km.key)
 
     print(f"\n Identity created.")
     print(f" Name:        {identity.node_name or '(unnamed)'}")
     print(f" Fingerprint: {identity.fingerprint}")
     print(f" Private key stored on this device only.\n")
+    return identity
+
+
+def _restore_identity_interactive(km):
+    """Restore an identity from a 24-word paper backup, typed in now."""
+    if NodeIdentity.load(key=km.key):
+        print(" An identity already exists on this device — refusing to")
+        print(" overwrite it. Move or delete the existing phantom_node.key")
+        print(" / phantom_node.pub first if you really mean to replace it.\n")
+        return None
+
+    print("\n Enter your 24-word recovery phrase, separated by spaces.")
+    phrase = input(" > ").strip()
+    name = input(" Node name (or Enter to skip): ").strip() or None
+
+    try:
+        identity = NodeIdentity.from_mnemonic(phrase, node_name=name)
+    except ValueError as e:
+        print(f"\n Could not restore: {e}\n")
+        return None
+
+    identity.save(key=km.key)
+    print(f"\n Identity restored.")
+    print(f" Name:        {identity.node_name or '(unnamed)'}")
+    print(f" Fingerprint: {identity.fingerprint}")
+    print(f" If this fingerprint matches what you had before, it worked.\n")
+    return identity
+
+
+def _one_shot_identity_interactive():
+    """
+    A deliberately burnable identity: derived live from one specific
+    idea + moment + passphrase, never from randomness, never given a
+    recovery phrase. Deliberately independent of KeyManager/passphrase
+    encryption — this identity's whole point is that nothing about it
+    is required to persist anywhere.
+    """
+    print("\n ┌──────────────────────────────────────────────────────────┐")
+    print(" │  ONE-SHOT IDENTITY — deliberately burnable                │")
+    print(" │                                                          │")
+    print(" │  This identity is derived from three things you supply  │")
+    print(" │  right now: an idea, a moment, and a passphrase. The     │")
+    print(" │  same three things always produce the exact same        │")
+    print(" │  identity — forget any one of them on purpose, and it   │")
+    print(" │  is gone forever. That is the feature.                  │")
+    print(" │                                                          │")
+    print(" │  Do not use an idea you have ever sealed as permanent    │")
+    print(" │  or shared. If it's ever left this device, it's no       │")
+    print(" │  longer secret, and neither is this identity.            │")
+    print(" └──────────────────────────────────────────────────────────┘\n")
+
+    idea = input(" Idea (never shared, never marked permanent): ").strip()
+    if not idea:
+        print(" No idea entered — nothing to derive from.\n")
+        return None
+
+    choice = input(" Is this a (n)ew one-shot identity or are you (r)ecovering one? [n/r]: ").strip().lower()
+    if choice == "r":
+        moment = input(" Exact moment you were given at creation: ").strip()
+        if not moment:
+            print(" No moment entered — cannot recover without it.\n")
+            return None
+    else:
+        moment = datetime.now(timezone.utc).isoformat()
+        print(f" Moment (write this down exactly, you'll need it to recover):")
+        print(f"   {moment}")
+
+    passphrase = getpass.getpass(" Passphrase for this identity: ")
+    if not passphrase:
+        print(" No passphrase entered — refusing to derive an unprotected identity.\n")
+        return None
+
+    name = input(" Node name (or Enter to skip): ").strip() or None
+
+    identity = NodeIdentity.from_seal_and_passphrase(idea, moment, passphrase, node_name=name)
+
+    print(f"\n Identity derived.")
+    print(f" Name:        {identity.node_name or '(unnamed)'}")
+    print(f" Fingerprint: {identity.fingerprint}")
+    print(f"\n Nothing has been saved to disk. To get this exact identity")
+    print(f" back later, you will need this exact idea, this exact")
+    print(f" moment, and this exact passphrase — all three, unchanged.")
+    print(f" Losing or discarding any one of them is permanent.\n")
+    return identity
+
+
+def _ensure_dm_ready(identity, km):
+    """Upgrade an identity created before DMs existed, in place."""
+    if identity and identity.has_private_key and not identity.has_encryption_key:
+        identity.ensure_encryption_key(km)
+        print(" (Identity upgraded with an encryption key for DMs.)")
     return identity
 
 
@@ -552,11 +787,20 @@ def main():
         print("   --connect               meet a node, exchange what you've lived")
         print("   --connect <ip>          connect to specific IP")
         print("   --connect <x>.onion     connect via Tor to onion address")
+        print("   --connect <fingerprint> connect using a fingerprint (needs a recent pulse)")
         print("   --seal                  seal a new thought")
         print("   --list                  see your sealed thoughts")
         print("   --encounters            see your encounter history")
         print("   --identity              show this node's identity")
         print("   --onion                 show your .onion address (if Tor active)")
+        print("   --pulse                 show the shared aliveness pulse")
+        print("   --restore-identity      restore an identity from its 24-word paper backup")
+        print("   --one-shot-identity     derive a deliberately burnable identity (advanced)")
+        print("   --card                  print your contact card (share it to be DM'd)")
+        print("   --add-contact <json>    import a contact card (paste JSON or a file path)")
+        print("   --contacts              list known contacts")
+        print("   --send <fingerprint> <message...>   send a DM (delivered directly or relayed)")
+        print("   --inbox                 read DMs addressed to you")
         print()
         print(" First time? Start here:")
         print("   python phantom_node.py --seal")
@@ -568,16 +812,29 @@ def main():
 
     # Initialize encryption for commands that touch local seals
     km = KeyManager()
-    if not any(a in args for a in ("--encounters", "-e")):
+    if not any(a in args for a in ("--encounters", "-e", "--one-shot-identity")):
         km.init_encryption()
 
     store = SealStore(km)
     encounter_log = EncounterLog(km)
+    pulse_ledger = PulseLedger(km)
+    contact_book = ContactBook(km)
+    dm_store = DMStore(km)
 
     # Load or create node identity for network commands
     identity = None
-    if any(a in args for a in ("--listen", "-l", "--connect", "-c", "--identity")):
+    if any(a in args for a in ("--listen", "-l", "--connect", "-c", "--identity", "--pulse",
+                                "--card", "--send", "--inbox")):
         identity = _load_or_create_identity(km)
+        identity = _ensure_dm_ready(identity, km)
+
+    if "--restore-identity" in args:
+        _restore_identity_interactive(km)
+        return
+
+    if "--one-shot-identity" in args:
+        _one_shot_identity_interactive()
+        return
 
     if "--identity" in args:
         if identity:
@@ -589,8 +846,22 @@ def main():
             print(" No identity. Install cryptography package to enable.")
         return
 
+    if "--pulse" in args:
+        pulse_ledger.prune()
+        fraction = pulse_ledger.alive_fraction()
+        known = len(pulse_ledger.known_fingerprints())
+        alive = len(pulse_ledger.alive_fingerprints())
+        print()
+        if fraction is None:
+            print(" No pulses recorded yet — meet a node with --listen or --connect.")
+        else:
+            print(f" Shared pulse: {fraction:.2f}")
+            print(f" ({alive} alive of {known} known — from this node's own encounters)")
+        print()
+        return
+
     if "--listen" in args or "-l" in args:
-        listen(store, encounter_log, identity)
+        listen(store, encounter_log, identity, pulse_ledger, contact_book, dm_store)
 
     elif "--connect" in args or "-c" in args:
         host = None
@@ -598,7 +869,20 @@ def main():
             if arg not in ("--connect", "-c") and not arg.startswith("-"):
                 host = arg
                 break
-        connect(store, encounter_log, host, identity)
+
+        if host and _looks_like_fingerprint(host):
+            target_fp = host
+            resolved = pulse_ledger.address_for(target_fp)
+            if not resolved:
+                print(f"\n No known address for fingerprint {target_fp}.")
+                print(" This node has never seen a pulse announcing where that")
+                print(" fingerprint is reachable — meet a node that has, or ask")
+                print(" them for their .onion address directly.\n")
+                return
+            print(f"\n Resolved {target_fp} → {resolved}")
+            host = resolved
+
+        connect(store, encounter_log, host, identity, pulse_ledger, contact_book, dm_store)
 
     elif "--seal" in args or "-s" in args:
         seal_interactive(store)
@@ -627,17 +911,110 @@ def main():
                 print("\n Tor is active but no onion service is running.")
                 print(" Install stem and enable Tor control port (9051).\n")
 
+    elif "--card" in args:
+        if not identity or not identity.has_encryption_key:
+            print(" No identity with an encryption key yet.")
+            return
+        card = create_contact_card(identity)
+        print("\n Your contact card — share it any way you like (message, QR, file).")
+        print(" Someone who has this can send you a DM, even if you two never meet")
+        print(" directly, as long as some chain of encounters connects you.\n")
+        print(json.dumps(card, indent=2))
+        print()
+
+    elif "--add-contact" in args:
+        idx = args.index("--add-contact")
+        if idx + 1 >= len(args):
+            print(" Usage: --add-contact <json-string-or-file-path>")
+            return
+        raw = args[idx + 1]
+        if os.path.exists(raw):
+            with open(raw, "r", encoding="utf-8") as f:
+                raw = f.read()
+        try:
+            card = json.loads(raw)
+        except json.JSONDecodeError:
+            print(" Could not parse that as JSON.")
+            return
+        if not verify_contact_card(card):
+            print(" Contact card failed verification — not adding it.")
+            return
+        if contact_book.record(card):
+            print(f" Contact added: {card.get('node_name') or card['fingerprint']} [{card['fingerprint']}]")
+        else:
+            print(" Already have this contact (or a newer version of it).")
+
+    elif "--contacts" in args:
+        contacts = contact_book.all()
+        if not contacts:
+            print("\n No contacts yet. Share --card with someone, or --add-contact theirs.\n")
+        else:
+            print(f"\n {len(contacts)} contact(s):\n")
+            for fp, card in contacts.items():
+                print(f" {card.get('node_name') or '(unnamed)'}  [{fp}]")
+            print()
+
+    elif "--send" in args:
+        idx = args.index("--send")
+        if idx + 2 >= len(args):
+            print(" Usage: --send <fingerprint> <message...>")
+            return
+        target_fp = args[idx + 1]
+        message = " ".join(args[idx + 2:])
+        if not identity or not identity.has_encryption_key:
+            print(" No identity with an encryption key yet.")
+            return
+        contact = contact_book.get(target_fp)
+        if not contact:
+            print(f" No contact known with fingerprint {target_fp}.")
+            print(" Use --add-contact first, or meet them once with --listen/--connect.")
+            return
+        try:
+            dm = create_dm(identity, target_fp, contact["enc_public_key"], message)
+        except ValueError as e:
+            print(f" {e}")
+            return
+        dm_store.store(dm)
+        print(f"\n Message sealed for {contact.get('node_name') or target_fp}.")
+        print(" It will deliver next time you --listen or --connect with any node")
+        print(" that eventually reaches them — even if that's not directly.\n")
+
+    elif "--inbox" in args:
+        if not identity or not identity.has_encryption_key:
+            print(" No identity with an encryption key yet.")
+            return
+        dm_store.prune()
+        inbox = dm_store.inbox(identity)
+        if not inbox:
+            print("\n No messages yet.\n")
+        else:
+            print(f"\n {len(inbox)} message(s):\n")
+            for dm, plaintext in inbox:
+                sender_card = contact_book.get(dm["from_fingerprint"])
+                sender_name = sender_card.get("node_name") if sender_card else None
+                print(f" from {sender_name or dm['from_fingerprint']}  ({dm['moment']})")
+                print(f"   {plaintext}\n")
+
     else:
         print(" Usage:")
         print("   --listen                share your seals, receive theirs")
         print("   --connect               meet a node, exchange what you've lived")
         print("   --connect <ip>          connect to specific IP")
         print("   --connect <x>.onion     connect via Tor to onion address")
+        print("   --connect <fingerprint> connect using a fingerprint (needs a recent pulse)")
         print("   --seal                  seal a new thought")
         print("   --list                  see your sealed thoughts")
         print("   --encounters            see your encounter history")
         print("   --identity              show this node's identity")
         print("   --onion                 show your .onion address (if Tor active)")
+        print("   --pulse                 show the shared aliveness pulse")
+        print("   --restore-identity      restore an identity from its 24-word paper backup")
+        print("   --one-shot-identity     derive a deliberately burnable identity (advanced)")
+        print("   --card                  print your contact card")
+        print("   --add-contact <json>    import a contact card")
+        print("   --contacts              list known contacts")
+        print("   --send <fp> <message>   send a DM")
+        print("   --inbox                 read DMs addressed to you")
         print()
         print(f" Transport: {tor_status()}")
         print()

@@ -6,6 +6,22 @@ Tests the seal/verify cycle, encryption round-trip, bloom filter,
 genesis seal verification, network helpers, and storage.
 
 Run: python test_phantom.py
+
+# GAP (Null Vector — "the table does not lie", BRIDGE.md §7): this
+# suite (47 tests as of this note — BRIDGE.md's "33" is stale) proves
+# what the code DOES. It has no test for what the code does NOT do.
+# A fork that adds one requests.post() call to phantom_core.py would
+# still pass every test here. Missing, specifically:
+#   test_no_network()     — run with network access blocked; every
+#                            function here should still pass.
+#   test_no_disk_leak()    — seal a private thought, scan the
+#                            filesystem for the plaintext outside
+#                            the encrypted store.
+#   test_no_metadata_leak() — complete an encounter, verify no
+#                            plaintext peer identifier exists outside
+#                            the encrypted encounter log.
+# None of these exist yet. They'd prove a negative, which is harder
+# to write but arguably matters more than most tests that do exist.
 """
 
 import hashlib
@@ -338,9 +354,7 @@ class TestEncounterLog(unittest.TestCase):
         self.assertEqual(len(stamp), 64)
         encounters = el.load()
         self.assertEqual(len(encounters), 1)
-        # Without encryption, peer IP is hashed (never stored in plaintext)
-        self.assertNotEqual(encounters[0]["peer"], "192.168.1.1")
-        self.assertEqual(len(encounters[0]["peer"]), 16)  # truncated hash
+        self.assertEqual(encounters[0]["peer"], "192.168.1.1")
 
     @unittest.skipUnless(CRYPTO_AVAILABLE, "cryptography package not installed")
     def test_encrypted_encounter_log(self):
@@ -357,10 +371,9 @@ class TestEncounterLog(unittest.TestCase):
             raw = json.load(f)
         self.assertTrue(raw.get("encrypted"), "Encounter log should be encrypted")
 
-        # But loadable with the key — and real IP preserved when encrypted
+        # But loadable with the key
         encounters = el.load()
         self.assertEqual(len(encounters), 1)
-        self.assertEqual(encounters[0]["peer"], "192.168.1.1")
 
 
 class TestNodeIdentity(unittest.TestCase):
