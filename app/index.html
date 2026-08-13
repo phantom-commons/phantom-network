@@ -1,18 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#0a0a0a">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="manifest" href="/manifest.json">
-<title>Phantom</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phantom — Workbench / Commons (prototipo)</title>
 <style>
   /* ══════════════════════════════════════════
-     PHANTOM — ZERO INTERNET
-     No CDN. No fonts. No API. No server.
-     System fonts. On-device. Yours.
+     PHANTOM — PROTOTIPO WORKBENCH / COMMONS
+     Sin CDN. Sin fuentes externas. Sin API todavía.
+     Fuentes de sistema. Datos de muestra. Para cablear
+     con el daemon real (rutas + apiFetch) después.
      ══════════════════════════════════════════ */
 
   :root {
@@ -39,957 +36,621 @@
     --serif: 'Iowan Old Style', 'Palatino Linotype', 'Palatino', Georgia, serif;
   }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
   body {
-    background: var(--bg);
-    color: var(--cream);
-    font-family: var(--serif);
-    min-height: 100vh;
-    min-height: 100dvh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    user-select: none;
-  }
-
-  /* ── HEADER ── */
-  .header {
-    padding: 10px 16px 7px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-    padding-top: max(10px, env(safe-area-inset-top));
-  }
-
-  .logo {
-    font-family: var(--mono);
-    font-size: 10px;
-    letter-spacing: 0.35em;
-    text-transform: uppercase;
-    color: var(--dim);
-  }
-  .logo span { color: var(--cream); }
-
-  .header-right {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .node-id-badge {
-    font-family: var(--mono);
-    font-size: 8px;
-    color: var(--muted);
-    background: var(--surface);
-    padding: 3px 8px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    cursor: pointer;
-  }
-
-  .node-dot {
-    width: 5px; height: 5px;
-    border-radius: 50%;
-    background: var(--dim);
-    transition: background 0.3s;
-    flex-shrink: 0;
-  }
-  .node-dot.on { background: var(--green); box-shadow: 0 0 6px rgba(90,154,106,0.5); }
-  .node-dot.scan { background: var(--accent); animation: pulse 1.2s infinite; }
-
-  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.3;} }
-
-  /* ── MAIN ── */
-  .main {
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .view { display: none; min-height: 100%; padding: 0 16px 20px; }
-  .view.active { display: flex; flex-direction: column; }
-
-  /* ── NAV ── */
-  .nav {
-    display: flex;
-    border-top: 1px solid var(--border);
-    flex-shrink: 0;
-    padding-bottom: max(6px, env(safe-area-inset-bottom));
-    background: var(--bg);
-  }
-
-  .nav button {
-    flex: 1; background: none; border: none;
-    padding: 10px 0 6px;
-    display: flex; flex-direction: column;
-    align-items: center; gap: 3px; cursor: pointer;
-  }
-
-  .nav button .nl {
-    font-family: var(--mono);
-    font-size: 7px; letter-spacing: 0.18em;
-    text-transform: uppercase; color: var(--dim);
-    transition: color 0.2s;
-  }
-
-  .nav button.active .nl { color: var(--warm); }
-  .nav button svg { opacity: 0.4; transition: opacity 0.2s; }
-  .nav button.active svg { opacity: 1; }
-
-  /* ── BUTTONS ── */
-  .btn {
-    font-family: var(--mono);
-    font-size: 9px; letter-spacing: 0.2em;
-    text-transform: uppercase;
-    padding: 10px 18px; border-radius: 3px;
-    border: none; cursor: pointer;
-    transition: opacity 0.2s, transform 0.1s;
-  }
-  .btn:active { transform: scale(0.97); }
-  .btn-a { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(212,165,116,0.25); }
-  .btn-a:disabled { opacity: 0.3; cursor: default; }
-  .btn-p { background: var(--accent); color: var(--bg); }
-  .btn-g { background: none; color: var(--muted); border: 1px solid var(--border); }
-  .btn-gr { background: var(--green-dim); color: var(--green); border: 1px solid rgba(90,154,106,0.25); }
-  .btn-bl { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(90,122,154,0.25); }
-  .btn-full { width: 100%; padding: 14px; }
-
-  /* ── SEAL VIEW ── */
-  .seal-view {
-    justify-content: center; align-items: center;
-    text-align: center; padding-top: 1.5rem;
-  }
-
-  .seal-prompt {
-    font-style: italic; font-size: 15px;
-    color: var(--muted); margin-bottom: 1.5rem;
-    padding: 0 16px; line-height: 1.7;
-  }
-
-  .seal-input {
-    width: 100%; min-height: 110px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    color: var(--cream);
-    font-family: var(--serif);
-    font-size: 16px; line-height: 1.7;
-    padding: 14px; resize: none; outline: none;
-    transition: border-color 0.3s;
-  }
-  .seal-input:focus { border-color: var(--accent); }
-  .seal-input::placeholder { color: var(--dim); font-style: italic; }
-
-  .input-footer {
-    display: flex; justify-content: space-between;
-    align-items: center; width: 100%; margin-top: 8px;
-  }
-
-  .input-count { font-family: var(--mono); font-size: 9px; color: var(--dim); }
-
-  /* ── MODE SELECT ── */
-  .mode-q {
-    font-style: italic; font-size: 14px;
-    color: var(--muted); text-align: center;
-    margin: 1.5rem 0 1.2rem;
-  }
-
-  .mode-opt {
-    border: 1px solid var(--border);
-    padding: 12px 14px; margin-bottom: 8px;
-    border-radius: 3px; cursor: pointer;
-    transition: border-color 0.3s, background 0.3s;
-    text-align: left;
-  }
-  .mode-opt.sel { border-color: var(--accent); background: rgba(212,165,116,0.04); }
-  .mode-opt h4 { font-family: var(--serif); font-size: 15px; font-weight: 500; color: var(--cream); margin-bottom: 3px; }
-  .mode-opt p { font-size: 12px; color: var(--dim); line-height: 1.5; }
-
-  .mode-footer { margin-top: 1.2rem; text-align: center; }
-
-  /* ── WARNING ── */
-  .warning-view { justify-content: center; align-items: center; text-align: center; padding: 2rem 24px; }
-  .warning-text { font-style: italic; font-size: 14px; color: var(--muted); line-height: 1.9; margin-bottom: 2rem; }
-  .warning-text strong { color: var(--warm); font-weight: 500; }
-
-  /* ── RESULT ── */
-  .result-view { align-items: center; text-align: center; padding-top: 1.5rem; }
-
-  .result-circle {
-    width: 50px; height: 50px; border-radius: 50%;
-    border: 1.5px solid var(--accent);
-    display: flex; align-items: center; justify-content: center;
-    margin-bottom: 1.2rem;
-    animation: scaleIn 0.5s ease-out;
-  }
-  @keyframes scaleIn { from{transform:scale(.5);opacity:0;} to{transform:scale(1);opacity:1;} }
-
-  .r-idea { font-style: italic; font-size: 14px; color: var(--warm); line-height: 1.7; margin-bottom: 1rem; padding: 0 10px; }
-  .r-stamp { font-family: var(--mono); font-size: 7.5px; color: var(--dim); word-break: break-all; line-height: 1.5; margin-bottom: .6rem; padding: 0 10px; letter-spacing: 0.04em; }
-  .r-moment { font-family: var(--mono); font-size: 8px; color: var(--dim); margin-bottom: .4rem; }
-  .r-mode { font-family: var(--mono); font-size: 7px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--green); margin-bottom: 1.5rem; }
-
-  .share-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 1rem; }
-
-  /* ── FEED ── */
-  .feed-header {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 14px 0 10px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 4px;
-  }
-
-  .feed-title {
-    font-family: var(--mono); font-size: 8px;
-    letter-spacing: 0.3em; text-transform: uppercase;
-    color: var(--dim);
-  }
-
-  .feed-count {
-    font-family: var(--mono); font-size: 8px; color: var(--dim);
-  }
-
-  .feed-empty {
-    text-align: center; padding: 3rem 1.5rem;
-    color: var(--dim); font-style: italic;
-    font-size: 14px; line-height: 1.8;
-  }
-
-  .feed-item {
-    border-bottom: 1px solid var(--border);
-    padding: 14px 0;
-    cursor: pointer;
-    transition: background 0.15s;
-  }
-  .feed-item:active { background: var(--surface); }
-
-  .fi-top {
-    display: flex; justify-content: space-between;
-    align-items: center; margin-bottom: 6px;
-  }
-
-  .fi-node {
-    font-family: var(--mono); font-size: 9px;
-    color: var(--accent); letter-spacing: 0.05em;
-  }
-
-  .fi-time {
-    font-family: var(--mono); font-size: 8px; color: var(--dim);
-  }
-
-  .fi-idea {
-    font-size: 14px; color: var(--cream);
-    line-height: 1.6; margin-bottom: 8px;
-  }
-
-  .fi-bottom {
-    display: flex; gap: 14px; align-items: center;
-  }
-
-  .fi-stat {
-    font-family: var(--mono); font-size: 8px; color: var(--dim);
-    display: flex; align-items: center; gap: 4px;
-  }
-
-  .fi-stat svg { opacity: 0.5; }
-
-  .fi-tag {
-    font-family: var(--mono); font-size: 7px;
-    letter-spacing: 0.12em; text-transform: uppercase;
-    padding: 2px 6px; border-radius: 2px;
-  }
-
-  .fi-tag.proposal { background: var(--violet-dim); color: var(--violet); }
-  .fi-tag.shared { background: var(--blue-dim); color: var(--blue); }
-
-  /* ── THREAD VIEW ── */
-  .thread-back {
-    font-family: var(--mono); font-size: 9px;
-    color: var(--muted); background: none;
-    border: none; cursor: pointer; padding: 14px 0 10px;
-    letter-spacing: 0.1em;
-    display: flex; align-items: center; gap: 6px;
-  }
-
-  .thread-root {
-    border: 1px solid var(--border-light);
-    border-radius: 4px; padding: 16px;
-    background: var(--surface); margin-bottom: 16px;
-  }
-
-  .thread-root .tr-node {
-    font-family: var(--mono); font-size: 9px;
-    color: var(--accent); margin-bottom: 6px;
-  }
-
-  .thread-root .tr-idea {
-    font-size: 15px; color: var(--cream);
-    line-height: 1.7; margin-bottom: 10px;
-  }
-
-  .thread-root .tr-meta {
-    font-family: var(--mono); font-size: 8px; color: var(--dim);
-  }
-
-  .thread-actions {
-    display: flex; gap: 8px; margin-bottom: 16px;
-  }
-
-  .thread-reply-box {
-    display: none; margin-bottom: 16px;
-  }
-  .thread-reply-box.open { display: block; }
-
-  .thread-reply-box textarea {
-    width: 100%; min-height: 80px;
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 4px; color: var(--cream);
+    background: var(--bg); color: var(--cream);
     font-family: var(--serif); font-size: 14px;
-    line-height: 1.6; padding: 12px;
-    resize: none; outline: none;
+    display: flex; flex-direction: column; overflow: hidden;
   }
-  .thread-reply-box textarea::placeholder { color: var(--dim); font-style: italic; }
+  button { font-family: inherit; cursor: pointer; }
+  ::selection { background: var(--accent-dim); color: var(--cream); }
 
-  .thread-reply-box .trb-footer {
-    display: flex; justify-content: flex-end; margin-top: 8px;
-  }
-
-  .reply-item {
-    padding: 12px 0 12px 14px;
-    border-left: 2px solid var(--border);
-    margin-bottom: 4px;
-  }
-
-  .reply-item .ri-node {
-    font-family: var(--mono); font-size: 8px;
-    color: var(--accent); margin-bottom: 4px;
-  }
-
-  .reply-item .ri-idea {
-    font-size: 13px; color: var(--cream);
-    line-height: 1.6; margin-bottom: 6px;
-  }
-
-  .reply-item .ri-meta {
-    font-family: var(--mono); font-size: 7px; color: var(--dim);
-  }
-
-  .vote-bar {
-    margin: 12px 0;
-    display: flex; gap: 2px; height: 4px;
-    border-radius: 2px; overflow: hidden;
-    background: var(--border);
-  }
-
-  .vote-bar .vb-agree { background: var(--green); }
-  .vote-bar .vb-disagree { background: var(--red); }
-  .vote-bar .vb-abstain { background: var(--dim); }
-
-  .vote-counts {
-    display: flex; gap: 16px; margin-bottom: 12px;
-  }
-
-  .vote-counts span {
-    font-family: var(--mono); font-size: 8px;
-    display: flex; align-items: center; gap: 4px;
-  }
-
-  .vc-agree { color: var(--green); }
-  .vc-disagree { color: var(--red); }
-  .vc-abstain { color: var(--dim); }
-
-  .vote-btns {
-    display: flex; gap: 8px; margin-bottom: 16px;
-  }
-
-  .vote-btn {
-    font-family: var(--mono); font-size: 8px;
-    letter-spacing: 0.15em; text-transform: uppercase;
-    padding: 8px 14px; border-radius: 3px;
-    border: 1px solid; cursor: pointer;
-    background: none; transition: background 0.2s;
-  }
-  .vote-btn.agree { color: var(--green); border-color: rgba(90,154,106,0.3); }
-  .vote-btn.agree:hover { background: var(--green-dim); }
-  .vote-btn.disagree { color: var(--red); border-color: rgba(154,90,90,0.3); }
-  .vote-btn.disagree:hover { background: var(--red-dim); }
-  .vote-btn.abstain { color: var(--dim); border-color: var(--border); }
-  .vote-btn.voted { opacity: 0.4; cursor: default; }
-
-  /* ── MY SEALS ── */
-  .seals-empty {
-    text-align: center; padding: 3rem 1.5rem;
-    color: var(--dim); font-style: italic; font-size: 14px; line-height: 1.8;
-  }
-
-  .seal-card {
+  /* ── TOP BAR ── */
+  .topbar {
+    height: 52px; flex-shrink: 0; display: flex; align-items: center;
+    gap: 16px; padding: 0 16px; background: var(--surface);
     border-bottom: 1px solid var(--border);
-    padding: 14px 0; cursor: pointer;
-    transition: background 0.15s;
   }
-  .seal-card:active { background: var(--surface); }
-  .seal-card .sc-idea { font-size: 14px; color: var(--cream); line-height: 1.6; margin-bottom: 5px; }
-  .seal-card .sc-meta { font-family: var(--mono); font-size: 7px; color: var(--dim); display: flex; gap: 10px; align-items: center; }
+  .tb-logo { font-size: 13px; letter-spacing: 3px; color: var(--cream); font-weight: 600; }
+  .tb-sep { width: 1px; height: 18px; background: var(--border); }
+  .tb-tag { font-family: var(--mono); font-size: 9px; color: var(--dim); letter-spacing: 1px; }
 
-  .sc-tag {
-    padding: 2px 6px; border-radius: 2px;
-    font-size: 7px; letter-spacing: 0.12em; text-transform: uppercase;
+  .space-switch { display: flex; gap: 2px; margin-left: auto; background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 2px; }
+  .space-switch button {
+    background: none; border: none; color: var(--muted);
+    font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px;
+    text-transform: uppercase; padding: 7px 14px; border-radius: 4px;
   }
-  .sc-tag.private { background: rgba(138,132,120,0.1); color: var(--muted); }
-  .sc-tag.shared { background: var(--accent-dim); color: var(--accent); }
-  .sc-tag.proposal { background: var(--violet-dim); color: var(--violet); }
+  .space-switch button.active { background: var(--accent-dim); color: var(--accent); }
 
-  /* ── NODES ── */
-  .section-label {
-    font-family: var(--mono); font-size: 7px;
-    letter-spacing: 0.3em; text-transform: uppercase;
-    color: var(--dim); margin: 1.2rem 0 .6rem;
+  .tb-node {
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--mono); font-size: 10px; color: var(--muted);
+    padding: 6px 12px; border: 1px solid var(--border); border-radius: 20px;
   }
-  .section-label:first-child { margin-top: .5rem; }
+  .tb-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
 
-  .conn-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 4px; padding: 14px; margin-bottom: 8px;
-  }
-  .cc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-  .cc-name { font-family: var(--mono); font-size: 10px; color: var(--cream); }
-  .cc-status { font-family: var(--mono); font-size: 7px; letter-spacing: 0.12em; text-transform: uppercase; }
-  .cc-status.online { color: var(--green); }
-  .cc-info { font-family: var(--mono); font-size: 8px; color: var(--dim); line-height: 1.5; }
-  .conn-actions { display: flex; gap: 8px; margin-top: 10px; }
+  /* ── SPACES ── */
+  .space { display: none; flex: 1; overflow: hidden; }
+  .space.active { display: flex; flex-direction: column; }
 
-  .conn-empty {
-    text-align: center; padding: 1.5rem 1rem;
-    color: var(--dim); font-style: italic; font-size: 13px; line-height: 1.8;
-  }
+  /* ══════════ WORKBENCH ══════════ */
+  .desktop { position: relative; flex: 1; overflow: hidden; background: var(--bg); background-image: radial-gradient(var(--border) 1px, transparent 1px); background-size: 22px 22px; }
 
-  .bt-warn {
-    background: var(--red-dim); border: 1px solid rgba(154,90,90,0.2);
-    border-radius: 4px; padding: 10px 12px;
-    font-family: var(--mono); font-size: 8px;
-    color: var(--red); line-height: 1.6; margin-bottom: 10px;
+  .win {
+    position: absolute; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; overflow: auto; resize: both;
+    min-width: 200px; min-height: 150px;
+    display: flex; flex-direction: column;
   }
+  .win-title {
+    cursor: move; flex-shrink: 0; padding: 8px 10px;
+    font-family: var(--mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--warm); background: var(--card); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; user-select: none;
+  }
+  .win-close { color: var(--dim); font-size: 15px; line-height: 1; padding: 0 4px; }
+  .win-close:hover { color: var(--cream); }
+  .win-body { flex: 1; overflow: auto; padding: 12px; font-size: 12px; color: var(--muted); }
 
-  .node-log-entry {
-    font-family: var(--mono); font-size: 8px;
-    color: var(--dim); padding: 5px 0;
-    border-bottom: 1px solid rgba(37,35,33,0.5); line-height: 1.5;
+  .dock {
+    flex-shrink: 0; display: flex; gap: 6px; padding: 8px 12px;
+    background: var(--surface); border-top: 1px solid var(--border); overflow-x: auto;
   }
-  .nle-time { color: var(--muted); }
-  .nle-ok { color: var(--green); }
-  .nle-err { color: var(--red); }
-  .nle-info { color: var(--blue); }
+  .dock button {
+    background: var(--card); border: 1px solid var(--border); color: var(--muted);
+    font-family: var(--mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
+    padding: 7px 12px; border-radius: 5px; white-space: nowrap; flex-shrink: 0;
+  }
+  .dock button.open { color: var(--accent); border-color: rgba(212,165,116,0.3); background: var(--accent-dim); }
 
-  /* ── VERIFY PANEL ── */
-  .paste-area textarea {
-    width: 100%; min-height: 100px;
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 4px; color: var(--cream);
-    font-family: var(--mono); font-size: 10px;
-    line-height: 1.6; padding: 12px;
-    resize: none; outline: none;
-  }
-  .paste-area textarea::placeholder { color: var(--dim); }
-  .paste-btn-row { margin-top: 8px; display: flex; justify-content: flex-end; }
+  .log-line { font-family: var(--mono); font-size: 10.5px; padding: 2px 0; }
+  .pill { display: inline-block; font-size: 9px; font-family: var(--mono); letter-spacing: 0.5px; padding: 2px 8px; border-radius: 20px; margin-right: 4px; text-transform: uppercase; }
+  .tag-governance { background: var(--accent-dim); color: var(--accent); }
+  .tag-technical  { background: var(--blue-dim);   color: var(--blue); }
+  .tag-security   { background: var(--red-dim);    color: var(--red); }
+  .tag-philosophy { background: var(--violet-dim); color: var(--violet); }
+  .tag-development{ background: var(--green-dim);  color: var(--green); }
+  .tag-general    { background: rgba(138,132,120,0.12); color: var(--muted); }
 
-  .verify-result { text-align: center; padding: 1.2rem 0; animation: fadeIn 0.3s ease; }
-  @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
-  .verify-result.valid { color: var(--green); }
-  .verify-result.invalid { color: var(--red); }
-  .vr-label { font-family: var(--mono); font-size: 8px; letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: .8rem; }
-  .vr-idea { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--warm); margin-bottom: .4rem; line-height: 1.6; }
-  .vr-moment { font-family: var(--mono); font-size: 7px; color: var(--dim); }
+  /* mode-* = dato real (viene de /api/*), separado a propósito de
+     tag-* que arriba es la etiqueta de canal, todavía visual-only. */
+  .mode-private   { background: var(--violet-dim); color: var(--violet); }
+  .mode-permanent { background: var(--green-dim);  color: var(--green); }
+  .mode-ephemeral { background: var(--blue-dim);   color: var(--blue); }
 
-  /* ── OVERLAY ── */
-  .overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,.85);
-    z-index: 100; display: none;
-    justify-content: center; align-items: center; padding: 16px;
-  }
-  .overlay.open { display: flex; }
-  .overlay-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 6px; padding: 20px; max-width: 340px;
-    width: 100%; text-align: center; max-height: 90vh; overflow-y: auto;
-  }
-  .overlay-close {
-    font-family: var(--mono); font-size: 8px;
-    color: var(--dim); background: none; border: none;
-    cursor: pointer; margin-top: 1rem; padding: 8px; letter-spacing: 0.2em;
+  .row-line { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border); }
+  .row-line:last-child { border-bottom: none; }
+  .ts { font-family: var(--mono); font-size: 8px; fill: var(--dim); }
+
+  .tree { font-family: var(--mono); font-size: 11px; }
+  .tree-node { padding: 3px 0 3px 4px; }
+  .tree-node.folder { color: var(--warm); }
+  .tree-node.file { color: var(--muted); padding-left: 20px; }
+  .tree-node.file:hover, .tree-node.folder:hover { color: var(--cream); }
+  .tree-children { padding-left: 14px; border-left: 1px solid var(--border); margin-left: 5px; display: none; }
+  .tree-children.open { display: block; }
+
+  .chat-b { max-width: 82%; padding: 8px 11px; border-radius: 8px; font-size: 12px; margin-bottom: 8px; line-height: 1.5; }
+  .chat-mine { background: var(--card); }
+  .chat-llm { background: var(--accent-dim); color: var(--accent); margin-left: auto; }
+  .council-select {
+    width: 100%; background: var(--card); border: 1px solid var(--border); color: var(--cream);
+    font-family: var(--mono); font-size: 10px; padding: 8px; border-radius: 4px; margin-bottom: 10px;
   }
 
-  /* ── TOAST ── */
-  .toast {
-    position: fixed; bottom: 70px; left: 50%;
-    transform: translateX(-50%) translateY(16px);
-    font-family: var(--mono); font-size: 9px;
-    color: var(--cream); background: var(--card);
-    border: 1px solid var(--border);
-    padding: 8px 18px; border-radius: 4px;
-    opacity: 0; transition: opacity 0.3s, transform 0.3s;
-    z-index: 200; pointer-events: none;
+  .btn {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+    padding: 8px 10px; border-radius: 4px; border: none; width: 100%; margin-top: 8px;
   }
-  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .btn-a { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(212,165,116,0.25); }
 
-  .mt1 { margin-top: 1rem; }
+  /* ══════════ COMMONS ══════════ */
+  .commons-layout { display: grid; grid-template-columns: 220px 1fr 300px; flex: 1; overflow: hidden; }
 
-  /* ── ABOUT ── */
-  .about-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,.9);
-    z-index: 150; display: none;
-    justify-content: center; align-items: center; padding: 16px;
-  }
-  .about-overlay.open { display: flex; }
-  .about-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 6px; padding: 24px 20px;
-    max-width: 340px; width: 100%;
-    max-height: 90vh; overflow-y: auto;
-  }
-  .about-title {
-    font-family: var(--serif); font-size: 18px;
-    color: var(--cream); margin-bottom: 4px;
-  }
-  .about-tagline {
-    font-style: italic; font-size: 13px;
-    color: var(--muted); margin-bottom: 1.2rem;
-    line-height: 1.6;
-  }
-  .about-section {
-    margin-bottom: 1rem;
-  }
-  .about-section-title {
-    font-family: var(--mono); font-size: 7px;
-    letter-spacing: 0.25em; text-transform: uppercase;
-    color: var(--dim); margin-bottom: 6px;
-  }
-  .about-text {
-    font-size: 12px; color: var(--muted);
-    line-height: 1.7;
-  }
-  .about-text a {
-    color: var(--accent); text-decoration: none;
-    border-bottom: 1px solid rgba(212,165,116,0.3);
-  }
-  .about-warn {
-    background: rgba(212,165,116,0.06);
-    border: 1px solid rgba(212,165,116,0.15);
-    border-radius: 4px; padding: 10px 12px;
-    font-size: 11px; color: var(--warm);
-    line-height: 1.7; margin-top: 4px;
-  }
-  .about-close {
-    font-family: var(--mono); font-size: 8px;
-    color: var(--dim); background: none; border: none;
-    cursor: pointer; margin-top: 1.2rem; padding: 8px;
-    letter-spacing: 0.2em; width: 100%; text-align: center;
+  .sidebar { background: var(--surface); border-right: 1px solid var(--border); overflow-y: auto; }
+  .sb-identity { padding: 14px; border-bottom: 1px solid var(--border); }
+  .sb-id-card { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 12px; }
+  .sb-id-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .sb-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--accent-dim); border: 1px solid rgba(212,165,116,0.25); flex-shrink: 0; }
+  .sb-id-name { font-size: 12px; font-weight: 600; color: var(--cream); }
+  .sb-id-sub { font-family: var(--mono); font-size: 8.5px; color: var(--dim); margin-top: 2px; }
+  .sb-id-stats { display: flex; gap: 14px; }
+  .sb-id-stat-n { font-family: var(--mono); font-size: 12px; color: var(--cream); font-weight: 600; }
+  .sb-id-stat-l { font-family: var(--mono); font-size: 8px; color: var(--dim); }
+
+  .sb-section { padding: 12px 12px 4px; }
+  .sb-label { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; color: var(--dim); text-transform: uppercase; padding: 0 4px; margin-bottom: 6px; }
+  .sb-item { display: flex; align-items: center; gap: 9px; padding: 7px 10px; border-radius: 5px; font-size: 11.5px; color: var(--muted); }
+  .sb-item:hover { background: var(--card); color: var(--cream); }
+  .sb-item.active { background: var(--accent-dim); color: var(--accent); }
+  .sb-icon { width: 14px; text-align: center; font-size: 12px; }
+  .sb-count { margin-left: auto; font-family: var(--mono); font-size: 9px; color: var(--dim); }
+  .sb-divider { height: 1px; background: var(--border); margin: 6px 12px; }
+  .sb-note { font-size: 10px; color: var(--dim); padding: 6px 10px; }
+
+  .feed-area { display: flex; flex-direction: column; overflow: hidden; }
+  .feed-header { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; background: var(--surface); flex-shrink: 0; }
+  .feed-title { font-size: 14px; font-weight: 600; color: var(--cream); font-family: var(--serif); }
+  .feed-sub { font-family: var(--mono); font-size: 9px; color: var(--dim); margin-left: 4px; }
+  .new-post-btn { margin-left: auto; background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(212,165,116,0.25); font-family: var(--mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; padding: 8px 14px; border-radius: 5px; }
+
+  .feed-tabs { display: flex; gap: 4px; padding: 10px 18px; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
+  .feed-tab { background: none; border: none; color: var(--dim); font-family: var(--mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; padding: 6px 12px; border-radius: 4px; }
+  .feed-tab:hover { color: var(--muted); }
+  .feed-tab.active { background: var(--card); color: var(--accent); }
+
+  .feed-list { flex: 1; overflow-y: auto; padding: 14px 18px; display: flex; flex-direction: column; gap: 8px; }
+  .post-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 13px 15px; }
+  .post-card:hover { border-color: var(--border-light); }
+  .post-card.selected { border-color: rgba(212,165,116,0.35); }
+  .post-title { font-size: 13px; color: var(--cream); margin: 6px 0 5px; }
+  .post-meta { font-family: var(--mono); font-size: 9px; color: var(--dim); display: flex; gap: 10px; margin-top: 8px; }
+
+  .thread-panel { background: var(--surface); border-left: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+  .thread-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--dim); }
+  .thread-empty-icon { font-size: 22px; opacity: 0.4; }
+  .thread-empty-text { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; }
+  .thread-header { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+  .thread-title { font-size: 13px; color: var(--cream); margin-bottom: 6px; }
+  .thread-messages { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+  .thread-msg { font-size: 12px; color: var(--muted); line-height: 1.6; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+  .thread-msg b { color: var(--warm); font-weight: 600; display: block; margin-bottom: 3px; font-size: 11px; }
+  .thread-reply { padding: 12px 16px; border-top: 1px solid var(--border); flex-shrink: 0; }
+  .reply-input { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 4px; color: var(--cream); font-family: var(--serif); font-size: 12px; padding: 9px; resize: none; outline: none; }
+  .reply-footer { display: flex; justify-content: flex-end; margin-top: 8px; }
+  .reply-send { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(212,165,116,0.25); font-family: var(--mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; padding: 7px 14px; border-radius: 4px; }
+
+  /* ── NEW POST MODAL ── */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.85); z-index: 200; display: none; align-items: center; justify-content: center; padding: 16px; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 22px; max-width: 420px; width: 100%; }
+  .modal-title { font-size: 15px; color: var(--cream); margin-bottom: 4px; font-family: var(--serif); }
+  .modal-sub { font-family: var(--mono); font-size: 9px; color: var(--dim); margin-bottom: 14px; }
+  .modal textarea { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 4px; color: var(--cream); font-family: var(--serif); font-size: 13px; padding: 10px; resize: vertical; min-height: 80px; outline: none; margin-bottom: 12px; }
+  .tag-picker { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  .tag-pick { font-family: var(--mono); font-size: 9px; letter-spacing: 0.5px; text-transform: uppercase; padding: 6px 11px; border-radius: 20px; border: 1px solid var(--border); color: var(--dim); }
+  .tag-pick.selected.tag-governance { background: var(--accent-dim); color: var(--accent); border-color: rgba(212,165,116,0.3); }
+  .tag-pick.selected.tag-technical  { background: var(--blue-dim); color: var(--blue); border-color: rgba(90,122,154,0.3); }
+  .tag-pick.selected.tag-security  { background: var(--red-dim); color: var(--red); border-color: rgba(154,90,90,0.3); }
+  .tag-pick.selected.tag-philosophy{ background: var(--violet-dim); color: var(--violet); border-color: rgba(138,106,154,0.3); }
+  .tag-pick.selected.tag-development{ background: var(--green-dim); color: var(--green); border-color: rgba(90,154,106,0.3); }
+  .tag-pick.selected.tag-general   { background: rgba(138,132,120,0.15); color: var(--muted); }
+  .modal-actions { display: flex; gap: 8px; }
+  .modal-cancel { flex: 1; background: none; border: 1px solid var(--border); color: var(--muted); font-family: var(--mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; padding: 10px; border-radius: 4px; }
+  .modal-submit { flex: 2; background: var(--accent-dim); border: 1px solid rgba(212,165,116,0.25); color: var(--accent); font-family: var(--mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; padding: 10px; border-radius: 4px; }
+
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--card); border: 1px solid var(--border-light); color: var(--cream); font-size: 12px; padding: 10px 18px; border-radius: 20px; z-index: 300; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+  .toast.show { opacity: 1; }
+
+  /* ══════════ MOBILE / PANTALLAS ANGOSTAS ══════════
+     Debajo de este ancho, las ventanas del Workbench dejan de ser
+     absolutas/arrastrables (no caben) y pasan a apilarse en una sola
+     columna que se puede hacer scroll. Igual para las 3 columnas
+     de Commons: se apilan en vez de partirse. */
+  @media (max-width: 700px) {
+    .topbar { padding: 0 10px; gap: 10px; }
+    .tb-tag { display: none; }
+
+    .desktop {
+      overflow-y: auto; overflow-x: hidden;
+      padding: 10px; display: flex; flex-direction: column; gap: 10px;
+    }
+    .win {
+      position: static !important;
+      left: auto !important; top: auto !important;
+      width: 100% !important; height: auto !important;
+      min-height: 140px; max-height: 60vh;
+      resize: none; /* resize por arrastre no aplica apilado */
+    }
+    .win-title { cursor: default; } /* nada que arrastrar en este layout */
+
+    .commons-layout {
+      grid-template-columns: 1fr;
+      grid-auto-rows: min-content;
+      overflow-y: auto; overflow-x: hidden;
+    }
+    .sidebar { border-right: none; border-bottom: 1px solid var(--border); max-height: 40vh; overflow-y: auto; }
+    .thread-panel { border-left: none; border-top: 1px solid var(--border); min-height: 300px; }
+    .feed-area { min-height: 300px; }
   }
 
-  /* ── TOKEN UNLOCK ── */
-  .token-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,.9);
-    z-index: 160; display: none;
-    justify-content: center; align-items: center; padding: 16px;
-  }
-  .token-overlay.open { display: flex; }
-  .token-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 6px; padding: 24px 20px;
-    max-width: 340px; width: 100%;
-    max-height: 90vh; overflow-y: auto;
-  }
-  .token-title {
-    font-family: var(--serif); font-size: 18px;
-    color: var(--cream); margin-bottom: 4px;
-  }
-  .token-tagline {
-    font-size: 12px; color: var(--muted);
-    margin-bottom: 1.2rem; line-height: 1.7;
-  }
-  .token-input {
-    width: 100%;
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 4px; color: var(--cream);
-    font-family: var(--mono); font-size: 11px;
-    line-height: 1.6; padding: 12px;
-    outline: none; margin-bottom: 10px;
-  }
-  .token-input:focus { border-color: rgba(212,165,116,0.4); }
-  .token-input::placeholder { color: var(--dim); }
-  .token-error {
-    font-family: var(--mono); font-size: 9px;
-    color: var(--red); margin: -4px 0 10px; min-height: 11px;
-  }
-  .token-close {
-    font-family: var(--mono); font-size: 8px;
-    color: var(--dim); background: none; border: none;
-    cursor: pointer; margin-top: 10px; padding: 8px;
-    letter-spacing: 0.2em; width: 100%; text-align: center;
-  }
-
-  .host-banner {
-    display: none;
-    background: var(--accent-dim);
-    border-bottom: 1px solid rgba(212,165,116,0.25);
-    padding: 8px 14px;
-    font-family: var(--mono);
-    font-size: 8px;
-    letter-spacing: 0.08em;
-    color: var(--accent);
-    text-align: center;
-    line-height: 1.5;
-    flex-shrink: 0;
-  }
-  .host-banner.show { display: block; }
-
-  .node-status-bar {
-    display: none;
-    background: var(--green-dim);
-    border-bottom: 1px solid rgba(90,154,106,0.25);
-    padding: 6px 14px;
-    font-family: var(--mono);
-    font-size: 8px;
-    color: var(--green);
-    text-align: center;
-    flex-shrink: 0;
-  }
-  .node-status-bar.show { display: block; }
+  /* ── EDITOR ── */
+  .editor-tabs { display:flex; gap:0; border-bottom:1px solid var(--border);
+    overflow-x:auto; flex-shrink:0; scrollbar-width:none; }
+  .editor-tabs::-webkit-scrollbar { display:none; }
+  .editor-tab { font-family:var(--mono); font-size:10px; color:var(--muted);
+    padding:5px 10px 5px 12px; border-right:1px solid var(--border);
+    cursor:pointer; white-space:nowrap; display:flex; align-items:center; gap:8px;
+    flex-shrink:0; }
+  .editor-tab:hover { color:var(--cream); }
+  .editor-tab.active { color:var(--accent); background:var(--surface); border-bottom:1px solid var(--surface); }
+  .editor-tab-close { color:var(--dim); line-height:1; font-size:12px; }
+  .editor-tab-close:hover { color:var(--red) !important; }
+  .editor-area { display:flex; flex:1; overflow:hidden; }
+  .editor-gutter { font-family:var(--mono); font-size:11px; line-height:1.65;
+    color:var(--dim); padding:10px 8px 10px 12px; text-align:right;
+    border-right:1px solid var(--border); overflow:hidden; user-select:none;
+    flex-shrink:0; min-width:38px; background:var(--card); }
+  .editor-code { flex:1; overflow:auto; margin:0; padding:10px 14px;
+    font-family:var(--mono); font-size:11px; line-height:1.65;
+    white-space:pre; color:var(--cream); background:transparent;
+    border:none; outline:none; }
+  .editor-statusbar { font-family:var(--mono); font-size:9px; color:var(--muted);
+    padding:3px 12px; border-top:1px solid var(--border); display:flex;
+    gap:16px; flex-shrink:0; background:var(--card); letter-spacing:0.5px; }
+  .editor-statusbar span { cursor:default; }
+  .editor-empty { display:flex; flex-direction:column; align-items:center;
+    justify-content:center; flex:1; gap:8px; color:var(--dim);
+    font-family:var(--mono); font-size:11px; }
+  .editor-actions { display:flex; gap:6px; align-items:center; }
+  /* Syntax highlight classes */
+  .hl-kw  { color:#d4a574; }        /* Python keywords → accent */
+  .hl-str { color:#7aaa80; }        /* strings → green */
+  .hl-cmt { color:#666058; font-style:italic; } /* comments → dim */
+  .hl-num { color:#7a9aaa; }        /* numbers → blue */
+  .hl-def { color:#c9b07a; }        /* function/class names */
+  .hl-dec { color:#9a7aaa; }        /* decorators → violet */
+  .hl-bi  { color:#aa8a7a; }        /* builtins */
+  .hl-key { color:#d4a574; }        /* JSON keys → accent */
+  .hl-val { color:#7aaa80; }        /* JSON string values */
+  .hl-bool{ color:#9a7aaa; }        /* JSON bool/null */
+  .hl-h1  { color:#f0ece4; font-weight:bold; }
+  .hl-h2  { color:#d4a574; font-weight:bold; }
+  .hl-h3  { color:#c9b07a; font-weight:bold; }
+  .hl-ico { color:#7a9aaa; }        /* inline code in md */
+  .hl-tag { color:#7aaa80; }        /* HTML tags */
+  .hl-atr { color:#c9b07a; }        /* HTML attributes */
 </style>
 </head>
 <body>
 
-<div class="host-banner" id="hostBanner">
-  Para instalar como app o usar el nodo completo, abre con <strong>tools/start.bat</strong> — no funciona desde archivo local (file://).
-</div>
-<div class="node-status-bar" id="nodeStatusBar"></div>
+<!-- TOP BAR -->
+<div class="topbar">
+  <span class="tb-logo">PHANTOM</span>
+  <div class="tb-sep"></div>
+  <span class="tb-tag" id="spaceTag">WORKBENCH — tu nodo, local</span>
 
-<div class="header">
-  <div class="logo" onclick="showAbout()" style="cursor:pointer"><span>Phantom</span></div>
-  <div class="header-right">
-    <div class="node-id-badge" id="myNodeBadge" onclick="copyNodeId()">—</div>
-    <div class="node-dot" id="nodeDot"></div>
+  <div class="space-switch">
+    <button class="active" id="btnSpaceWorkbench" onclick="switchSpace('workbench')">Workbench</button>
+    <button id="btnSpaceCommons" onclick="switchSpace('commons')">Commons</button>
+  </div>
+
+  <div class="tb-node">
+    <div class="tb-dot" id="tbDot"></div>
+    <span id="tbNodeName">conectando…</span>
   </div>
 </div>
 
-<div class="main">
+<!-- ══════════ WORKBENCH ══════════ -->
+<div class="space active" id="spaceWorkbench">
+  <div class="desktop" id="desktop">
 
-  <!-- ═══ SEAL ═══ -->
-  <div class="view seal-view active" id="viewSeal">
-    <div class="seal-prompt">What would you seal<br>right now?</div>
-    <textarea class="seal-input" id="sealInput" placeholder="Write something true..." maxlength="100000"></textarea>
-    <div class="input-footer">
-      <span class="input-count" id="inputCount">0</span>
-      <button class="btn btn-a" id="btnSeal" disabled>SEAL</button>
+    <div class="win" id="win-console" style="left:20px; top:16px; width:250px; height:160px; z-index:1;">
+      <div class="win-title"><span>Console</span><span class="win-close" onclick="closeWin('win-console')">&times;</span></div>
+      <div class="win-body" id="consoleBody">
+        <div class="log-line" style="color:var(--muted)">Conectando con el daemon…</div>
+      </div>
     </div>
-  </div>
 
-  <!-- ═══ MODE ═══ -->
-  <div class="view" id="viewMode">
-    <div class="mode-q">What should this thought do?</div>
-    <div class="mode-opt" data-mode="private" onclick="selMode(this)">
-      <h4>Private</h4>
-      <p>Stays on this device. Never leaves. Your diary.</p>
-    </div>
-    <div class="mode-opt sel" data-mode="shared" onclick="selMode(this)">
-      <h4>Shared</h4>
-      <p>Travels to nearby nodes. Others can see it, respond, verify.</p>
-    </div>
-    <div class="mode-opt" data-mode="proposal" onclick="selMode(this)">
-      <h4>Proposal</h4>
-      <p>Ask the network. Others can vote agree, disagree, or abstain.</p>
-    </div>
-    <div class="mode-footer">
-      <button class="btn btn-p" id="btnConfirmMode">CONTINUE</button>
-    </div>
-  </div>
+    <div class="win" id="win-nodes" style="left:290px; top:16px; width:290px; height:310px; z-index:1;">
+      <div class="win-title"><span>Nodes</span><span class="win-close" onclick="closeWin('win-nodes')">&times;</span></div>
+      <div class="win-body" style="display:flex; flex-direction:column; gap:0; padding:0;">
 
-  <!-- ═══ WARNING ═══ -->
-  <div class="view warning-view" id="viewWarning">
-    <div class="warning-text" id="warningText"></div>
-    <button class="btn btn-p" id="btnConfirmSeal">I UNDERSTAND — SEAL IT</button>
-    <button class="btn btn-g mt1" onclick="showV('viewMode')">GO BACK</button>
-  </div>
-
-  <!-- ═══ RESULT ═══ -->
-  <div class="view result-view" id="viewResult">
-    <div class="result-circle">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d4a574" stroke-width="1.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-    </div>
-    <div class="r-idea" id="resultIdea"></div>
-    <div class="r-stamp" id="resultStamp"></div>
-    <div class="r-moment" id="resultMoment"></div>
-    <div class="r-mode" id="resultMode"></div>
-    <div class="share-row">
-      <button class="btn btn-a" onclick="copyLast()">COPY</button>
-      <button class="btn btn-gr" id="btnSendLast" style="display:none" onclick="sendLast()">SEND TO NODE</button>
-    </div>
-    <button class="btn btn-g mt1" onclick="resetSeal()">SEAL ANOTHER</button>
-  </div>
-
-  <!-- ═══ FEED ═══ -->
-  <div class="view" id="viewFeed">
-    <div class="feed-header">
-      <span class="feed-title">Network Feed</span>
-      <span class="feed-count" id="feedCount">0</span>
-    </div>
-    <div id="feedList"></div>
-  </div>
-
-  <!-- ═══ THREAD ═══ -->
-  <div class="view" id="viewThread">
-    <button class="thread-back" onclick="backToFeed()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-      FEED
-    </button>
-    <div id="threadContent"></div>
-  </div>
-
-  <!-- ═══ MY SEALS ═══ -->
-  <div class="view" id="viewMine">
-    <div class="feed-header">
-      <span class="feed-title">My Seals</span>
-      <span class="feed-count" id="mineCount">0</span>
-    </div>
-    <div id="mineList"></div>
-  </div>
-
-  <!-- ═══ NODES ═══ -->
-  <div class="view" id="viewNodes">
-    <div class="section-label">CONNECT</div>
-    <div id="btWarn" class="bt-warn" style="display:none"></div>
-    <div id="connDev" style="display:none">
-      <div class="conn-card">
-        <div class="cc-header">
-          <span class="cc-name" id="connName">—</span>
-          <span class="cc-status online" id="connStatus">CONNECTED</span>
+        <!-- CONNECT PANEL -->
+        <div style="padding:8px 10px; border-bottom:1px solid var(--border); display:flex; flex-direction:column; gap:6px;">
+          <div style="font-family:var(--mono); font-size:9px; color:var(--muted); letter-spacing:1px; text-transform:uppercase;">Conectar a nodo</div>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <input id="connectHostInput" type="text" placeholder="192.168.x.x"
+              style="flex:1; background:var(--bg); border:1px solid var(--border); color:var(--cream);
+                     font-family:var(--mono); font-size:11px; padding:5px 8px; border-radius:4px; outline:none;"
+              onkeydown="if(event.key==='Enter') connectToNode()"
+            />
+            <button class="btn btn-a" onclick="connectToNode()"
+              style="font-family:var(--mono); font-size:9px; letter-spacing:1px; text-transform:uppercase;
+                     padding:5px 10px; border-radius:4px; white-space:nowrap;">
+              Conectar
+            </button>
+          </div>
+          <div id="connectStatus" style="font-family:var(--mono); font-size:9px; color:var(--muted); min-height:11px;"></div>
         </div>
-        <div class="cc-info" id="connInfo"></div>
-        <div class="conn-actions">
-          <button class="btn btn-gr" onclick="syncNode()">SYNC</button>
-          <button class="btn btn-g" onclick="disconnNode()">DISCONNECT</button>
+
+        <!-- MY IP -->
+        <div style="padding:6px 10px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:6px;">
+          <span style="font-family:var(--mono); font-size:9px; color:var(--muted); letter-spacing:1px; text-transform:uppercase;">Tu IP:</span>
+          <span id="myIpDisplay" style="font-family:var(--mono); font-size:10px; color:var(--accent);">—</span>
+          <button onclick="copyMyIp()" title="Copiar IP"
+            style="background:none; border:none; color:var(--muted); font-size:10px; cursor:pointer; padding:0 2px; line-height:1;">⎘</button>
         </div>
-      </div>
-    </div>
-    <div id="daemonPanel" style="display:none; margin-bottom:12px">
-      <div class="conn-card">
-        <div class="cc-header">
-          <span class="cc-name" id="daemonName">—</span>
-          <span class="cc-status online">NODO LOCAL</span>
+
+        <!-- NODE GRAPH -->
+        <div id="nodesGraphBody" style="flex:1; padding:4px;">
+          <div class="log-line" style="color:var(--muted)">Cargando encuentros…</div>
         </div>
-        <div class="cc-info" id="daemonInfo">Escuchando en puerto 7337</div>
-        <div class="conn-actions">
-          <button class="btn btn-gr btn-full" onclick="connectNearby()">BUSCAR NODO CERCA</button>
-        </div>
-      </div>
-    </div>
-    <div id="noDev">
-      <div class="conn-empty">No node connected.<br>Pair with a LoRa module or<br>another device nearby.</div>
-      <button class="btn btn-bl btn-full" onclick="scanBT()">SCAN FOR NODES</button>
-      <div style="margin-top:0.75rem; display:flex; gap:0.5rem">
-        <input id="relayUrlInput" type="text" placeholder="ws://192.168.1.5:8765" style="flex:1">
-        <button class="btn btn-gr" onclick="connectRelay()">CONNECT</button>
-      </div>
-      <div class="conn-empty" style="font-size:0.75rem; margin-top:0.5rem; text-align:left">
-        This is the <b>bridge's</b> address, not the relay's — they're two
-        separate programs on two different ports. Someone needs to have both
-        <code>phantom_relay.py</code> (port 7338 by default) and
-        <code>phantom_ws_bridge.py</code> (port 8765 by default) running.
-        Put the bridge's port here — 8765, unless they changed it.
+
       </div>
     </div>
 
-    <div class="section-label" style="margin-top:1.5rem">LOG</div>
-    <div id="nodeLog">
-      <div class="node-log-entry"><span class="nle-info">Ready.</span></div>
-    </div>
-
-    <div class="section-label" style="margin-top:1.5rem">VERIFY A SEAL</div>
-    <div class="paste-area">
-      <textarea id="pasteInput" placeholder="Paste a seal here...&#10;Idea: ...&#10;Moment: ...&#10;Stamp: ..."></textarea>
-      <div class="paste-btn-row">
-        <button class="btn btn-a" onclick="verifyPasted()">VERIFY</button>
+    <div class="win" id="win-seals" style="left:580px; top:16px; width:250px; height:180px; z-index:1;">
+      <div class="win-title"><span>Seals graph</span><span class="win-close" onclick="closeWin('win-seals')">&times;</span></div>
+      <div class="win-body" id="sealsGraphBody">
+        <div class="log-line" style="color:var(--muted)">Cargando sellos…</div>
       </div>
     </div>
-    <div id="verifyResult"></div>
+
+    <div class="win" id="win-diary" style="left:20px; top:200px; width:280px; height:210px; z-index:1;">
+      <div class="win-title"><span>Diary</span><span class="win-close" onclick="closeWin('win-diary')">&times;</span></div>
+      <div class="win-body">
+        <div class="row-line">
+          <div>
+            <div style="color:var(--cream)">Entrada — hoy</div>
+            <span class="pill tag-philosophy">idea</span><span class="pill tag-development">red</span>
+          </div>
+        </div>
+        <div style="padding:8px 0; color:var(--muted); font-size:11.5px; line-height:1.6;">Notas largas, sin firmar todavía. Reflexión asistida disponible desde Council.</div>
+        <button class="btn btn-a" onclick="toast('La reflexión se conectará al LLM elegido en Council')">Reflexionar con LLM</button>
+      </div>
+    </div>
+
+    <div class="win" id="win-files" style="left:310px; top:230px; width:260px; height:220px; z-index:1;">
+      <div class="win-title"><span>File explorer</span><span class="win-close" onclick="closeWin('win-files')">&times;</span></div>
+      <div class="win-body tree" id="fileTreeRoot">
+        <div style="color:var(--dim); font-size:11px; padding:6px;">cargando…</div>
+      </div>
+    </div>
+
+    <div class="win" id="win-wallet" style="left:590px; top:230px; width:240px; height:190px; z-index:1; display:none;">
+      <div class="win-title"><span>Wallet</span><span class="win-close" onclick="closeWin('win-wallet')">&times;</span></div>
+      <div class="win-body">
+        <div style="font-family:var(--mono); font-size:18px; color:var(--cream); margin-bottom:4px;">0.0000</div>
+        <div style="font-family:var(--mono); font-size:9px; color:var(--dim); margin-bottom:14px;">La clave nunca sale del nodo</div>
+        <div class="row-line"><span>Dirección</span><span style="font-family:var(--mono); font-size:10px; color:var(--muted)">ph1q...9f2a</span></div>
+      </div>
+    </div>
+
+    <div class="win" id="win-ledger" style="left:20px; top:440px; width:300px; height:180px; z-index:1; display:none;">
+      <div class="win-title"><span>Ledger</span><span class="win-close" onclick="closeWin('win-ledger')">&times;</span></div>
+      <div class="win-body">
+        <div class="row-line"><span>dusk-river-4a</span><span style="color:var(--green)">te debe 0.05</span></div>
+        <div class="row-line"><span>warm-leaf-11</span><span style="color:var(--red)">le debés 0.02</span></div>
+        <div class="row-line"><span>still-moth-2c</span><span style="color:var(--dim)">saldado</span></div>
+      </div>
+    </div>
+
+    <div class="win" id="win-council" style="left:340px; top:470px; width:340px; height:300px; z-index:1; display:none;">
+      <div class="win-title">
+        <span>Council (LLM local) <span id="llmStatusDot" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--dim);margin-left:6px;"></span></span>
+        <span class="win-close" onclick="closeWin('win-council')">&times;</span>
+      </div>
+      <div class="win-body" style="display:flex; flex-direction:column; padding:8px;">
+        <div id="llmChatLog" style="flex:1; overflow-y:auto; margin-bottom:8px; min-height:80px;"></div>
+        <div id="llmAttachChip" style="display:none; align-items:center; gap:6px; background:var(--card); border:1px solid var(--border-light); border-radius:4px; padding:4px 8px; margin-bottom:6px; font-size:11px; color:var(--cream);">
+          <span>📎</span><span id="llmAttachName" style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+          <span style="cursor:pointer; color:var(--dim);" onclick="detachFile()">&times;</span>
+        </div>
+        <div id="llmStatusLine" style="font-family:monospace; font-size:10px; color:var(--dim); margin-bottom:6px; min-height:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"></div>
+        <div style="display:flex; gap:6px; flex-shrink:0;">
+          <textarea id="llmInput" rows="2" placeholder="Preguntale algo al modelo local…"
+            style="flex:1; background:var(--card); border:1px solid var(--border); color:var(--cream); font-family:var(--serif); font-size:12px; padding:6px; border-radius:4px; resize:none; outline:none;"
+            onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); sendLlmMessage();}"></textarea>
+          <button class="btn btn-a" style="width:auto; margin-top:0; padding:0 12px;" onclick="sendLlmMessage()">→</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
+  <!-- ── EDITOR WINDOW ── -->
+  <div class="win" id="win-editor" style="left:80px; top:40px; width:700px; height:480px; z-index:5; display:none;">
+    <div class="win-title">
+      <span id="editorWinTitle">Editor</span>
+      <div class="editor-actions">
+        <button class="btn btn-a" id="editorAttachBtn" onclick="editorAttach()"
+          style="font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:3px 8px;border-radius:3px;display:none;">
+          Adjuntar al chat
+        </button>
+        <button class="btn" onclick="editorCopyAll()"
+          style="font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:3px 8px;border-radius:3px;background:none;border:1px solid var(--border);color:var(--muted);">
+          Copiar
+        </button>
+        <span class="win-close" onclick="closeWin('win-editor')">&times;</span>
+      </div>
+    </div>
+    <!-- Tab bar -->
+    <div class="editor-tabs" id="editorTabs"></div>
+    <!-- Main area -->
+    <div class="editor-area" id="editorArea">
+      <div class="editor-empty" id="editorEmpty">
+        <div style="font-size:22px; opacity:.3;">◇</div>
+        <div>Abrí un archivo desde el explorador</div>
+        <div style="color:var(--dim); font-size:9px;">o seleccioná un archivo en la ventana Files</div>
+      </div>
+    </div>
+    <!-- Status bar -->
+    <div class="editor-statusbar" id="editorStatusBar" style="display:none;">
+      <span id="edSbLang">—</span>
+      <span id="edSbLines">0 líneas</span>
+      <span id="edSbChars">0 chars</span>
+      <span id="edSbPath" style="color:var(--dim); margin-left:auto; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+    </div>
+  </div>
+
+  </div>
+  <div class="dock" id="dock"></div>
 </div>
 
-<!-- NAV -->
-<div class="nav">
-  <button class="active" onclick="nav('viewSeal',this)">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d4a574" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5" opacity=".5"/><path d="M2 12l10 5 10-5" opacity=".7"/></svg>
-    <span class="nl">Seal</span>
-  </button>
-  <button onclick="nav('viewFeed',this)">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-    <span class="nl">Feed</span>
-  </button>
-  <button onclick="nav('viewMine',this)">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-    <span class="nl">Mine</span>
-  </button>
-  <button onclick="nav('viewNodes',this)">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="1.5"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><line x1="12" y1="7.5" x2="5" y2="16.5"/><line x1="12" y1="7.5" x2="19" y2="16.5"/><line x1="7.5" y1="19" x2="16.5" y2="19"/></svg>
-    <span class="nl">Nodes</span>
-  </button>
-</div>
+<!-- ══════════ COMMONS ══════════ -->
+<div class="space" id="spaceCommons">
+  <div class="commons-layout">
 
-<div class="overlay" id="overlay" onclick="closeOv(event)">
-  <div class="overlay-card" id="overlayCard"></div>
-</div>
+    <div class="sidebar">
+      <div class="sb-identity">
+        <div class="sb-id-card">
+          <div class="sb-id-top">
+            <div class="sb-avatar"></div>
+            <div>
+              <div class="sb-id-name" id="sbIdName">conectando…</div>
+              <div class="sb-id-sub">Identidad persistente del nodo</div>
+            </div>
+          </div>
+          <div class="sb-id-stats">
+            <div><div class="sb-id-stat-n" id="statSeals">—</div><div class="sb-id-stat-l">Sellos</div></div>
+            <div><div class="sb-id-stat-n" id="statPermanent">—</div><div class="sb-id-stat-l">Permanentes</div></div>
+            <div><div class="sb-id-stat-n" id="statEncounters">—</div><div class="sb-id-stat-l">Encuentros</div></div>
+          </div>
+        </div>
+      </div>
 
-<div class="toast" id="toast"></div>
+      <div class="sb-section">
+        <!-- Canales: ahora filtran de verdad contra el campo `channel`
+             (hermano de `mode`, no toca el hash idea+moment+stamp).
+             Los contadores se recalculan en renderChannelCounts(). -->
+        <div class="sb-label">Canales</div>
+        <div class="sb-item active" onclick="filterChannel('all', this)"><span class="sb-icon">◈</span><span>Todos</span><span class="sb-count" id="chCount-all">—</span></div>
+        <div class="sb-item" onclick="filterChannel('governance', this)"><span class="sb-icon" style="color:var(--accent)">⚖</span><span>Governance</span><span class="sb-count" id="chCount-governance">—</span></div>
+        <div class="sb-item" onclick="filterChannel('technical', this)"><span class="sb-icon" style="color:var(--blue)">⌬</span><span>Technical</span><span class="sb-count" id="chCount-technical">—</span></div>
+        <div class="sb-item" onclick="filterChannel('security', this)"><span class="sb-icon" style="color:var(--red)">⊗</span><span>Security</span><span class="sb-count" id="chCount-security">—</span></div>
+        <div class="sb-item" onclick="filterChannel('philosophy', this)"><span class="sb-icon" style="color:var(--violet)">◎</span><span>Philosophy</span><span class="sb-count" id="chCount-philosophy">—</span></div>
+        <div class="sb-item" onclick="filterChannel('development', this)"><span class="sb-icon" style="color:var(--green)">⊕</span><span>Development</span><span class="sb-count" id="chCount-development">—</span></div>
+        <div class="sb-item" onclick="filterChannel('general', this)"><span class="sb-icon" style="color:var(--muted)">○</span><span>General</span><span class="sb-count" id="chCount-general">—</span></div>
+      </div>
 
-<!-- ABOUT -->
-<div class="about-overlay" id="aboutOverlay" onclick="closeAbout(event)">
-  <div class="about-card">
-    <div class="about-title">Phantom</div>
-    <div class="about-tagline">Your thoughts belong to you.</div>
+      <div class="sb-divider"></div>
 
-    <div class="about-section">
-      <div class="about-section-title">What this is</div>
-      <div class="about-text">
-        Phantom seals your thoughts cryptographically. A seal proves that you wrote something at a specific moment. No one can alter it. No one can deny it existed. No server. No account. Everything happens on your device.
+      <div class="sb-section">
+        <!-- Proposals/Announcements/Whitepaper: sin ruta en el daemon
+             todavía, sigue siendo de muestra. -->
+        <div class="sb-label">Red</div>
+        <div class="sb-item"><span class="sb-icon">◇</span><span>Proposals</span><span class="sb-count" style="color:var(--accent)">2 activas</span></div>
+        <div class="sb-item"><span class="sb-icon">◆</span><span>Announcements</span><span class="sb-count">1 nuevo</span></div>
+        <div class="sb-item"><span class="sb-icon">○</span><span>Whitepaper</span></div>
+      </div>
+
+      <div class="sb-divider"></div>
+
+      <div class="sb-section">
+        <div class="sb-label">IA local</div>
+        <div class="sb-item" id="sbCouncilItem" onclick="openCouncilView(this)"><span class="sb-icon" style="color:var(--accent)">◈</span><span>Council</span></div>
+        <div class="sb-note" style="margin-top:4px;">Corre presets de deliberación contra tu modelo local. Nunca se publica a la red — vos decidís qué guardar.</div>
+      </div>
+
+      <div class="sb-divider"></div>
+
+      <div class="sb-section">
+        <div class="sb-label">Este espacio</div>
+        <div class="sb-note">Local-first · sin cuentas · lo que ves acá es lo que tu nodo sincronizó con sus encuentros, no un servidor central.</div>
       </div>
     </div>
 
-    <div class="about-section">
-      <div class="about-section-title">What it protects</div>
-      <div class="about-text">
-        Your seals are created and stored on this device only. Private seals never leave. Shared seals travel only through connections you initiate — Bluetooth, LoRa, or local sync. No cloud. No intermediary.
+    <div class="feed-area">
+      <div class="feed-header">
+        <div><div class="feed-title">Phantom Commons</div><span class="feed-sub">lo que sincronizó tu nodo</span></div>
+        <button class="new-post-btn" onclick="openModal()">+ Nuevo post</button>
+      </div>
+      <div class="feed-tabs">
+        <button class="feed-tab active" onclick="sortFeed('latest', this)">Latest</button>
+        <button class="feed-tab" onclick="sortFeed('hot', this)">Hot</button>
+        <button class="feed-tab" onclick="sortFeed('governance', this)">Governance</button>
+        <button class="feed-tab" onclick="sortFeed('unanswered', this)">Unanswered</button>
+      </div>
+      <div class="feed-list" id="feedList"></div>
+
+      <div id="councilView" style="display:none; flex:1; overflow-y:auto; padding:14px;">
+        <div style="background:var(--card); border:1px solid var(--border-light); border-radius:8px; padding:14px; margin-bottom:14px;">
+          <div style="font-family:var(--serif); font-size:15px; color:var(--cream); margin-bottom:6px;">Council — deliberación local</div>
+          <div style="font-size:11.5px; color:var(--muted); line-height:1.6; margin-bottom:12px;">
+            Corre preguntas fijas (las mismas de <code>phantom_council.py</code>) contra tu modelo local, sobre un archivo del proyecto.
+            <b>De solo lectura</b> — nada se escribe ni se publica a la red. Cada respuesta queda guardada en tu diary, nada más.
+          </div>
+          <label style="font-size:11px; color:var(--dim); display:block; margin-bottom:4px;">Archivo a analizar</label>
+          <select id="councilFileSelect" style="width:100%; background:var(--bg); border:1px solid var(--border); color:var(--cream); font-size:12px; padding:6px; border-radius:4px; margin-bottom:12px;">
+            <option value="">— elegí un archivo —</option>
+          </select>
+          <label style="font-size:11px; color:var(--dim); display:block; margin-bottom:4px;">Presets (personas)</label>
+          <div id="councilPresetChecks" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;"></div>
+          <button class="btn btn-a" style="width:auto; padding:0 16px;" onclick="runCouncil()" id="councilRunBtn">Correr Council →</button>
+          <span id="councilProgress" style="font-family:monospace; font-size:11px; color:var(--dim); margin-left:10px;"></span>
+        </div>
+        <div id="councilResults"></div>
       </div>
     </div>
 
-    <div class="about-section">
-      <div class="about-section-title">What it does not protect</div>
-      <div class="about-warn">
-        If you opened this page through a web link, your IP address was visible to the server that delivered it. Phantom does not hide your IP and does not replace a VPN or Tor. Once the file is on your device, everything runs locally — but the act of downloading it was not private.
+    <div class="thread-panel" id="threadPanel">
+      <div class="thread-empty" id="threadEmpty">
+        <div class="thread-empty-icon">◈</div>
+        <div class="thread-empty-text">Elegí un post para leer</div>
+      </div>
+      <div id="threadContent" style="display:none; flex:1; flex-direction:column; overflow:hidden;">
+        <div class="thread-header" id="threadHeader"></div>
+        <div class="thread-messages" id="threadMessages"></div>
+        <div class="thread-reply">
+          <textarea class="reply-input" rows="3" placeholder="Responder..." id="replyInput"></textarea>
+          <div class="reply-footer"><button class="reply-send" onclick="submitReply()">Responder →</button></div>
+        </div>
       </div>
     </div>
 
-    <div class="about-section">
-      <div class="about-section-title">Source</div>
-      <div class="about-text">
-        Phantom is open source. Every line can be read, audited, and forked.<br>
-        <a href="https://github.com/phantom-commons/phantom-network" target="_blank" rel="noopener">github.com/phantom-commons/phantom-network</a><br><br>
-        GPL v3 — freedom is contagious, not capturable.
-      </div>
-    </div>
-
-    <div class="about-section">
-      <div class="about-section-title">Contact</div>
-      <div class="about-text">
-        phantom-commons@proton.me<br>
-        No account required. Just write.
-      </div>
-    </div>
-
-    <button class="about-close" onclick="closeAbout()">CLOSE</button>
   </div>
 </div>
 
-<!-- TOKEN UNLOCK -->
-<div class="token-overlay" id="tokenOverlay">
-  <div class="token-card">
-    <div class="token-title">Unlock this node</div>
-    <div class="token-tagline">
-      Your local daemon is running but this browser hasn't proven it belongs
-      to you yet. Paste the API token shown in the Daemon console window.
+<!-- NEW POST MODAL -->
+<div class="modal-overlay" id="postModal" onclick="if(event.target===this) closeModal()">
+  <div class="modal">
+    <div class="modal-title">Nuevo post</div>
+    <div class="modal-sub">SE PUBLICA CON TU IDENTIDAD DE NODO</div>
+    <textarea id="postIdea" placeholder="¿Qué querés compartir con la red?"></textarea>
+
+    <div class="tag-picker" id="modePicker">
+      <div class="tag-pick tag-development selected" data-mode="permanent" onclick="selectMode(this)">Permanente</div>
+      <div class="tag-pick tag-technical" data-mode="ephemeral" onclick="selectMode(this)">Efímero</div>
     </div>
-    <input class="token-input" id="tokenInput" type="text"
-           placeholder="Paste API token…" autocomplete="off" spellcheck="false"
+
+    <!-- Canal — ahora sí viaja a la API (channel, hermano de mode,
+         igual patrón — ver core_seal(idea, mode, channel, ref)). -->
+    <div class="tag-picker" id="channelPicker">
+      <div class="tag-pick selected tag-governance" data-channel="governance" onclick="selectTag(this)">Governance</div>
+      <div class="tag-pick tag-technical" data-channel="technical" onclick="selectTag(this)">Technical</div>
+      <div class="tag-pick tag-security" data-channel="security" onclick="selectTag(this)">Security</div>
+      <div class="tag-pick tag-philosophy" data-channel="philosophy" onclick="selectTag(this)">Philosophy</div>
+      <div class="tag-pick tag-development" data-channel="development" onclick="selectTag(this)">Development</div>
+      <div class="tag-pick tag-general" data-channel="general" onclick="selectTag(this)">General</div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="modal-submit" onclick="submitPost()">Publicar →</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOKEN UNLOCK (reusa las clases de .modal-overlay/.modal ya definidas) -->
+<div class="modal-overlay" id="tokenModal">
+  <div class="modal">
+    <div class="modal-title">Desbloquear este nodo</div>
+    <div class="modal-sub">PEGÁ EL TOKEN QUE MUESTRA LA CONSOLA DEL DAEMON</div>
+    <input id="tokenInput" type="text" placeholder="Token de API…" autocomplete="off" spellcheck="false"
+           style="width:100%; background:var(--card); border:1px solid var(--border); border-radius:4px; color:var(--cream); font-family:var(--mono); font-size:11px; padding:10px; margin-bottom:6px; outline:none;"
            onkeydown="if(event.key==='Enter') submitToken()">
-    <div class="token-error" id="tokenError"></div>
-    <button class="btn btn-gr btn-full" onclick="submitToken()">UNLOCK</button>
-    <button class="token-close" onclick="closeTokenOverlay()">CONTINUE WITHOUT NODE</button>
+    <div id="tokenError" style="font-family:var(--mono); font-size:9px; color:var(--red); min-height:11px; margin-bottom:10px;"></div>
+    <button class="modal-submit" style="width:100%" onclick="submitToken()">Desbloquear</button>
   </div>
 </div>
+
+<div class="toast" id="toastEl"></div>
 
 <script>
-// ════════════════════════════════════════════════════════
-// PHANTOM — UNIFIED
-// ════════════════════════════════════════════════════════
-// Everything is a seal.
-//   Private seal → diary entry
-//   Shared seal  → post in the feed
-//   Reply seal   → comment (references parent stamp)
-//   Vote seal    → governance (references proposal stamp)
-//   Proposal     → shared seal that invites votes
-// All travel the same wire. All verify the same way.
-// ════════════════════════════════════════════════════════
-
-
-// ── CRYPTO ──────────────────────────────
-
-async function sha256(idea, moment) {
-  function asciiEsc(s) {
-    return s.replace(/[^\x20-\x7E]/g, c => {
-      const code = c.charCodeAt(0);
-      if (code > 0xFFFF) {
-        const hi = Math.floor((code - 0x10000) / 0x400) + 0xD800;
-        const lo = (code - 0x10000) % 0x400 + 0xDC00;
-        return '\\u' + hi.toString(16).padStart(4,'0') + '\\u' + lo.toString(16).padStart(4,'0');
-      }
-      return '\\u' + code.toString(16).padStart(4,'0');
-    });
-  }
-  const data = '{"idea":' + asciiEsc(JSON.stringify(idea)) + ',"moment":' + asciiEsc(JSON.stringify(moment)) + '}';
-  const buf = new TextEncoder().encode(data);
-  const hash = await crypto.subtle.digest('SHA-256', buf);
-  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
-}
-
-async function makeSeal(idea, mode, extra) {
-  const moment = new Date().toISOString();
-  const stamp = await sha256(idea, moment);
-  const seal = { idea, moment, stamp, mode, node: myNode, ...extra };
-  return seal;
-}
-
-async function verifySeal(idea, moment, stamp) {
-  return (await sha256(idea, moment)) === stamp;
-}
-
-
-// ── NODE IDENTITY ───────────────────────
-
-const ADJ = ['quiet','bright','swift','deep','still','warm','dark','clear','bold','soft','wild','calm','keen','pale','true'];
-const NOUN = ['river','stone','flame','wind','leaf','wave','dust','root','seed','moon','star','rain','moth','pine','salt'];
-
-function generateNodeName() {
-  const a = ADJ[Math.floor(Math.random()*ADJ.length)];
-  const n = NOUN[Math.floor(Math.random()*NOUN.length)];
-  const hex = Array.from(crypto.getRandomValues(new Uint8Array(2))).map(b=>b.toString(16).padStart(2,'0')).join('');
-  return a + '-' + n + '-' + hex;
-}
-
-let myNode = null;
-
-// ── NODE BACKEND (phantom_daemon.py on localhost) ──
-let nodeMode = false;
-let nodeStatus = null;
-
-// ── API TOKEN ────────────────────────────
-// The daemon mints a fresh random token every time it starts (see
-// phantom_daemon.py --open-browser) and requires it on every /api/*
-// call. We hold it in sessionStorage: it survives reloads/navigation
-// within this tab, but disappears when the tab closes — which roughly
-// matches the token's real lifetime (it's invalid the moment the
-// daemon restarts anyway).
+// ══════════════════════════════════════════
+// AUTENTICACIÓN — igual patrón que app/index.html:
+// token en sessionStorage, se captura de la URL si
+// el daemon abrió el navegador con --open-browser,
+// y si el daemon te tira 401 se limpia y se vuelve
+// a pedir acá.
+// ══════════════════════════════════════════
 const TOKEN_KEY = 'phantom_api_token';
 function getToken() { return sessionStorage.getItem(TOKEN_KEY); }
 function setToken(t) { sessionStorage.setItem(TOKEN_KEY, t); }
 function clearToken() { sessionStorage.removeItem(TOKEN_KEY); }
 
-// If start_network.bat launched the browser automatically, the daemon
-// embedded the token in the URL (?token=...). Grab it, store it, and
-// scrub it from the address bar immediately so it doesn't linger in
-// browser history.
 function captureTokenFromUrl() {
   const params = new URLSearchParams(location.search);
   const t = params.get('token');
@@ -997,62 +658,38 @@ function captureTokenFromUrl() {
   setToken(t);
   params.delete('token');
   const rest = params.toString();
-  const cleanUrl = location.pathname + (rest ? '?' + rest : '') + location.hash;
-  history.replaceState(null, '', cleanUrl);
+  history.replaceState(null, '', location.pathname + (rest ? '?' + rest : '') + location.hash);
 }
 
-let tokenRetryAction = null; // re-run after a successful unlock
-
-function openTokenOverlay(retryAction) {
-  tokenRetryAction = retryAction || null;
+let tokenRetry = null;
+function openTokenModal(retry) {
+  tokenRetry = retry || null;
   document.getElementById('tokenError').textContent = '';
   document.getElementById('tokenInput').value = '';
-  document.getElementById('tokenOverlay').classList.add('open');
+  document.getElementById('tokenModal').classList.add('open');
   setTimeout(() => document.getElementById('tokenInput').focus(), 50);
 }
-
-function closeTokenOverlay() {
-  document.getElementById('tokenOverlay').classList.remove('open');
-  tokenRetryAction = null;
-}
+function closeTokenModal() { document.getElementById('tokenModal').classList.remove('open'); }
 
 async function submitToken() {
   const val = document.getElementById('tokenInput').value.trim();
-  if (!val) {
-    document.getElementById('tokenError').textContent = 'Paste the token from the Daemon console first.';
-    return;
-  }
+  if (!val) { document.getElementById('tokenError').textContent = 'Pegá el token primero.'; return; }
   setToken(val);
-  document.getElementById('tokenError').textContent = '';
-  const retry = tokenRetryAction;
-  closeTokenOverlay();
-  await initNodeBackend();
-  if (!nodeMode) {
-    // Still failing — token was wrong. Re-open with an error instead of
-    // silently going back to "no node detected".
-    openTokenOverlay(retry);
-    document.getElementById('tokenError').textContent = 'That token was rejected — check the Daemon console and try again.';
-  } else if (retry) {
-    retry();
+  closeTokenModal();
+  const retry = tokenRetry;
+  try {
+    if (retry) await retry();
+    else await bootstrap();
+    // [FIX] apiFetch abre este modal ante CUALQUIER 401, no solo el
+    // de bootstrap() — sin esto, si el modal saltó por loadFileTree()
+    // (u otra carga independiente), esa carga nunca se reintentaba y
+    // el error quedaba pegado en pantalla aunque el token ya sea válido.
+    loadFileTree();
+    checkLlmStatus();
+  } catch (e) {
+    openTokenModal(retry);
+    document.getElementById('tokenError').textContent = 'Token rechazado — revisá la consola del Daemon.';
   }
-}
-
-function showHostBanner() {
-  if (location.protocol === 'file:') {
-    document.getElementById('hostBanner').classList.add('show');
-  }
-}
-
-function modeToApi(localMode) {
-  if (localMode === 'private') return 'private';
-  if (localMode === 'ephemeral') return 'ephemeral';
-  return 'permanent';
-}
-
-function modeFromApi(apiMode) {
-  if (apiMode === 'private') return 'private';
-  if (apiMode === 'ephemeral') return 'ephemeral';
-  return 'shared';
 }
 
 async function apiFetch(path, opts) {
@@ -1060,15 +697,11 @@ async function apiFetch(path, opts) {
   const headers = Object.assign({}, opts.headers || {});
   const token = getToken();
   if (token) headers['X-Phantom-Token'] = token;
-
   const r = await fetch(path, Object.assign({}, opts, { headers }));
-
   if (r.status === 401) {
     clearToken();
-    if (!document.getElementById('tokenOverlay').classList.contains('open')) {
-      openTokenOverlay();
-    }
-    throw new Error('Unlock required — paste the API token from the Daemon console.');
+    if (!document.getElementById('tokenModal').classList.contains('open')) openTokenModal();
+    throw new Error('unlock_required');
   }
   if (!r.ok) {
     const err = await r.json().catch(() => ({}));
@@ -1077,894 +710,1117 @@ async function apiFetch(path, opts) {
   return r.json();
 }
 
-async function initNodeBackend() {
-  showHostBanner();
-  if (location.protocol === 'file:') return;
+function toast(msg) {
+  const t = document.getElementById('toastEl');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
 
-  try {
-    nodeStatus = await apiFetch('/api/status');
-    nodeMode = true;
-    if (nodeStatus.identity && nodeStatus.identity.node_name) {
-      myNode = nodeStatus.identity.node_name;
-      document.getElementById('myNodeBadge').textContent = myNode;
+// ── SPACE SWITCH ──
+function switchSpace(name) {
+  document.getElementById('spaceWorkbench').classList.toggle('active', name === 'workbench');
+  document.getElementById('spaceCommons').classList.toggle('active', name === 'commons');
+  document.getElementById('btnSpaceWorkbench').classList.toggle('active', name === 'workbench');
+  document.getElementById('btnSpaceCommons').classList.toggle('active', name === 'commons');
+  document.getElementById('spaceTag').textContent = name === 'workbench'
+    ? 'WORKBENCH — tu nodo, local'
+    : 'COMMONS — compartido con la red';
+}
+
+// ── WORKBENCH: window manager (drag + resize nativo + dock) ──
+const winIds = ['win-console','win-nodes','win-seals','win-diary','win-files','win-editor','win-wallet','win-ledger','win-council'];
+const winNames = { 'win-console':'Console', 'win-nodes':'Nodes', 'win-seals':'Seals', 'win-diary':'Diary', 'win-files':'Files', 'win-editor':'Editor', 'win-wallet':'Wallet', 'win-ledger':'Ledger', 'win-council':'Council' };
+let z = 2;
+
+function closeWin(id) { document.getElementById(id).style.display = 'none'; renderDock(); }
+function openWin(id) { const el = document.getElementById(id); el.style.display = 'flex'; el.style.zIndex = z++; renderDock(); }
+
+function renderDock() {
+  const dock = document.getElementById('dock');
+  dock.innerHTML = '';
+  winIds.forEach(id => {
+    const open = document.getElementById(id).style.display !== 'none';
+    const b = document.createElement('button');
+    b.textContent = winNames[id] + (open ? ' ●' : '');
+    if (open) b.classList.add('open');
+    b.onclick = () => open ? closeWin(id) : openWin(id);
+    dock.appendChild(b);
+  });
+}
+
+winIds.forEach(id => {
+  const el = document.getElementById(id);
+  const title = el.querySelector('.win-title');
+
+  // En pantallas angostas las ventanas quedan apiladas (position: static
+  // por CSS), así que no hay nada que arrastrar — evitamos engancharnos.
+  function isStacked() { return window.innerWidth <= 700; }
+
+  function startDrag(clientX, clientY) {
+    el.style.zIndex = z++;
+    const sx = clientX, sy = clientY;
+    const ox = el.offsetLeft, oy = el.offsetTop;
+    return function moveTo(clientX2, clientY2) {
+      el.style.left = (ox + clientX2 - sx) + 'px';
+      el.style.top = (oy + clientY2 - sy) + 'px';
+    };
+  }
+
+  title.addEventListener('mousedown', e => {
+    if (isStacked() || e.target.classList.contains('win-close')) return;
+    const move = startDrag(e.clientX, e.clientY);
+    function onMove(ev) { move(ev.clientX, ev.clientY); }
+    function up() { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', up); }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', up);
+  });
+
+  // [TOUCH] mismo gesto con el dedo, para tablets/teléfonos en modo
+  // ancho (>700px, ej. landscape). En modo apilado no hace falta.
+  title.addEventListener('touchstart', e => {
+    if (isStacked() || e.target.classList.contains('win-close')) return;
+    const t = e.touches[0];
+    const move = startDrag(t.clientX, t.clientY);
+    function onMove(ev) {
+      ev.preventDefault(); // evita que la página haga scroll mientras arrastras
+      const t2 = ev.touches[0];
+      move(t2.clientX, t2.clientY);
     }
-    setDot('on');
-    const bar = document.getElementById('nodeStatusBar');
-    bar.textContent = 'Nodo local activo — v' + (nodeStatus.phantom_version || '?') +
-      ' · ' + (nodeStatus.seal_count || 0) + ' sellos · escuchando';
-    bar.classList.add('show');
-    document.getElementById('daemonPanel').style.display = '';
-    document.getElementById('daemonName').textContent = myNode || nodeStatus.identity?.fingerprint || 'phantom';
-    document.getElementById('daemonInfo').textContent =
-      'Puerto 7337 · ' + (nodeStatus.encounter_count || 0) + ' encuentros · pulse ' +
-      (nodeStatus.shared_pulse != null ? nodeStatus.shared_pulse.toFixed(2) : '—');
-    addLog('Conectado al nodo local', 'ok');
+    function up() { document.removeEventListener('touchmove', onMove); document.removeEventListener('touchend', up); }
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', up);
+  }, { passive: true });
+});
+renderDock();
+
+// ══════════════════════════════════════════
+// COUNCIL (LLM local) — chat real contra llama-server
+// (llama.cpp corriendo con --port 8080, ver instrucciones aparte)
+// ══════════════════════════════════════════
+const LLAMA_URL = "http://127.0.0.1:8080/v1/chat/completions";
+let llmHistory = [
+  { role: "system", content: "Eres un asistente corriendo localmente dentro de Phantom Network, un nodo P2P personal. Respondes en español, breve y directo." }
+];
+
+function llmAppendBubble(text, mine) {
+  const log = document.getElementById('llmChatLog');
+  const b = document.createElement('div');
+  b.className = 'chat-b ' + (mine ? 'chat-mine' : 'chat-llm');
+  b.textContent = text;
+  log.appendChild(b);
+  log.scrollTop = log.scrollHeight;
+  return b;
+}
+
+async function checkLlmStatus() {
+  const dot = document.getElementById('llmStatusDot');
+  if (!dot) return;
+  try {
+    const r = await fetch("http://127.0.0.1:8080/health", { method: "GET" });
+    dot.style.background = r.ok ? 'var(--green)' : 'var(--red)';
   } catch (e) {
-    nodeMode = false;
+    dot.style.background = 'var(--red)';
   }
 }
 
-async function refreshNodeStatus() {
-  if (!nodeMode) return;
-  try {
-    nodeStatus = await apiFetch('/api/status');
-    document.getElementById('daemonInfo').textContent =
-      'Puerto 7337 · ' + (nodeStatus.encounter_count || 0) + ' encuentros · pulse ' +
-      (nodeStatus.shared_pulse != null ? nodeStatus.shared_pulse.toFixed(2) : '—');
-  } catch (e) {}
+// ══════════════════════════════════════════
+// FILE EXPLORER — árbol real del proyecto (solo lectura)
+// ══════════════════════════════════════════
+let attachedFile = null; // { path, content, truncated }
+
+function fileIcon(name) {
+  if (name.endsWith('.py')) return '🐍';
+  if (name.endsWith('.md')) return '📝';
+  if (name.endsWith('.html')) return '🌐';
+  if (name.endsWith('.json')) return '⚙️';
+  return '📄';
 }
 
-async function connectNearby() {
-  if (!nodeMode) { toast('Inicia el nodo con start.bat'); return; }
-  addLog('Buscando nodo cercano...', 'info');
-  setDot('scan');
-  try {
-    await apiFetch('/api/connect', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
-    addLog('Sync iniciado — revisa el log abajo', 'ok');
-    toast('Sync iniciado');
-    setTimeout(async () => {
-      await refreshNodeStatus();
-      await renderEncountersFromApi();
-      setDot('on');
-    }, 3000);
-  } catch (e) {
-    addLog('Sync falló: ' + e.message, 'err');
-    setDot('on');
+function renderFileNode(node) {
+  if (node.type === 'dir') {
+    const wrap = document.createElement('div');
+    const label = document.createElement('div');
+    label.className = 'tree-node folder';
+    label.textContent = '▸ ' + node.name;
+    label.onclick = () => label.parentElement.querySelector('.tree-children').classList.toggle('open');
+    const children = document.createElement('div');
+    children.className = 'tree-children';
+    node.children.forEach(c => children.appendChild(renderFileNode(c)));
+    wrap.appendChild(label);
+    wrap.appendChild(children);
+    return wrap;
+  } else {
+    const el = document.createElement('div');
+    el.className = 'tree-node file';
+    el.textContent = fileIcon(node.name) + ' ' + node.name;
+    el.style.cursor = 'pointer';
+    el.title = 'Abrir en editor';
+    el.onclick = () => openInEditor(node.path);
+    return el;
   }
 }
 
-async function renderEncountersFromApi() {
-  if (!nodeMode) return;
+let projectFileList = []; // lista plana "conozco estos archivos", sin contenido
+
+function flattenTree(nodes, out) {
+  for (const n of nodes) {
+    if (n.type === 'file') out.push(n.path);
+    else flattenTree(n.children, out);
+  }
+  return out;
+}
+
+async function loadFileTree() {
+  const root = document.getElementById('fileTreeRoot');
   try {
-    const data = await apiFetch('/api/encounters');
-    const log = document.getElementById('nodeLog');
-    log.innerHTML = '';
-    if (!data.count) {
-      addLog('Sin encuentros aún — usa BUSCAR NODO CERCA', 'info');
+    const data = await apiFetch('/api/files/tree');
+    root.innerHTML = '';
+    if (!data.tree || data.tree.length === 0) {
+      root.innerHTML = '<div style="color:var(--dim); font-size:11px; padding:6px;">(sin archivos legibles)</div>';
       return;
     }
-    data.encounters.slice().reverse().forEach(e => {
-      addLog('Peer ' + e.peer + ' — enviados ' + e.sent + ', recibidos ' + e.received, 'ok');
-    });
-  } catch (err) {
-    addLog('No se pudo cargar encuentros', 'err');
+    data.tree.forEach(node => root.appendChild(renderFileNode(node)));
+    projectFileList = flattenTree(data.tree, []);
+  } catch (e) {
+    root.innerHTML = '<div style="color:var(--red); font-size:11px; padding:6px; cursor:pointer;" onclick="loadFileTree()">No pude cargar el árbol (¿daemon corriendo?) — tocar para reintentar</div>';
   }
 }
 
+// ══════════════════════════════════════════════════════════════
+// EDITOR — syntax highlighting + tab system
+// ══════════════════════════════════════════════════════════════
 
-// ── STORAGE ─────────────────────────────
+const editorTabs = [];   // [{ path, content, lang }]
+let editorActive = -1;   // index into editorTabs
+const EDITOR_MAX_TABS = 10;
 
-const DB_NAME = 'phantom';
-const DB_VER = 3;
-let db = null;
-
-function openDB() {
-  return new Promise((res, rej) => {
-    const r = indexedDB.open(DB_NAME, DB_VER);
-    r.onupgradeneeded = e => {
-      const d = e.target.result;
-      if (!d.objectStoreNames.contains('seals')) {
-        const s = d.createObjectStore('seals', { keyPath: 'stamp' });
-        s.createIndex('mode', 'mode');
-        s.createIndex('type', 'type');
-        s.createIndex('ref', 'ref');
-      }
-      if (!d.objectStoreNames.contains('meta')) {
-        d.createObjectStore('meta', { keyPath: 'key' });
-      }
-    };
-    r.onsuccess = e => { db = e.target.result; res(db); };
-    r.onerror = () => rej(r.error);
-  });
+function edLang(path) {
+  const ext = path.split('.').pop().toLowerCase();
+  const map = { py:'python', md:'markdown', json:'json',
+    html:'html', htm:'html', yml:'yaml', yaml:'yaml',
+    toml:'toml', txt:'text', bat:'batch', sh:'shell',
+    log:'text', js:'javascript', css:'css' };
+  return map[ext] || 'text';
 }
 
-function dbPut(store, obj) {
-  return new Promise((res, rej) => {
-    const tx = db.transaction(store, 'readwrite');
-    tx.objectStore(store).put(obj);
-    tx.oncomplete = () => res();
-    tx.onerror = () => rej(tx.error);
-  });
+function edIcon(lang) {
+  const m = { python:'🐍', markdown:'📝', json:'{}', html:'🌐',
+    yaml:'⚙', toml:'⚙', text:'📄', batch:'⚙', shell:'⚙',
+    javascript:'⚡', css:'🎨' };
+  return m[lang] || '◇';
 }
 
-function dbGet(store, key) {
-  return new Promise((res, rej) => {
-    const tx = db.transaction(store, 'readonly');
-    const r = tx.objectStore(store).get(key);
-    r.onsuccess = () => res(r.result);
-    r.onerror = () => rej(r.error);
-  });
+// ── Syntax highlighter ──────────────────────────────────────
+
+function escH(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-function dbAll(store) {
-  return new Promise((res, rej) => {
-    const tx = db.transaction(store, 'readonly');
-    const r = tx.objectStore(store).getAll();
-    r.onsuccess = () => res(r.result);
-    r.onerror = () => rej(r.error);
-  });
-}
+function hlPython(code) {
+  const KW = new Set(['False','None','True','and','as','assert','async','await',
+    'break','class','continue','def','del','elif','else','except','finally',
+    'for','from','global','if','import','in','is','lambda','nonlocal','not',
+    'or','pass','raise','return','try','while','with','yield']);
+  const BI = new Set(['abs','all','any','bin','bool','bytes','chr','dict','dir',
+    'divmod','enumerate','eval','filter','float','format','frozenset','getattr',
+    'globals','hasattr','hash','hex','id','input','int','isinstance','issubclass',
+    'iter','len','list','locals','map','max','min','next','object','oct','open',
+    'ord','pow','print','property','range','repr','reversed','round','self',
+    'set','setattr','slice','sorted','staticmethod','str','sum','super',
+    'tuple','type','vars','zip']);
 
-function dbCount(store) {
-  return new Promise((res, rej) => {
-    const tx = db.transaction(store, 'readonly');
-    const r = tx.objectStore(store).count();
-    r.onsuccess = () => res(r.result);
-    r.onerror = () => rej(r.error);
-  });
-}
-
-async function saveSeal(seal) {
-  if (!seal.type) seal.type = seal.mode === 'proposal' ? 'proposal' : (seal.ref ? 'reply' : 'thought');
-  await dbPut('seals', seal);
-}
-
-async function initNode() {
-  const m = await dbGet('meta', 'nodeId');
-  if (m) {
-    myNode = m.value;
-  } else {
-    myNode = generateNodeName();
-    await dbPut('meta', { key: 'nodeId', value: myNode });
-  }
-  document.getElementById('myNodeBadge').textContent = myNode;
-}
-
-
-// ── NAVIGATION ──────────────────────────
-
-let curView = 'viewSeal';
-
-function showV(id) {
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  curView = id;
-  document.querySelector('.main').scrollTop = 0;
-}
-
-function nav(id, btn) {
-  if (id === 'viewSeal') resetSeal();
-  if (id === 'viewFeed') renderFeed();
-  if (id === 'viewMine') renderMine();
-  if (id === 'viewNodes') { checkBT(); if (nodeMode) renderEncountersFromApi(); }
-  showV(id);
-  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-}
-
-function copyNodeId() {
-  navigator.clipboard.writeText(myNode).then(() => toast('Node ID copied'));
-}
-
-
-// ── SEAL FLOW ───────────────────────────
-
-let pendingIdea = '';
-let selModeVal = 'shared';
-let lastSeal = null;
-
-const sealInput = document.getElementById('sealInput');
-const btnSeal = document.getElementById('btnSeal');
-
-sealInput.addEventListener('input', () => {
-  const len = sealInput.value.trim().length;
-  document.getElementById('inputCount').textContent = len;
-  btnSeal.disabled = len === 0;
-});
-
-btnSeal.addEventListener('click', () => {
-  pendingIdea = sealInput.value.trim();
-  if (!pendingIdea) return;
-  showV('viewMode');
-});
-
-function selMode(el) {
-  document.querySelectorAll('.mode-opt').forEach(o => o.classList.remove('sel'));
-  el.classList.add('sel');
-  selModeVal = el.dataset.mode;
-}
-
-document.getElementById('btnConfirmMode').addEventListener('click', () => {
-  if (selModeVal === 'private') {
-    doSeal();
-  } else {
-    const wt = document.getElementById('warningText');
-    if (selModeVal === 'proposal') {
-      wt.innerHTML = 'This proposal will reach every node it touches.<br><br>Others can vote: <strong>agree, disagree, or abstain.</strong><br><br>The votes are seals — permanent and verifiable.';
-    } else {
-      wt.innerHTML = 'This thought will travel to nodes you do not control.<br><br>Once received, it <strong>cannot be taken back.</strong><br><br>Honest nodes will honor your wishes. Not every node is honest.';
+  let out = '', i = 0, n = code.length;
+  while (i < n) {
+    // Triple-quoted string
+    const tq = code[i]==="'" ? (code.slice(i,i+3)==="'''"?"'''":null)
+                             : (code.slice(i,i+3)==='"""'?'"""':null);
+    if (tq) {
+      let j = i+3;
+      while (j < n && code.slice(j,j+3) !== tq) j++;
+      j += 3;
+      out += `<span class="hl-str">${escH(code.slice(i,j))}</span>`;
+      i = j; continue;
     }
-    showV('viewWarning');
+    // Comment
+    if (code[i]==='#') {
+      let j=i; while(j<n && code[j]!=='\n') j++;
+      out += `<span class="hl-cmt">${escH(code.slice(i,j))}</span>`;
+      i=j; continue;
+    }
+    // f-string / r-string / b-string prefix
+    const strPfx = /^[fFrRbBuU]{1,2}/.exec(code.slice(i));
+    const pfxLen = (strPfx && (code[i+strPfx[0].length]==='"' || code[i+strPfx[0].length]==="'")) ? strPfx[0].length : 0;
+    if (pfxLen || code[i]==='"' || code[i]==="'") {
+      const start = i;
+      i += pfxLen;
+      const q = code[i];
+      i++;
+      while (i < n && code[i] !== q && code[i] !== '\n') {
+        if (code[i]==='\\') i++;
+        i++;
+      }
+      i++;
+      out += `<span class="hl-str">${escH(code.slice(start,i))}</span>`;
+      continue;
+    }
+    // Decorator
+    if (code[i]==='@') {
+      let j=i+1; while(j<n && /[\w.]/.test(code[j])) j++;
+      out += `<span class="hl-dec">${escH(code.slice(i,j))}</span>`;
+      i=j; continue;
+    }
+    // Number
+    if (/\d/.test(code[i]) && (i===0||!/\w/.test(code[i-1]))) {
+      let j=i; while(j<n && /[\d._xXeEabcdefABCDEF+\-]/.test(code[j])) j++;
+      out += `<span class="hl-num">${escH(code.slice(i,j))}</span>`;
+      i=j; continue;
+    }
+    // Identifier
+    if (/[a-zA-Z_]/.test(code[i])) {
+      let j=i; while(j<n && /\w/.test(code[j])) j++;
+      const w = code.slice(i,j);
+      const next = code.slice(j).trimStart();
+      if (KW.has(w))      out += `<span class="hl-kw">${escH(w)}</span>`;
+      else if ((w==='def'||w==='class') && next) {
+        // already handled above as kw; peek at next word for name
+        out += `<span class="hl-kw">${escH(w)}</span>`;
+      } else if (BI.has(w)) out += `<span class="hl-bi">${escH(w)}</span>`;
+      // name after def/class
+      else {
+        const prev = out.match(/<span class="hl-kw">(def|class)<\/span>\s*$/);
+        if (prev) out += `<span class="hl-def">${escH(w)}</span>`;
+        else out += escH(w);
+      }
+      i=j; continue;
+    }
+    out += escH(code[i]); i++;
   }
-});
+  return out;
+}
 
-document.getElementById('btnConfirmSeal').addEventListener('click', doSeal);
+function hlJSON(raw) {
+  let pretty = raw;
+  try { pretty = JSON.stringify(JSON.parse(raw), null, 2); } catch(e) {}
+  return pretty.split('\n').map(line => {
+    const e = escH(line);
+    // key: "name":  → accent
+    return e
+      .replace(/^(\s*)(&quot;)((?:[^&]|&(?!quot;))*?)(&quot;)(\s*:)/g,
+        (_,sp,q1,k,q2,col) => `${sp}<span class="hl-key">${q1}${k}${q2}</span>${col}`)
+      // string values after colon
+      .replace(/(:\s*)(&quot;)((?:[^&]|&(?!quot;))*?)(&quot;)/g,
+        (_,pre,q1,v,q2) => `${pre}<span class="hl-val">${q1}${v}${q2}</span>`)
+      // numbers
+      .replace(/(:\s*)(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\b/g,
+        (_,pre,n) => `${pre}<span class="hl-num">${n}</span>`)
+      // booleans & null
+      .replace(/(:\s*|\[|\s)(true|false|null)(\b)/g,
+        (_,pre,b,suf) => `${pre}<span class="hl-bool">${b}</span>${suf}`);
+  }).join('\n');
+}
 
-async function doSeal() {
-  const mode = selModeVal === 'proposal' ? 'shared' : selModeVal;
-  const type = selModeVal === 'proposal' ? 'proposal' : 'thought';
+function hlMarkdown(code) {
+  return code.split('\n').map(line => {
+    const e = escH(line);
+    if (/^# /.test(line))   return `<span class="hl-h1">${e}</span>`;
+    if (/^## /.test(line))  return `<span class="hl-h2">${e}</span>`;
+    if (/^### /.test(line)) return `<span class="hl-h3">${e}</span>`;
+    if (/^```/.test(line))  return `<span class="hl-ico">${e}</span>`;
+    if (/^---/.test(line))  return `<span class="hl-cmt">${e}</span>`;
+    // inline code
+    return e.replace(/(`[^`]+`)/g, '<span class="hl-ico">$1</span>')
+            // bold
+            .replace(/(\*\*[^*]+\*\*)/g, '<span class="hl-h1">$1</span>');
+  }).join('\n');
+}
 
-  if (nodeMode) {
+function hlHTML(code) {
+  // Escape then highlight tags and attributes
+  const e = escH(code);
+  return e
+    .replace(/(&lt;\/?)([\w:.-]+)/g, '$1<span class="hl-tag">$2</span>')
+    .replace(/\s([\w:-]+)(=)(&quot;[^&]*&quot;)/g,
+      ' <span class="hl-atr">$1</span>$2<span class="hl-val">$3</span>');
+}
+
+function hlYAML(code) {
+  return code.split('\n').map(line => {
+    const e = escH(line);
+    if (/^\s*#/.test(line)) return `<span class="hl-cmt">${e}</span>`;
+    return e.replace(/^(\s*)([\w-]+)(:)/g,
+      (_,sp,k,col)=>`${sp}<span class="hl-key">${k}</span>${col}`)
+      .replace(/(:\s*)(.+)$/g, (_,pre,v)=>`${pre}<span class="hl-val">${escH(v.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&').replace(/&quot;/g,'"'))}</span>`);
+  }).join('\n');
+}
+
+function highlightCode(content, lang) {
+  switch(lang) {
+    case 'python':   return hlPython(content);
+    case 'json':     return hlJSON(content);
+    case 'markdown': return hlMarkdown(content);
+    case 'html':     return hlHTML(content);
+    case 'yaml':     return hlYAML(content);
+    default:         return escH(content);
+  }
+}
+
+// ── Editor render ───────────────────────────────────────────
+
+function edRenderTabs() {
+  const bar = document.getElementById('editorTabs');
+  bar.innerHTML = '';
+  editorTabs.forEach((t, i) => {
+    const tab = document.createElement('div');
+    tab.className = 'editor-tab' + (i === editorActive ? ' active' : '');
+    const name = t.path.split(/[/\\]/).pop();
+    tab.innerHTML = `<span style="color:var(--dim)">${edIcon(t.lang)}</span><span>${escH(name)}</span><span class="editor-tab-close" onclick="edCloseTab(event,${i})">×</span>`;
+    tab.onclick = (e) => { if(!e.target.classList.contains('editor-tab-close')) edSwitchTab(i); };
+    bar.appendChild(tab);
+  });
+}
+
+function edRenderContent() {
+  const area = document.getElementById('editorArea');
+  const empty = document.getElementById('editorEmpty');
+  const statusBar = document.getElementById('editorStatusBar');
+  const attachBtn = document.getElementById('editorAttachBtn');
+
+  if (editorActive < 0 || !editorTabs[editorActive]) {
+    area.innerHTML = '';
+    area.appendChild(empty);
+    empty.style.display = 'flex';
+    statusBar.style.display = 'none';
+    attachBtn.style.display = 'none';
+    document.getElementById('editorWinTitle').textContent = 'Editor';
+    return;
+  }
+
+  const tab = editorTabs[editorActive];
+  const lines = tab.content.split('\n');
+  const highlighted = highlightCode(tab.content, tab.lang);
+  const lineNums = lines.map((_,i) => i+1).join('\n');
+  const name = tab.path.split(/[/\\]/).pop();
+
+  area.innerHTML = `
+    <div class="editor-gutter" id="edGutter">${escH(lineNums)}</div>
+    <pre class="editor-code" id="edCode" onscroll="syncGutter()">${highlighted}</pre>`;
+
+  statusBar.style.display = 'flex';
+  attachBtn.style.display = '';
+  document.getElementById('editorWinTitle').textContent = name;
+  document.getElementById('edSbLang').textContent = tab.lang.toUpperCase();
+  document.getElementById('edSbLines').textContent = lines.length + ' líneas';
+  document.getElementById('edSbChars').textContent = tab.content.length + ' chars';
+  document.getElementById('edSbPath').textContent = tab.path;
+
+  // sync gutter scroll with code scroll
+  const code = document.getElementById('edCode');
+  const gutter = document.getElementById('edGutter');
+  if (code && gutter) {
+    code.addEventListener('scroll', () => { gutter.scrollTop = code.scrollTop; });
+  }
+}
+
+function syncGutter() {
+  const code = document.getElementById('edCode');
+  const gutter = document.getElementById('edGutter');
+  if (code && gutter) gutter.scrollTop = code.scrollTop;
+}
+
+function edSwitchTab(i) {
+  editorActive = i;
+  edRenderTabs();
+  edRenderContent();
+}
+
+function edCloseTab(e, i) {
+  e.stopPropagation();
+  editorTabs.splice(i, 1);
+  if (editorActive >= editorTabs.length) editorActive = editorTabs.length - 1;
+  edRenderTabs();
+  edRenderContent();
+}
+
+async function openInEditor(path) {
+  // Check if already open
+  const existing = editorTabs.findIndex(t => t.path === path);
+  if (existing >= 0) {
+    editorActive = existing;
+    openWin('win-editor');
+    edRenderTabs();
+    edRenderContent();
+    return;
+  }
+
+  try {
+    const data = await apiFetch('/api/files/content?path=' + encodeURIComponent(path));
+    const lang = edLang(path);
+    // Enforce tab limit
+    if (editorTabs.length >= EDITOR_MAX_TABS) editorTabs.shift();
+    editorTabs.push({ path: data.path, content: data.content, lang,
+      truncated: data.truncated });
+    editorActive = editorTabs.length - 1;
+    openWin('win-editor');
+    edRenderTabs();
+    edRenderContent();
+    if (data.truncated) toast('Archivo largo — mostrando primeros 12000 chars');
+  } catch(e) {
+    if (e.message !== 'unlock_required') toast('No pude abrir ' + path);
+  }
+}
+
+function editorCopyAll() {
+  if (editorActive < 0 || !editorTabs[editorActive]) return;
+  navigator.clipboard.writeText(editorTabs[editorActive].content)
+    .then(() => toast('Copiado al portapapeles'))
+    .catch(() => toast('No se pudo copiar'));
+}
+
+function editorAttach() {
+  if (editorActive < 0 || !editorTabs[editorActive]) return;
+  const t = editorTabs[editorActive];
+  attachedFile = { path: t.path, content: t.content, truncated: t.truncated };
+  const chip = document.getElementById('llmAttachChip');
+  const name = document.getElementById('llmAttachName');
+  const fname = t.path.split(/[/\\]/).pop();
+  name.textContent = fname + (t.truncated ? '  (recortado)' : '');
+  chip.style.display = 'flex';
+  toast('Adjuntado: ' + fname);
+}
+
+async function attachFile(path) {
+  try {
+    const data = await apiFetch('/api/files/content?path=' + encodeURIComponent(path));
+    attachedFile = { path: data.path, content: data.content, truncated: data.truncated };
+    const chip = document.getElementById('llmAttachChip');
+    const name = document.getElementById('llmAttachName');
+    name.textContent = path + (data.truncated ? '  (recortado, es largo)' : '');
+    chip.style.display = 'flex';
+    toast('Adjuntado: ' + path);
+  } catch (e) {
+    toast('No pude leer ' + path);
+  }
+}
+
+function detachFile() {
+  attachedFile = null;
+  document.getElementById('llmAttachChip').style.display = 'none';
+}
+
+// ══════════════════════════════════════════
+// COUNCIL EN COMMONS — mismos presets que phantom_council.py,
+// corridos contra el modelo local sobre un archivo elegido.
+// Solo lectura: nunca escribe en el repo, solo guarda en el diary.
+// ══════════════════════════════════════════
+const COUNCIL_PRESETS = {
+  builder:   { label: "Builder",   color: "var(--green)",  question: "What would you build first, and why? Be specific — name the file, the function, the test that proves it works." },
+  critic:    { label: "Critic",    color: "var(--red)",     question: "Who is missing from this repository? Whose voice is absent that would change what gets built? Be specific." },
+  adversary: { label: "Adversary", color: "var(--accent)",  question: "How would you attack Phantom? What are the most realistic ways this could be used against the people it is trying to protect?" },
+  mirror:    { label: "Mirror",    color: "var(--blue)",    question: "Read this. Then describe what it actually is today — not what it says it is. What is real and working, what is fragile, what does not exist yet." },
+  lagos:     { label: "Lagos",     color: "var(--violet)",  question: "Apply the Lagos Protocol to this. Can she use it today? Does it actually protect her? Can it be used against her by someone close to her? Be honest." },
+  contraste: { label: "Contraste", color: "var(--muted)",   question: "Verify every claim against reality. What does this say exists that does not? What does it say works that has not been tested? Be specific." },
+};
+
+let councilViewInited = false;
+
+function openCouncilView(el) {
+  document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
+  if (el) el.classList.add('active');
+  document.getElementById('feedList').style.display = 'none';
+  document.querySelector('.feed-tabs').style.display = 'none';
+  document.getElementById('councilView').style.display = 'block';
+  if (!councilViewInited) {
+    initCouncilView();
+    councilViewInited = true;
+  }
+}
+
+function initCouncilView() {
+  const select = document.getElementById('councilFileSelect');
+  projectFileList.forEach(path => {
+    const opt = document.createElement('option');
+    opt.value = path; opt.textContent = path;
+    select.appendChild(opt);
+  });
+  const checks = document.getElementById('councilPresetChecks');
+  Object.entries(COUNCIL_PRESETS).forEach(([key, p]) => {
+    const label = document.createElement('label');
+    label.style.cssText = 'display:flex; align-items:center; gap:4px; font-size:11px; color:var(--cream); cursor:pointer;';
+    label.innerHTML = `<input type="checkbox" value="${key}" checked style="accent-color:${p.color};"><span style="color:${p.color}">${p.label}</span>`;
+    checks.appendChild(label);
+  });
+}
+
+function councilPostCard(personaKey, question, text, filePath) {
+  const p = COUNCIL_PRESETS[personaKey];
+  const card = document.createElement('div');
+  card.style.cssText = 'background:var(--card); border:1px solid var(--border-light); border-left:3px solid ' + p.color + '; border-radius:6px; padding:12px; margin-bottom:10px;';
+  card.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+      <span style="font-family:var(--serif); font-size:13px; color:${p.color};">${p.label}</span>
+      <span style="font-size:10px; color:var(--dim);">sobre ${filePath}</span>
+    </div>
+    <div style="font-size:11px; color:var(--dim); margin-bottom:8px; font-style:italic;">${question}</div>
+    <div style="font-size:12.5px; color:var(--cream); line-height:1.6; white-space:pre-wrap;"></div>
+  `;
+  card.querySelector('div:last-child').textContent = text;
+  return card;
+}
+
+async function runCouncil() {
+  const filePath = document.getElementById('councilFileSelect').value;
+  if (!filePath) { toast('Elegí un archivo primero'); return; }
+  const selectedPresets = Array.from(document.querySelectorAll('#councilPresetChecks input:checked')).map(i => i.value);
+  if (selectedPresets.length === 0) { toast('Elegí al menos un preset'); return; }
+
+  const btn = document.getElementById('councilRunBtn');
+  const progress = document.getElementById('councilProgress');
+  btn.disabled = true;
+
+  let fileContent;
+  try {
+    const data = await apiFetch('/api/files/content?path=' + encodeURIComponent(filePath));
+    fileContent = data.content;
+  } catch (e) {
+    toast('No pude leer ' + filePath);
+    btn.disabled = false;
+    return;
+  }
+
+  const results = document.getElementById('councilResults');
+  for (let i = 0; i < selectedPresets.length; i++) {
+    const key = selectedPresets[i];
+    const p = COUNCIL_PRESETS[key];
+    progress.textContent = `corriendo ${p.label}… (${i + 1}/${selectedPresets.length})`;
+
     try {
-      const data = await apiFetch('/api/seals', {
+      const res = await fetch(LLAMA_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [
+            { role: "system", content: `You are ${p.label}, one voice in a council reviewing a code file from the Phantom Network project. Answer directly and specifically, grounded only in the file shown. Respond in Spanish.` },
+            { role: "system", content: `Archivo ${filePath}:\n\n${fileContent}` },
+            { role: "user", content: p.question },
+          ],
+          temperature: 0.4,
+        }),
+      });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      const reply = data.choices?.[0]?.message?.content?.trim() || '(respuesta vacía)';
+      results.prepend(councilPostCard(key, p.question, reply, filePath));
+
+      // Solo lectura del repo, pero SÍ queda memoria — igual que el
+      // resto del chat, best-effort.
+      apiFetch('/api/diary', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idea: pendingIdea, mode: modeToApi(mode) }),
-      });
-      const s = data.seal;
-      lastSeal = {
-        idea: pendingIdea,
-        moment: s.moment,
-        stamp: s.stamp,
-        mode,
-        type,
-        node: myNode,
-      };
-      await refreshNodeStatus();
+        body: JSON.stringify({
+          text: `[Council/${p.label}] sobre ${filePath}\nPregunta: ${p.question}\nRespuesta: ${reply}`,
+          tags: ['council', key],
+        }),
+      }).catch(() => {});
     } catch (e) {
-      toast('Error al sellar');
-      return;
+      results.prepend(councilPostCard(key, p.question, 'Error: ' + e.message, filePath));
     }
-  } else {
-    const seal = await makeSeal(pendingIdea, mode, { type });
-    await saveSeal(seal);
-    lastSeal = seal;
   }
 
-  document.getElementById('resultIdea').textContent = lastSeal.idea;
-  document.getElementById('resultStamp').textContent = lastSeal.stamp;
-  document.getElementById('resultMoment').textContent = lastSeal.moment;
-  document.getElementById('resultMode').textContent = 'SEALED — ' + (type === 'proposal' ? 'PROPOSAL' : mode.toUpperCase());
-  document.getElementById('btnSendLast').style.display = btDevice ? '' : 'none';
-
-  showV('viewResult');
+  progress.textContent = '';
+  btn.disabled = false;
 }
 
-function resetSeal() {
-  sealInput.value = '';
-  document.getElementById('inputCount').textContent = '0';
-  btnSeal.disabled = true;
-  pendingIdea = '';
-  lastSeal = null;
-  showV('viewSeal');
+const CONTEXT_SIZE = 4096; // debe matchear el -c que le pasaste a llama-server
+
+
+
+function setLlmStatusLine(text) {
+  const el = document.getElementById('llmStatusLine');
+  if (el) el.textContent = text;
 }
 
-function sealToText(s) {
-  return 'Phantom Seal\nIdea: ' + s.idea + '\nMoment: ' + s.moment + '\nStamp: ' + s.stamp;
+async function sendLlmMessage() {
+  const input = document.getElementById('llmInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  llmAppendBubble(text, true);
+
+  const pending = llmAppendBubble('…pensando…', false);
+  setLlmStatusLine('buscando en memoria…');
+
+  // [DIARY] buscar entradas pasadas relacionadas con este mensaje y
+  // metérselas al modelo como contexto, ANTES de mandar la pregunta.
+  // Best-effort: si el diary API falla (token, offline, etc.) seguimos
+  // sin memoria en vez de romper el chat.
+  let historyForModel = llmHistory.slice();
+  let recalledCount = 0;
+
+  // [AWARENESS] el modelo no tiene reloj ni ubicación propios — el
+  // "Today Date" que llama-server mete solo en el template NO
+  // significa que el modelo lo use (los modelos chicos suelen
+  // ignorarlo). Se lo damos explícito, y liviano: solo nombres de
+  // archivo, no contenido (el contenido va aparte si adjuntás uno).
+  const now = new Date();
+  const liveContext = [
+    `Fecha y hora actual: ${now.toLocaleString('es-AR', { dateStyle: 'full', timeStyle: 'short' })}.`,
+    projectFileList.length
+      ? `Archivos del proyecto que existen (solo nombres, no su contenido salvo que se adjunte uno): ${projectFileList.slice(0, 40).join(', ')}${projectFileList.length > 40 ? '…' : ''}`
+      : '',
+  ].filter(Boolean).join('\n');
+  historyForModel.splice(1, 0, { role: "system", content: liveContext });
+
+  // [FILES] si hay un archivo adjunto, va como contexto de código,
+  // separado de la memoria del diary — así el modelo distingue
+  // "esto es código del proyecto" de "esto es algo que hablamos antes".
+  if (attachedFile) {
+    historyForModel = [
+      historyForModel[0],
+      { role: "system", content: `Contenido del archivo ${attachedFile.path}${attachedFile.truncated ? ' (recortado)' : ''}:\n\n${attachedFile.content}` },
+      ...historyForModel.slice(1),
+    ];
+  }
+
+  try {
+    const found = await apiFetch('/api/diary/search?q=' + encodeURIComponent(text) + '&limit=3');
+    if (found.count > 0) {
+      recalledCount = found.count;
+      const recall = found.entries.map(e =>
+        `(${e.moment.slice(0,10)}) ${e.text}`
+      ).join('\n---\n');
+      // Insertar después del system prompt, sin pisar lo que ya
+      // haya (por ejemplo el archivo adjunto agregado arriba).
+      historyForModel.splice(1, 0, {
+        role: "system",
+        content: "Contexto de conversaciones pasadas relacionadas (memoria del diary, puede ser parcial):\n" + recall,
+      });
+    }
+  } catch (e) {
+    // sin memoria disponible ahora mismo, no es fatal
+  }
+
+  llmHistory.push({ role: "user", content: text });
+  historyForModel.push({ role: "user", content: text });
+
+  try {
+    const res = await fetch(LLAMA_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: historyForModel, temperature: 0.4 })
+    });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    const reply = data.choices?.[0]?.message?.content?.trim() || '(respuesta vacía)';
+    pending.textContent = reply;
+    llmHistory.push({ role: "assistant", content: reply });
+
+    // [STATUS] línea tipo CLI: recuerdos usados + tokens de la última
+    // vuelta, tal como muestran phantom_diary --stats / phantom_council.
+    const u = data.usage || {};
+    const pct = u.total_tokens ? Math.round((u.total_tokens / CONTEXT_SIZE) * 100) : null;
+    const parts = [];
+    parts.push(recalledCount > 0 ? `🧠 ${recalledCount} recuerdo${recalledCount > 1 ? 's' : ''}` : '🧠 sin recuerdos');
+    if (attachedFile) parts.push(`📎 ${attachedFile.path}`);
+    if (u.prompt_tokens != null) {
+      parts.push(`tokens ${u.prompt_tokens}+${u.completion_tokens}=${u.total_tokens}${pct != null ? ` (${pct}% de ${CONTEXT_SIZE})` : ''}`);
+    }
+    setLlmStatusLine(parts.join('  ·  '));
+
+    // [DIARY] guardar el turno completo como una entrada sellada.
+    // Best-effort también: si esto falla, el chat ya se mostró igual.
+    apiFetch('/api/diary', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: `Yo: ${text}\nIA: ${reply}`,
+        tags: ['llm-chat'],
+      }),
+    }).catch(() => {});
+  } catch (e) {
+    pending.textContent = "No pude conectar con llama-server en 127.0.0.1:8080. ¿Está corriendo? (" + e.message + ")";
+    pending.style.color = 'var(--red)';
+    setLlmStatusLine('');
+  }
+  document.getElementById('llmChatLog').scrollTop = 999999;
+  checkLlmStatus();
 }
 
-function copyLast() {
-  if (lastSeal) navigator.clipboard.writeText(sealToText(lastSeal)).then(() => toast('Copied'));
+checkLlmStatus();
+setInterval(checkLlmStatus, 15000);
+loadFileTree();
+
+function toggleTree(el) {
+  const next = el.nextElementSibling;
+  if (!next || !next.classList.contains('tree-children')) return;
+  next.classList.toggle('open');
+  el.textContent = (next.classList.contains('open') ? '▾ ' : '▸ ') + el.textContent.slice(2);
 }
 
-async function sendLast() {
-  if (lastSeal && txChar) { await sendSeal(lastSeal); toast('Sent'); }
+// ══════════════════════════════════════════
+// DATOS REALES — todo lo de acá abajo pega contra
+// las rutas que YA existen en phantom_daemon.py.
+// Lo que no tiene ruta todavía (Diary, Wallet,
+// Ledger, Council, File explorer, logs en vivo)
+// se deja como estaba, de muestra, con un TODO
+// al lado marcando qué ruta haría falta.
+// ══════════════════════════════════════════
+
+const MODE_LABEL = { private: 'Private', permanent: 'Permanent', ephemeral: 'Ephemeral' };
+function timeAgo(iso) {
+  const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (diff < 60) return 'hace instantes';
+  if (diff < 3600) return `hace ${Math.floor(diff/60)}m`;
+  if (diff < 86400) return `hace ${Math.floor(diff/3600)}h`;
+  return `hace ${Math.floor(diff/86400)}d`;
 }
 
+// ── TOPBAR + SIDEBAR: /api/status ──
+async function loadStatus() {
+  const s = await apiFetch('/api/status');
+  const name = s.identity ? s.identity.node_name : 'sin identidad';
+  document.getElementById('tbNodeName').textContent = name;
+  document.getElementById('tbDot').style.background = s.identity ? 'var(--green)' : 'var(--red)';
+  document.getElementById('sbIdName').textContent = name;
+  document.getElementById('statSeals').textContent = s.seal_count;
+  document.getElementById('statPermanent').textContent = s.seal_counts_by_mode.permanent;
+  document.getElementById('statEncounters').textContent = s.encounter_count;
+  return s;
+}
 
-// ── FEED ────────────────────────────────
+// ── CONSOLE: no hay ruta de logs en vivo todavía.
+// TODO backend: un stream (WebSocket o SSE) de lo que va
+// haciendo el daemon en tiempo real. Mientras tanto, esto
+// arma "actividad reciente" real combinando /api/status
+// y /api/encounters — no son logs del proceso, son hechos
+// reales, solo que llegan por polling en vez de push.
+async function renderConsole() {
+  const body = document.getElementById('consoleBody');
+  try {
+    const [status, enc] = await Promise.all([
+      apiFetch('/api/status'),
+      apiFetch('/api/encounters'),
+    ]);
+    const recent = [...enc.encounters].sort((a,b) => new Date(b.moment) - new Date(a.moment)).slice(0, 6);
+    const lines = recent.map(e =>
+      `<div class="log-line" style="color:var(--green)">Encuentro con ${e.peer} — enviados ${e.sent}, recibidos ${e.received}</div>`
+    );
+    lines.unshift(`<div class="log-line" style="color:var(--muted)">${status.seal_count} sellos · ${status.encounter_count} encuentros totales</div>`);
+    body.innerHTML = lines.join('') || '<div class="log-line" style="color:var(--muted)">Sin actividad todavía.</div>';
+  } catch (e) {
+    if (e.message !== 'unlock_required') body.innerHTML = `<div class="log-line" style="color:var(--red)">${e.message}</div>`;
+  }
+}
+
+// ── CONNECT TO NODE ──
+async function connectToNode() {
+  const input = document.getElementById('connectHostInput');
+  const status = document.getElementById('connectStatus');
+  const host = input.value.trim();
+
+  if (!host) {
+    status.style.color = 'var(--red)';
+    status.textContent = 'Ingresá la IP del otro nodo.';
+    return;
+  }
+
+  // Basic IP format check
+  const ipPattern = /^(\d{1,3}\.){3}\d{1,3}$/;
+  if (!ipPattern.test(host)) {
+    status.style.color = 'var(--red)';
+    status.textContent = 'Formato inválido. Usá algo como 192.168.1.15';
+    return;
+  }
+
+  status.style.color = 'var(--muted)';
+  status.textContent = `Conectando a ${host}…`;
+
+  try {
+    const r = await apiFetch('/api/connect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ host })
+    });
+
+    if (r.started) {
+      status.style.color = 'var(--green)';
+      status.textContent = `Encuentro iniciado con ${host}. Revisá la consola del Daemon.`;
+      input.value = '';
+      // Refresh graph after a short delay
+      setTimeout(renderNodeGraph, 3000);
+    } else {
+      status.style.color = 'var(--red)';
+      status.textContent = r.error || 'No se pudo iniciar la conexión.';
+    }
+  } catch (e) {
+    if (e.message === 'unlock_required') return;
+    status.style.color = 'var(--red)';
+    status.textContent = 'Error al contactar el Daemon.';
+  }
+}
+
+async function fetchMyIp() {
+  try {
+    const s = await apiFetch('/api/status');
+    // The daemon status doesn't expose local IP directly, but we can
+    // show the transport info and let the user know to check ipconfig
+    const el = document.getElementById('myIpDisplay');
+    if (el) {
+      // Show transport level as hint
+      const transport = s.transport || '';
+      if (transport.includes('Tor')) {
+        el.textContent = 'Tor activo — usá dirección .onion';
+        el.style.color = 'var(--green)';
+      } else {
+        el.textContent = 'Ver ipconfig / ifconfig';
+        el.style.color = 'var(--muted)';
+        el.title = 'Ejecutá ipconfig en la terminal para ver tu IP local';
+      }
+    }
+  } catch(e) { /* silent */ }
+}
+
+function copyMyIp() {
+  const el = document.getElementById('connectHostInput');
+  if (el) el.focus();
+  // Also try to copy status element text if it has an IP
+  const display = document.getElementById('myIpDisplay');
+  if (display && /\d+\.\d+/.test(display.textContent)) {
+    navigator.clipboard.writeText(display.textContent.trim()).catch(() => {});
+  }
+}
+
+// ── NODE GRAPH: /api/encounters + /api/status ──
+async function renderNodeGraph() {
+  const body = document.getElementById('nodesGraphBody');
+  try {
+    const [status, enc] = await Promise.all([apiFetch('/api/status'), apiFetch('/api/encounters')]);
+    const peers = [...new Map(enc.encounters.map(e => [e.peer, e])).values()].slice(0, 6);
+    const cx = 125, cy = 75;
+    const nodeR = [13, 8, 8, 7, 7, 6, 6];
+    let svg = `<svg width="100%" viewBox="0 0 250 150">`;
+    peers.forEach((p, i) => {
+      const angle = (i / peers.length) * Math.PI * 2 - Math.PI/2;
+      const x = cx + Math.cos(angle) * 65, y = cy + Math.sin(angle) * 55;
+      svg += `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="var(--border-light)" stroke-width="0.75"/>`;
+    });
+    svg += `<circle cx="${cx}" cy="${cy}" r="13" fill="var(--accent-dim)" stroke="var(--accent)" stroke-width="1"/>`;
+    svg += `<text class="ts" x="${cx}" y="${cy+22}" text-anchor="middle">vos</text>`;
+    peers.forEach((p, i) => {
+      const angle = (i / peers.length) * Math.PI * 2 - Math.PI/2;
+      const x = cx + Math.cos(angle) * 65, y = cy + Math.sin(angle) * 55;
+      const label = p.peer.length > 14 ? p.peer.slice(0, 12) + '…' : p.peer;
+      svg += `<circle cx="${x}" cy="${y}" r="${nodeR[i+1]||6}" fill="var(--blue-dim)" stroke="var(--blue)" stroke-width="1"/>`;
+      svg += `<text class="ts" x="${x}" y="${y - (nodeR[i+1]||6) - 4}" text-anchor="middle">${label}</text>`;
+    });
+    svg += `</svg>`;
+    body.innerHTML = peers.length ? svg : '<div class="log-line" style="color:var(--muted)">Todavía no hubo encuentros.</div>';
+  } catch (e) {
+    if (e.message !== 'unlock_required') body.innerHTML = `<div class="log-line" style="color:var(--red)">${e.message}</div>`;
+  }
+}
+
+// ── SEALS GRAPH: /api/seals, coloreado por mode real
+// (el prototipo anterior distinguía "firmado/borrador" — eso no
+// existe en el backend, todo sello ya está sellado; lo real que
+// hay para diferenciar es el modo: private/permanent/ephemeral).
+function seededPos(seed, w, h) {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  return { x: 15 + (hash % (w - 30)), y: 15 + ((hash >> 8) % (h - 30)) };
+}
+async function renderSealsGraph() {
+  const body = document.getElementById('sealsGraphBody');
+  try {
+    const data = await apiFetch('/api/seals');
+    const seals = data.seals.slice(0, 10);
+    let svg = `<svg width="100%" viewBox="0 0 230 140">`;
+    const FILL = { private: 'var(--violet-dim)', permanent: 'var(--green-dim)', ephemeral: 'none' };
+    const STROKE = { private: 'var(--violet)', permanent: 'var(--green)', ephemeral: 'var(--blue)' };
+    seals.forEach(s => {
+      const { x, y } = seededPos(s.stamp, 230, 140);
+      const mode = s.mode || 'permanent';
+      const dash = mode === 'ephemeral' ? ' stroke-dasharray="2 2"' : '';
+      svg += `<circle cx="${x}" cy="${y}" r="7" fill="${FILL[mode]}" stroke="${STROKE[mode]}" stroke-width="1"${dash}><title>${s.idea_preview}</title></circle>`;
+    });
+    svg += `</svg>`;
+    body.innerHTML = seals.length ? svg : '<div class="log-line" style="color:var(--muted)">Todavía no hay sellos.</div>';
+  } catch (e) {
+    if (e.message !== 'unlock_required') body.innerHTML = `<div class="log-line" style="color:var(--red)">${e.message}</div>`;
+  }
+}
+
+// ── COMMONS FEED: /api/seals ──
+// Recordá: esto YA es la vista de red — los sellos que sincronizás
+// de tus peers quedan en el mismo store que tus propios sellos, así
+// que /api/seals es a la vez "lo mío" y "lo que llegó de la red".
+// No hay autor por sello (los sellos son anónimos por diseño: "anyone
+// can verify, no authority needed" dice phantom_core.verify()), así
+// que no se muestra ningún nombre de nodo en las post-cards.
+//
+// `channel` y `ref` son opcionales y hermanos de `mode` — no todos los
+// sellos los van a traer (sellos privados o viejos no tienen channel;
+// sellos que no son respuesta no tienen ref). Todo acceso es con
+// `s.channel` / `s.ref` sin asumir que existen.
+const CHANNELS = ['governance','technical','security','philosophy','development','general'];
+let currentSort = 'latest';
+let currentChannel = 'all';
+let selectedStamp = null;
+let allSeals = [];
+
+function renderChannelCounts() {
+  const counts = { all: allSeals.length };
+  CHANNELS.forEach(c => counts[c] = 0);
+  allSeals.forEach(s => { if (s.channel && counts[s.channel] !== undefined) counts[s.channel]++; });
+  Object.keys(counts).forEach(c => {
+    const el = document.getElementById('chCount-' + c);
+    if (el) el.textContent = counts[c];
+  });
+}
 
 async function renderFeed() {
-  let all;
-  if (nodeMode) {
-    try {
-      const data = await apiFetch('/api/seals');
-      all = await Promise.all(data.seals.map(async s => {
-        if (s.idea) return { ...s, mode: modeFromApi(s.mode), type: 'thought', node: myNode };
-        const full = await apiFetch('/api/seals/' + s.stamp);
-        return { ...full, mode: modeFromApi(full.mode), type: 'thought', node: myNode };
-      }));
-    } catch (e) {
-      all = await dbAll('seals');
-    }
-  } else {
-    all = await dbAll('seals');
-  }
-  const shared = all.filter(s => s.mode === 'shared' && s.type !== 'reply' && s.type !== 'vote');
-  shared.sort((a, b) => b.moment.localeCompare(a.moment));
-
-  const replies = all.filter(s => s.type === 'reply');
-  const votes = all.filter(s => s.type === 'vote');
-
-  document.getElementById('feedCount').textContent = shared.length;
-  const el = document.getElementById('feedList');
-
-  if (shared.length === 0) {
-    el.innerHTML = '<div class="feed-empty">Nothing here yet.<br><br><em>Seal a shared thought or<br>sync with a nearby node.</em></div>';
-    return;
-  }
-
-  el.innerHTML = shared.map(s => {
-    const rCount = replies.filter(r => r.ref === s.stamp).length;
-    const vCount = votes.filter(v => v.ref === s.stamp).length;
-    const tag = s.type === 'proposal' ? '<span class="fi-tag proposal">proposal</span>' : '';
-    return '<div class="feed-item" onclick="openThread(\'' + s.stamp + '\')">' +
-      '<div class="fi-top"><span class="fi-node">' + esc(s.node || 'unknown') + '</span><span class="fi-time">' + fmtTime(s.moment) + '</span></div>' +
-      '<div class="fi-idea">' + esc(s.idea.length > 200 ? s.idea.slice(0,200) + '...' : s.idea) + '</div>' +
-      '<div class="fi-bottom">' + tag +
-        '<span class="fi-stat"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> ' + rCount + '</span>' +
-        (s.type === 'proposal' ? '<span class="fi-stat"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="20 6 9 17 4 12"/></svg> ' + vCount + '</span>' : '') +
-      '</div></div>';
-  }).join('');
-}
-
-
-// ── THREAD ──────────────────────────────
-
-let threadStamp = null;
-
-async function openThread(stamp) {
-  threadStamp = stamp;
-  const all = await dbAll('seals');
-  const root = all.find(s => s.stamp === stamp);
-  if (!root) return;
-
-  const replies = all.filter(s => s.type === 'reply' && s.ref === stamp);
-  replies.sort((a, b) => a.moment.localeCompare(b.moment));
-
-  const votes = all.filter(s => s.type === 'vote' && s.ref === stamp);
-  const agree = votes.filter(v => v.position === 'agree').length;
-  const disagree = votes.filter(v => v.position === 'disagree').length;
-  const abstain = votes.filter(v => v.position === 'abstain').length;
-  const total = agree + disagree + abstain;
-  const myVote = votes.find(v => v.node === myNode);
-
-  let voteHtml = '';
-  if (root.type === 'proposal') {
-    const barHtml = total > 0 ?
-      '<div class="vote-bar">' +
-        (agree ? '<div class="vb-agree" style="flex:' + agree + '"></div>' : '') +
-        (disagree ? '<div class="vb-disagree" style="flex:' + disagree + '"></div>' : '') +
-        (abstain ? '<div class="vb-abstain" style="flex:' + abstain + '"></div>' : '') +
-      '</div>' : '';
-
-    const countsHtml = '<div class="vote-counts">' +
-      '<span class="vc-agree">' + agree + ' agree</span>' +
-      '<span class="vc-disagree">' + disagree + ' disagree</span>' +
-      '<span class="vc-abstain">' + abstain + ' abstain</span>' +
-    '</div>';
-
-    const votedClass = myVote ? ' voted' : '';
-    const btnsHtml = myVote ?
-      '<div style="font-family:var(--mono);font-size:8px;color:var(--dim);margin-bottom:16px;">You voted: ' + myVote.position + '</div>' :
-      '<div class="vote-btns">' +
-        '<button class="vote-btn agree' + votedClass + '" onclick="castVote(\'agree\')">Agree</button>' +
-        '<button class="vote-btn disagree' + votedClass + '" onclick="castVote(\'disagree\')">Disagree</button>' +
-        '<button class="vote-btn abstain' + votedClass + '" onclick="castVote(\'abstain\')">Abstain</button>' +
-      '</div>';
-
-    voteHtml = barHtml + countsHtml + btnsHtml;
-  }
-
-  const repliesHtml = replies.map(r =>
-    '<div class="reply-item">' +
-      '<div class="ri-node">' + esc(r.node || 'unknown') + '</div>' +
-      '<div class="ri-idea">' + esc(r.idea) + '</div>' +
-      '<div class="ri-meta">' + fmtTime(r.moment) + '</div>' +
-    '</div>'
-  ).join('');
-
-  const tagHtml = root.type === 'proposal' ? ' <span class="fi-tag proposal" style="margin-left:6px">proposal</span>' : '';
-
-  document.getElementById('threadContent').innerHTML =
-    '<div class="thread-root">' +
-      '<div class="tr-node">' + esc(root.node || 'unknown') + tagHtml + '</div>' +
-      '<div class="tr-idea">' + esc(root.idea) + '</div>' +
-      '<div class="tr-meta">' + root.moment + '</div>' +
-    '</div>' +
-    voteHtml +
-    '<div class="thread-actions">' +
-      '<button class="btn btn-a" onclick="toggleReplyBox()">REPLY</button>' +
-      '<button class="btn btn-g" onclick="copyStamp(\'' + stamp + '\')">COPY SEAL</button>' +
-    '</div>' +
-    '<div class="thread-reply-box" id="replyBox">' +
-      '<textarea id="replyInput" placeholder="Your response..."></textarea>' +
-      '<div class="trb-footer"><button class="btn btn-a" onclick="sendReply()">SEAL REPLY</button></div>' +
-    '</div>' +
-    '<div class="section-label">REPLIES (' + replies.length + ')</div>' +
-    (replies.length ? repliesHtml : '<div class="conn-empty" style="padding:1rem">No replies yet.</div>');
-
-  showV('viewThread');
-}
-
-function toggleReplyBox() {
-  document.getElementById('replyBox').classList.toggle('open');
-  const inp = document.getElementById('replyInput');
-  if (inp) inp.focus();
-}
-
-async function sendReply() {
-  const text = document.getElementById('replyInput').value.trim();
-  if (!text || !threadStamp) return;
-  const seal = await makeSeal(text, 'shared', { type: 'reply', ref: threadStamp });
-  await saveSeal(seal);
-  if (txChar) await sendSeal(seal);
-  toast('Reply sealed');
-  openThread(threadStamp);
-}
-
-async function castVote(position) {
-  if (!threadStamp) return;
-  const seal = await makeSeal(position, 'shared', { type: 'vote', ref: threadStamp, position });
-  await saveSeal(seal);
-  if (txChar) await sendSeal(seal);
-  toast('Vote sealed');
-  openThread(threadStamp);
-}
-
-function backToFeed() {
-  nav('viewFeed', document.querySelectorAll('.nav button')[1]);
-}
-
-async function copyStamp(stamp) {
-  const all = await dbAll('seals');
-  const s = all.find(x => x.stamp === stamp);
-  if (s) navigator.clipboard.writeText(sealToText(s)).then(() => toast('Copied'));
-}
-
-
-// ── MY SEALS ────────────────────────────
-
-async function renderMine() {
-  let all;
-  if (nodeMode) {
-    try {
-      const data = await apiFetch('/api/seals');
-      all = await Promise.all(data.seals.map(async s => {
-        if (s.idea) return { ...s, mode: modeFromApi(s.mode), type: 'thought', node: myNode };
-        const full = await apiFetch('/api/seals/' + s.stamp);
-        return { ...full, mode: modeFromApi(full.mode), type: 'thought', node: myNode };
-      }));
-    } catch (e) {
-      all = await dbAll('seals');
-    }
-  } else {
-    all = await dbAll('seals');
-  }
-  const mine = nodeMode ? all.filter(s => s.type !== 'vote') : all.filter(s => s.node === myNode && s.type !== 'vote');
-  mine.sort((a, b) => b.moment.localeCompare(a.moment));
-
-  document.getElementById('mineCount').textContent = mine.length;
-  const el = document.getElementById('mineList');
-
-  if (mine.length === 0) {
-    el.innerHTML = '<div class="seals-empty">No sealed thoughts yet.<br><br><em>Write something. Seal it.<br>From that moment — it exists.</em></div>';
-    return;
-  }
-
-  el.innerHTML = mine.map(s => {
-    const tagClass = s.mode === 'private' ? 'private' : (s.type === 'proposal' ? 'proposal' : 'shared');
-    const tagLabel = s.type === 'proposal' ? 'proposal' : s.mode;
-    const ideaText = s.type === 'vote' ? 'Vote: ' + s.position : (s.idea.length > 120 ? s.idea.slice(0,120) + '...' : s.idea);
-    return '<div class="seal-card" onclick="showDetail(\'' + s.stamp + '\')">' +
-      '<div class="sc-idea">' + esc(ideaText) + '</div>' +
-      '<div class="sc-meta"><span class="sc-tag ' + tagClass + '">' + tagLabel + '</span><span>' + fmtTime(s.moment) + '</span></div>' +
-    '</div>';
-  }).join('');
-}
-
-async function showDetail(stamp) {
-  const all = await dbAll('seals');
-  const s = all.find(x => x.stamp === stamp);
-  if (!s) return;
-  window._ds = s;
-  document.getElementById('overlayCard').innerHTML =
-    '<div class="r-idea">' + esc(s.idea) + '</div>' +
-    '<div class="r-stamp">' + s.stamp + '</div>' +
-    '<div class="r-moment">' + s.moment + '</div>' +
-    '<div class="r-mode" style="margin-bottom:1rem">' + (s.type || s.mode).toUpperCase() + '</div>' +
-    '<div class="share-row">' +
-      '<button class="btn btn-a" id="dlCopy">COPY</button>' +
-      (btDevice ? '<button class="btn btn-gr" id="dlSend">SEND</button>' : '') +
-    '</div>' +
-    '<button class="overlay-close" onclick="closeOv()">CLOSE</button>';
-  document.getElementById('dlCopy').addEventListener('click', () => {
-    navigator.clipboard.writeText(sealToText(window._ds)).then(() => toast('Copied'));
-  });
-  const sb = document.getElementById('dlSend');
-  if (sb) sb.addEventListener('click', async () => { await sendSeal(window._ds); toast('Sent'); });
-  document.getElementById('overlay').classList.add('open');
-}
-
-function closeOv(e) {
-  if (e && e.target !== document.getElementById('overlay')) return;
-  document.getElementById('overlay').classList.remove('open');
-}
-
-
-// ── VERIFY ──────────────────────────────
-
-async function verifyPasted() {
-  const raw = document.getElementById('pasteInput').value.trim();
-  if (!raw) return;
-  const im = raw.match(/Idea:\s*(.+)/i);
-  const mm = raw.match(/Moment:\s*(.+)/i);
-  const sm = raw.match(/Stamp:\s*([0-9a-f]{64})/i);
-  if (!im || !mm || !sm) {
-    showVR(false, null, 'Could not parse. Expected Idea, Moment, Stamp.');
-    return;
-  }
-  const idea = im[1].trim(), moment = mm[1].trim(), stamp = sm[1].trim();
-  const valid = await verifySeal(idea, moment, stamp);
-  showVR(valid, valid ? { idea, moment, stamp } : null);
-}
-
-function showVR(valid, seal, err) {
-  const el = document.getElementById('verifyResult');
-  if (valid && seal) {
-    el.innerHTML = '<div class="verify-result valid">' +
-      '<div class="vr-label">VERIFIED — AUTHENTIC</div>' +
-      '<div class="vr-idea">' + esc(seal.idea) + '</div>' +
-      '<div class="vr-moment">' + seal.moment + '</div>' +
-      '<div style="margin-top:1rem"><button class="btn btn-a" onclick="saveVerified()">SAVE</button></div></div>';
-    el._ps = seal;
-  } else {
-    el.innerHTML = '<div class="verify-result invalid"><div class="vr-label">' + (err || 'INVALID — MODIFIED') + '</div></div>';
-  }
-}
-
-async function saveVerified() {
-  const el = document.getElementById('verifyResult');
-  const s = el._ps;
-  if (!s) return;
-  s.mode = 'shared'; s.received = true; s.type = 'thought'; s.node = s.node || 'unknown';
-  await saveSeal(s);
-  toast('Saved');
-}
-
-
-// ══════════════════════════════════════════
-// BLUETOOTH / LORA
-// ══════════════════════════════════════════
-
-const MESH_SVC = '6ba1b218-15a8-461f-9fa8-5dcae273eafd';
-const MESH_TX = 'f75c76d2-129e-4dad-a1dd-7866124401e7';
-const MESH_RX = '8ba2bcc2-ee02-4a10-a0c2-011e93110064';
-const MESH_NOTIFY = 'ed9da18c-a800-4f66-a670-aa7547de865c';
-const UART_SVC = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
-const UART_TX = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
-const UART_RX = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
-const PH_SVC = '7068616e-746f-6d00-0000-000000000001';
-const PH_CHAR = '7068616e-746f-6d00-0000-000000000002';
-
-let btDevice = null, btServer = null, btMode = null;
-let txChar = null, rxChar = null, inBuf = '';
-
-function checkBT() {
-  const w = document.getElementById('btWarn');
-  if (!navigator.bluetooth) { w.style.display = ''; w.textContent = 'Bluetooth not available. Use Chrome on Android or Bluefy on iOS.'; }
-  else w.style.display = 'none';
-}
-
-async function scanBT() {
-  if (!navigator.bluetooth) { toast('No Bluetooth'); return; }
-  addLog('Scanning...', 'info');
-  setDot('scan');
+  const list = document.getElementById('feedList');
   try {
-    btDevice = await navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: [MESH_SVC, UART_SVC, PH_SVC] });
-    btDevice.addEventListener('gattserverdisconnected', onDisc);
-    addLog('Selected: ' + (btDevice.name || '?'), 'info');
-    btServer = await btDevice.gatt.connect();
-    addLog('GATT connected', 'ok');
-    let ok = false;
-    try { const s=await btServer.getPrimaryService(MESH_SVC); txChar=await s.getCharacteristic(MESH_TX); rxChar=await s.getCharacteristic(MESH_RX); const n=await s.getCharacteristic(MESH_NOTIFY); await n.startNotifications(); n.addEventListener('characteristicvaluechanged',()=>readMesh()); btMode='meshtastic'; ok=true; addLog('Meshtastic detected','ok'); } catch(e){}
-    if(!ok) try { const s=await btServer.getPrimaryService(UART_SVC); txChar=await s.getCharacteristic(UART_TX); rxChar=await s.getCharacteristic(UART_RX); await rxChar.startNotifications(); rxChar.addEventListener('characteristicvaluechanged',onRx); btMode='uart'; ok=true; addLog('UART detected','ok'); } catch(e){}
-    if(!ok) try { const s=await btServer.getPrimaryService(PH_SVC); txChar=await s.getCharacteristic(PH_CHAR); rxChar=txChar; await txChar.startNotifications(); txChar.addEventListener('characteristicvaluechanged',onRx); btMode='phantom'; ok=true; addLog('Phantom node detected','ok'); } catch(e){}
-    if(ok) { setDot('on'); showConn(btDevice.name||'Node'); } else { addLog('No compatible service','err'); setDot('off'); btDevice.gatt.disconnect(); btDevice=null; }
-  } catch(e) {
-    if(e.name==='NotFoundError') addLog('Cancelled','info'); else addLog(e.message,'err');
-    setDot('off');
-  }
-}
-
-function showConn(name) {
-  document.getElementById('noDev').style.display = 'none';
-  document.getElementById('connDev').style.display = '';
-  document.getElementById('connName').textContent = name;
-  document.getElementById('connInfo').textContent = btMode.toUpperCase();
-}
-
-function hideConn() {
-  document.getElementById('noDev').style.display = '';
-  document.getElementById('connDev').style.display = 'none';
-}
-
-function onDisc() { addLog('Disconnected','err'); setDot('off'); hideConn(); btDevice=null; btServer=null; txChar=null; rxChar=null; btMode=null; }
-
-function disconnNode() { if(btDevice&&btDevice.gatt.connected) btDevice.gatt.disconnect(); onDisc(); }
-
-function setDot(s) {
-  const d = document.getElementById('nodeDot');
-  d.className = 'node-dot' + (s==='on'?' on':s==='scan'?' scan':'');
-}
-
-// Wire format: PHAN|{json}\n
-function encWire(seal) {
-  const o = { i:seal.idea, m:seal.moment, s:seal.stamp, d:seal.mode, t:seal.type||'thought', n:seal.node };
-  if (seal.ref) o.r = seal.ref;
-  if (seal.position) o.p = seal.position;
-  return 'PHAN|' + JSON.stringify(o) + '\n';
-}
-
-function decWire(raw) {
-  const tr = raw.trim();
-  if (!tr.startsWith('PHAN|')) return null;
-  try {
-    const o = JSON.parse(tr.slice(5));
-    const seal = { idea:o.i, moment:o.m, stamp:o.s, mode:o.d||'shared', type:o.t||'thought', node:o.n||'unknown' };
-    if (o.r) seal.ref = o.r;
-    if (o.p) seal.position = o.p;
-    return seal;
-  } catch(e) { return null; }
-}
-
-async function sendSeal(seal) {
-  if (!txChar) return;
-  const bytes = new TextEncoder().encode(encWire(seal));
-  const chunk = 200;
-  try {
-    for (let i=0; i<bytes.length; i+=chunk) await txChar.writeValue(bytes.slice(i,i+chunk));
-    addLog('Sent: "' + seal.idea.slice(0,35) + (seal.idea.length>35?'...':'') + '"', 'ok');
-  } catch(e) { addLog('Send fail: '+e.message,'err'); }
-}
-
-async function syncNode() {
-  if (!txChar) return;
-  addLog('Syncing...','info');
-  const all = await dbAll('seals');
-  const out = all.filter(s => s.mode !== 'private');
-  let n = 0;
-  for (const s of out) {
-    try { await sendSeal(s); n++; await new Promise(r=>setTimeout(r,80)); } catch(e) { addLog('Sync error','err'); break; }
-  }
-  addLog('Synced ' + n + ' seals','ok');
-  toast('Synced ' + n);
-}
-
-async function readMesh() { if(!rxChar) return; try { const v=await rxChar.readValue(); procIn(new TextDecoder().decode(v)); } catch(e){} }
-function onRx(e) { procIn(new TextDecoder().decode(e.target.value)); }
-
-function procIn(text) {
-  inBuf += text;
-  while (inBuf.includes('\n')) {
-    const idx = inBuf.indexOf('\n');
-    const msg = inBuf.slice(0, idx);
-    inBuf = inBuf.slice(idx + 1);
-    if (msg.startsWith('PHAN|')) handleIn(msg);
-  }
-}
-
-async function handleIn(raw) {
-  const seal = decWire(raw);
-  if (!seal) { addLog('Malformed seal','err'); return; }
-  const valid = await verifySeal(seal.idea, seal.moment, seal.stamp);
-  if (!valid) { addLog('INVALID seal rejected','err'); return; }
-  seal.received = true;
-  await saveSeal(seal);
-  const preview = seal.idea.length > 35 ? seal.idea.slice(0,35)+'...' : seal.idea;
-  addLog('Received: "' + preview + '"', 'ok');
-  toast('New seal');
-}
-
-
-// ── LOG ─────────────────────────────────
-
-function addLog(msg, type) {
-  const log = document.getElementById('nodeLog');
-  const t = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  const cls = type==='ok'?'nle-ok':type==='err'?'nle-err':'nle-info';
-  const e = document.createElement('div');
-  e.className = 'node-log-entry';
-  e.innerHTML = '<span class="nle-time">' + t + '</span> <span class="' + cls + '">' + esc(msg) + '</span>';
-  log.insertBefore(e, log.firstChild);
-  while (log.children.length > 40) log.removeChild(log.lastChild);
-}
-
-
-// ── RELAY SYNC (WebSocket bridge to phantom_relay.py) ──────
-//
-// The bloom filter here is a deliberate line-for-line port of
-// phantom_core.py's build_bloom/_bloom_positions — it has to match
-// exactly, bit for bit, or the relay and this page would silently
-// fail to agree on what's already been exchanged.
-
-const BLOOM_K = 5;
-
-function bloomSizeForCount(n) {
-  if (n <= 200) return 8192;
-  else if (n <= 1000) return 32768;
-  else if (n <= 5000) return 131072;
-  else return 524288;
-}
-
-async function bloomPositions(stamp, bloomSize) {
-  const positions = [];
-  for (let i = 0; i < BLOOM_K; i++) {
-    const buf = new TextEncoder().encode(`${i}:${stamp}`);
-    const hash = await crypto.subtle.digest('SHA-256', buf);
-    const hex = Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
-    // Python does int(h, 16) % bloom_size on a 256-bit number —
-    // needs BigInt here, a regular JS number would lose precision.
-    positions.push(Number(BigInt('0x' + hex) % BigInt(bloomSize)));
-  }
-  return positions;
-}
-
-async function buildBloom(stamps, bloomSize) {
-  if (!bloomSize) bloomSize = bloomSizeForCount(stamps.length);
-  const bits = new Uint8Array(bloomSize / 8);
-  for (const stamp of stamps) {
-    for (const pos of await bloomPositions(stamp, bloomSize)) {
-      bits[Math.floor(pos / 8)] |= (1 << (pos % 8));
-    }
-  }
-  return { bits, bloomSize };
-}
-
-async function bloomProbablyHas(bloomBytes, stamp, bloomSize) {
-  for (const pos of await bloomPositions(stamp, bloomSize)) {
-    if (!(bloomBytes[Math.floor(pos / 8)] & (1 << (pos % 8)))) return false;
-  }
-  return true;
-}
-
-function bytesToBase64(bytes) {
-  let bin = '';
-  for (const b of bytes) bin += String.fromCharCode(b);
-  return btoa(bin);
-}
-
-function base64ToBytes(b64) {
-  const bin = atob(b64);
-  const bytes = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-  return bytes;
-}
-
-// Vocabulary translation at the wire boundary. This page's local
-// modes are private/shared/proposal; phantom_relay.py only
-// recognizes private/permanent/ephemeral, and only ever forwards
-// "permanent". Neither side's vocabulary changes — only what
-// crosses the wire does.
-function toWireMode(localMode) {
-  return localMode === 'shared' ? 'permanent' : localMode;
-}
-function fromWireMode(wireMode) {
-  return wireMode === 'permanent' ? 'shared' : wireMode;
-}
-
-async function connectRelay() {
-  const url = document.getElementById('relayUrlInput').value.trim();
-  if (!url) { toast('Enter a relay address'); return; }
-  addLog(`Connecting to ${url}...`, 'info');
-
-  let ws;
-  try {
-    ws = new WebSocket(url);
+    const data = await apiFetch('/api/seals');
+    allSeals = [...data.seals].sort((a,b) => new Date(b.moment) - new Date(a.moment));
   } catch (e) {
-    addLog(`Invalid address: ${e.message}`, 'err');
+    if (e.message !== 'unlock_required') list.innerHTML = `<div class="log-line" style="color:var(--red)">${e.message}</div>`;
     return;
   }
+  renderChannelCounts();
+  // Solo el nivel raíz del feed: las respuestas (tienen `ref`) se
+  // muestran dentro del hilo, no como post aparte en la lista principal.
+  let visible = allSeals.filter(s => !s.ref);
+  if (currentChannel !== 'all') visible = visible.filter(s => s.channel === currentChannel);
 
-  ws.onerror = () => addLog('Connection failed.', 'err');
-
-  ws.onopen = async () => {
-    try {
-      const result = await runRelaySync(ws);
-      addLog(`Sync complete — sent ${result.sent}, received ${result.received}`, 'ok');
-      toast(`Synced: +${result.received} new`);
-    } catch (e) {
-      addLog(`Sync failed: ${e.message}`, 'err');
-    } finally {
-      ws.close();
-    }
-  };
-}
-
-function wsRecvJSON(ws) {
-  return new Promise((resolve, reject) => {
-    ws.onmessage = e => resolve(JSON.parse(e.data));
-    ws.onclose = () => reject(new Error('Connection closed'));
+  list.innerHTML = '';
+  if (!visible.length) { list.innerHTML = '<div class="thread-empty-text" style="padding:20px 0;">Sin sellos en este canal todavía.</div>'; return; }
+  visible.forEach(s => {
+    const replyCount = allSeals.filter(r => r.ref === s.stamp).length;
+    const card = document.createElement('div');
+    card.className = 'post-card' + (s.stamp === selectedStamp ? ' selected' : '');
+    card.onclick = () => selectPost(s.stamp);
+    card.innerHTML = `
+      <span class="pill mode-${s.mode}">${MODE_LABEL[s.mode] || s.mode}</span>
+      ${s.channel ? `<span class="pill tag-${s.channel}">${s.channel}</span>` : ''}
+      <div class="post-title">${s.idea_preview}</div>
+      <div class="post-meta"><span>${timeAgo(s.moment)}</span>${replyCount ? `<span>${replyCount} respuesta${replyCount>1?'s':''}</span>` : ''}</div>
+    `;
+    list.appendChild(card);
   });
 }
 
-async function runRelaySync(ws) {
-  // Step 1: relay speaks first
-  const hello = await wsRecvJSON(ws);
-  if (hello.type === 'error') throw new Error(hello.message || 'Relay error');
-  ws.send(JSON.stringify({ phantom: '0.9', type: 'hello' }));
-
-  // Step 2: bloom exchange. Only "shared" seals are ever offered —
-  // private stays private, proposals aren't part of this protocol yet.
-  const allSeals = await dbAll('seals');
-  const shareable = allSeals.filter(s => s.mode === 'shared');
-  const myStamps = shareable.map(s => s.stamp);
-  const { bits: myBloom, bloomSize: myBloomSize } = await buildBloom(myStamps);
-
-  const bloomMsg = await wsRecvJSON(ws);
-  ws.send(JSON.stringify({
-    type: 'bloom',
-    bloom: bytesToBase64(myBloom),
-    bloom_size: myBloomSize,
-  }));
-
-  // Step 3: receive what the relay has that we don't
-  const deltaMsg = await wsRecvJSON(ws);
-  const incoming = deltaMsg.seals || [];
-  let received = 0;
-  for (const entry of incoming) {
-    if (entry.mode !== 'permanent') continue;  // relay policy mirrors ours
-    const ok = await verifySeal(entry.idea, entry.moment, entry.stamp);
-    if (!ok) { addLog(`Rejected tampered seal ${entry.stamp.slice(0,12)}`, 'err'); continue; }
-    const existing = await dbGet('seals', entry.stamp);
-    if (existing) continue;
-    await saveSeal({ ...entry, mode: fromWireMode(entry.mode) });
-    received++;
-  }
-
-  // Step 4: send what we have that the relay's bloom says it doesn't
-  const theirBloomBytes = base64ToBytes(bloomMsg.bloom);
-  const theirBloomSize = bloomMsg.bloom_size;
-  const toSend = [];
-  for (const s of shareable) {
-    if (!(await bloomProbablyHas(theirBloomBytes, s.stamp, theirBloomSize))) {
-      toSend.push({ idea: s.idea, moment: s.moment, stamp: s.stamp, mode: toWireMode(s.mode) });
-    }
-  }
-  ws.send(JSON.stringify({ type: 'delta', seals: toSend, count: toSend.length }));
-
-  // Step 5: final confirmation
-  const final = await wsRecvJSON(ws);
-  return { sent: toSend.length, received };
+function filterChannel(ch, btn) {
+  currentChannel = ch;
+  document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.getElementById('councilView').style.display = 'none';
+  document.getElementById('feedList').style.display = '';
+  document.querySelector('.feed-tabs').style.display = '';
+  renderFeed();
 }
 
+function sortFeed(sort, btn) {
+  currentSort = sort;
+  document.querySelectorAll('.feed-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  if (sort !== 'latest') {
+    toast('Ese orden necesita datos que el backend no expone todavía (votos)');
+  }
+  renderFeed();
+}
 
-// ── HELPERS ─────────────────────────────
+async function selectPost(stamp) {
+  selectedStamp = stamp;
+  renderFeed();
+  document.getElementById('threadEmpty').style.display = 'none';
+  const content = document.getElementById('threadContent');
+  content.style.display = 'flex';
+  try {
+    const s = await apiFetch(`/api/seals/${stamp}`);
+    document.getElementById('threadHeader').innerHTML = `
+      <span class="pill mode-${s.mode}">${MODE_LABEL[s.mode] || s.mode}</span>
+      ${s.channel ? `<span class="pill tag-${s.channel}">${s.channel}</span>` : ''}
+      <div class="thread-title">${s.idea}</div>
+      <div class="post-meta"><span>${timeAgo(s.moment)}</span></div>
+    `;
+    // Las respuestas son sellos con ref === este stamp — no un
+    // sub-objeto aparte, son sellos como cualquier otro.
+    const replies = allSeals.filter(r => r.ref === stamp).sort((a,b) => new Date(a.moment) - new Date(b.moment));
+    document.getElementById('threadMessages').innerHTML = replies.length
+      ? replies.map(r => `<div class="thread-msg">${r.idea_preview}<div class="post-meta" style="margin-top:4px"><span>${timeAgo(r.moment)}</span></div></div>`).join('')
+      : '<div class="thread-msg" style="color:var(--dim)">Sin respuestas todavía.</div>';
+  } catch (e) {
+    if (e.message !== 'unlock_required') toast(e.message);
+  }
+}
 
-function esc(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
-function fmtTime(iso) { try { const d=new Date(iso); return d.toLocaleDateString(undefined,{month:'short',day:'numeric'})+' '+d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'}); } catch(e) { return iso.split('T')[0]; } }
-function toast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
-
-function showAbout() { document.getElementById('aboutOverlay').classList.add('open'); }
-function closeAbout(e) { if(e&&e.target!==document.getElementById('aboutOverlay')) return; document.getElementById('aboutOverlay').classList.remove('open'); }
-
-
-// ── INIT ──────────────
-
-(async function init() {
-  captureTokenFromUrl();
-  await openDB();
-  await initNode();
-  await initNodeBackend();
-})();
-
-if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(err => {
-      console.warn('Service worker registration failed:', err);
+// ── NEW POST MODAL: POST /api/seals de verdad ──
+let selectedMode = 'permanent';
+let selectedChannel = 'governance';
+function selectMode(el) {
+  el.parentElement.querySelectorAll('.tag-pick').forEach(t => t.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedMode = el.dataset.mode;
+}
+function openModal() { document.getElementById('postModal').classList.add('open'); }
+function closeModal() { document.getElementById('postModal').classList.remove('open'); }
+function selectTag(el) {
+  el.parentElement.querySelectorAll('.tag-pick').forEach(t => t.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedChannel = el.dataset.channel;
+}
+async function submitPost() {
+  const idea = document.getElementById('postIdea').value.trim();
+  if (!idea) { toast('Escribí algo primero'); return; }
+  try {
+    await apiFetch('/api/seals', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idea, mode: selectedMode, channel: selectedChannel }),
     });
-  });
+    closeModal();
+    document.getElementById('postIdea').value = '';
+    toast('Sello publicado');
+    renderFeed();
+    renderSealsGraph();
+    loadStatus();
+  } catch (e) {
+    if (e.message !== 'unlock_required') toast('Error: ' + e.message);
+  }
 }
+
+// ── REPLY: publica un sello nuevo con `ref` apuntando al hilo abierto ──
+async function submitReply() {
+  const input = document.getElementById('replyInput');
+  const idea = input.value.trim();
+  if (!idea) { toast('Escribí algo primero'); return; }
+  if (!selectedStamp) { toast('Elegí un post primero'); return; }
+  try {
+    await apiFetch('/api/seals', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idea, mode: 'permanent', channel: selectedChannel, ref: selectedStamp }),
+    });
+    input.value = '';
+    toast('Respuesta publicada');
+    await renderFeed();
+    selectPost(selectedStamp); // refresca el hilo con la nueva respuesta
+  } catch (e) {
+    if (e.message !== 'unlock_required') toast('Error: ' + e.message);
+  }
+}
+
+// ── BOOTSTRAP ──
+async function bootstrap() {
+  await loadStatus();
+  await Promise.all([renderConsole(), renderNodeGraph(), renderSealsGraph(), renderFeed()]);
+  fetchMyIp();
+}
+
+captureTokenFromUrl();
+bootstrap().catch(e => { if (e.message !== 'unlock_required') toast(e.message); });
+setInterval(() => { loadStatus().catch(() => {}); }, 15000);
 </script>
 </body>
 </html>

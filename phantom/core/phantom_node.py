@@ -39,7 +39,7 @@ from phantom_core import (
     MODE_PERMANENT, MODE_PRIVATE, MODE_EPHEMERAL,
     seal, verify, KeyManager, SealStore, EncounterLog, NodeIdentity,
     build_bloom, bloom_probably_has, compute_delta,
-    send_json, recv_json,
+    send_json, recv_json, MalformedMessage,
     init_tor, make_socket, tor_status, get_onion_address, ONION_FILE,
     PulseLedger, generate_pulse, verify_pulse,
     ContactBook, DMStore, create_contact_card, verify_contact_card,
@@ -257,6 +257,8 @@ def handle_encounter(conn, addr, store, encounter_log, identity=None, pulse_ledg
         print(f"  Sent {len(sent_stamps)} | Received {len(received_stamps)}")
         print(f"  Encounter: {encounter_stamp[:24]}...")
 
+    except MalformedMessage as e:
+        print(f"  Malformed message from peer ({peer}): {e.raw_preview}  [{e.raw_len} bytes]")
     except json.JSONDecodeError as e:
         print(f"  Malformed message from peer: {e}")
     except ConnectionError as e:
@@ -569,6 +571,8 @@ def connect(store, encounter_log, host=None, identity=None, pulse_ledger=None,
     except ConnectionRefusedError:
         print(f" Could not connect to {host}:{PORT}")
         print(" Is the other phone running: python phantom_node.py --listen ?")
+    except MalformedMessage as e:
+        print(f" Malformed message from peer ({host}): {e.raw_preview}  [{e.raw_len} bytes]")
     except json.JSONDecodeError as e:
         print(f" Malformed message from peer: {e}")
     except ConnectionError as e:

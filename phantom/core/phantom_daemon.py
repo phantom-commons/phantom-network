@@ -46,16 +46,33 @@ from phantom_core import (
     PulseLedger, ReceiptLedger, ContactBook, DMStore,
     seal as core_seal, verify as core_verify,
     create_contact_card, verify_contact_card, create_dm,
-    PHANTOM_VERSION, MODE_PRIVATE, MODE_PERMANENT, MODE_EPHEMERAL, DEFAULT_MODE,
+    PHANTOM_VERSION, MODE_PRIVATE, MODE_PERMANENT, MODE_EPHEMERAL, DEFAULT_MODE, CHANNELS,
     CRYPTO_AVAILABLE, PULSE_TTL_SECONDS,
     init_tor, tor_status, get_onion_address,
 )
+from phantom_diary import DiaryStore, make_entry, verify_entry  # [DIARY] memoria de chats con la IA local
 
 DEFAULT_API_PORT = 7338
 DEFAULT_AUTO_CONNECT_INTERVAL = 300  # 5 minutes
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))        # phantom/core/
 APP_DIR = os.path.join(ROOT_DIR, '..', '..', 'app')           # Node/app/ (two levels up from phantom/core/)
+PROJECT_ROOT = os.path.realpath(os.path.join(ROOT_DIR, '..', '..'))  # Node/ — raíz para el explorador de archivos
+
+# [FILES] mismo criterio que phantom_council.py: qué se puede leer y qué no.
+# Nunca exponemos datos del nodo (sellos, llaves, diary cifrado, etc.),
+# solo código/documentación — es lo que un asistente necesita para ayudar
+# a programar, no el contenido privado del nodo.
+FILES_TEXT_EXTENSIONS = {'.md', '.py', '.txt', '.html', '.yml', '.yaml', '.toml', '.json'}
+FILES_EXCLUDE_DIRS = {'.git', '__pycache__', 'node_modules', '.phantom_data'}
+FILES_EXCLUDE_NAMES = {
+    'phantom_seals.json', 'phantom_encounters.json', 'phantom_salt.bin',
+    'phantom_key.salt', 'phantom_seals.enc', 'phantom_diary.json',
+    'phantom_contacts.json', 'phantom_dms.json', 'phantom_wallet.key',
+    'phantom_node.key', 'phantom_node.pub', 'phantom_pulses.json',
+    '.DS_Store', 'desktop.ini',
+}
+FILES_MAX_READ_CHARS = 12000  # ~ lo que entra cómodo en el contexto de un modelo chico
 
 app = Flask(__name__)
 state = {}  # populated once in main(): km, store, encounter_log, pulse_ledger,
@@ -63,11 +80,27 @@ state = {}  # populated once in main(): km, store, encounter_log, pulse_ledger,
 
 # [AUTH] Global token variable - set in main()
 API_TOKEN = None
+# [SECURITY] Expected Host header, set in main() as "127.0.0.1:<api_port>"
+EXPECTED_HOST = None
 
 
 # [AUTH] Decorator to protect API endpoints
 def require_token(f):
     def wrapper(*args, **kwargs):
+        # [SECURITY] DNS-rebinding defense: a malicious site can get the
+        # browser to re-resolve its own domain to 127.0.0.1 after the
+        # page has already loaded, at which point a fetch() from that
+        # page's JS looks same-origin to the browser even though it's
+        # attacker code. The Host header the browser sends still
+        # reflects the original domain, not 127.0.0.1 — so rejecting
+        # anything that doesn't match our own bound address catches it
+        # here, before the token check even runs.
+        if EXPECTED_HOST and request.host != EXPECTED_HOST:
+            return jsonify({
+                "error": "forbidden_host",
+                "message": "Request host does not match this daemon's bound address."
+            }), 403
+
         # Allow skipping auth if explicitly disabled (debug only)
         if not API_TOKEN:
             return f(*args, **kwargs)
@@ -132,6 +165,12 @@ def auto_connect_loop(interval):
 
 def _seal_to_dict(s, full=True):
     out = {"stamp": s["stamp"], "moment": s["moment"], "mode": s.get("mode")}
+    # .get(), no s["channel"]/s["ref"] — sellos viejos o privados
+    # simplemente no tienen estas claves, y eso es válido.
+    if s.get("channel") is not None:
+        out["channel"] = s["channel"]
+    if s.get("ref") is not None:
+        out["ref"] = s["ref"]
     if full:
         out["idea"] = s["idea"]
     else:
@@ -192,10 +231,20 @@ def create_seal():
     data = request.get_json(silent=True) or {}
     idea = data.get("idea", "")
     mode = data.get("mode", DEFAULT_MODE)
+    channel = data.get("channel")  # optional, sibling of mode — see phantom_core.seal()
+    ref = data.get("ref")          # optional, stamp of the seal being replied to
+
     if mode not in (MODE_PRIVATE, MODE_PERMANENT, MODE_EPHEMERAL):
         return jsonify({"error": "invalid_mode"}), 400
+    if channel is not None and channel not in CHANNELS:
+        return jsonify({"error": "invalid_channel", "message": f"channel must be one of {CHANNELS}"}), 400
+    if channel is not None and mode == MODE_PRIVATE:
+        return jsonify({"error": "invalid_channel", "message": "private seals don't take a channel"}), 400
+    if ref is not None and (len(ref) != 64 or any(c not in "0123456789abcdef" for c in ref)):
+        return jsonify({"error": "invalid_ref", "message": "ref must be a valid stamp (64 hex chars)"}), 400
+
     try:
-        entry = core_seal(idea, mode)
+        entry = core_seal(idea, mode, channel=channel, ref=ref)
     except ValueError as e:
         return jsonify({"error": "invalid_idea", "message": str(e)}), 400
     saved = state["store"].save(entry)
@@ -312,6 +361,174 @@ def dm_inbox():
 
 
 # ─────────────────────────────────────────────────────────
+# DIARY — memoria de las conversaciones con la IA local
+# (mismo cifrado/sellado que phantom_diary.py CLI, expuesto acá
+#  para que el chat del Workbench pueda guardar y recuperar)
+# ─────────────────────────────────────────────────────────
+
+def _diary_entry_to_dict(e, index=None, score=None):
+    out = {
+        "moment": e["moment"],
+        "text": e["text"],
+        "tags": e.get("tags", []),
+        "mood": e.get("mood", ""),
+        "stamp": e["stamp"],
+        "verified": verify_entry(e),
+    }
+    if index is not None:
+        out["index"] = index
+    if score is not None:
+        out["score"] = score
+    return out
+
+
+def _diary_multi_search(store, query, limit=5):
+    """
+    Búsqueda por palabra, no por frase literal. store.search() del CLI
+    exige que la frase completa aparezca seguida en el texto — bien
+    para el CLI donde el usuario escribe la query a mano, mal para
+    contexto automático donde le pasamos texto libre de un mensaje.
+    Acá partimos en palabras, contamos cuántas aparecen en cada
+    entrada, y devolvemos las mejores ordenadas por ese score.
+    """
+    keywords = [w for w in query.lower().split() if len(w) > 2]
+    if not keywords:
+        return []
+    entries = store.load()
+    scored = []
+    for e in entries:
+        haystack = (e["text"] + " " + " ".join(e.get("tags", [])) + " " + e.get("mood", "")).lower()
+        score = sum(1 for kw in keywords if kw in haystack)
+        if score > 0:
+            scored.append((score, e))
+    scored.sort(key=lambda pair: pair[0], reverse=True)  # score desc; sort estable conserva orden cronológico en empates
+    return scored[:limit]
+
+
+@app.route("/api/diary", methods=["POST"])
+@require_token
+def diary_write():
+    data = request.get_json(silent=True) or {}
+    text = data.get("text", "")
+    tags = data.get("tags") or []
+    mood = data.get("mood", "")
+    try:
+        entry = make_entry(text, tags=tags, mood=mood)
+    except ValueError as e:
+        return jsonify({"error": "invalid_entry", "message": str(e)}), 400
+    saved = state["diary_store"].save(entry)
+    return jsonify({"saved": saved, "entry": _diary_entry_to_dict(entry)}), (201 if saved else 200)
+
+
+@app.route("/api/diary/recent", methods=["GET"])
+@require_token
+def diary_recent():
+    n = request.args.get("n", default=10, type=int)
+    entries = state["diary_store"].recent(n)
+    return jsonify({
+        "count": len(entries),
+        "entries": [_diary_entry_to_dict(e) for e in entries],
+    })
+
+
+@app.route("/api/diary/search", methods=["GET"])
+@require_token
+def diary_search():
+    q = request.args.get("q", default="", type=str)
+    if not q.strip():
+        return jsonify({"error": "empty_query"}), 400
+    limit = request.args.get("limit", default=5, type=int)
+    scored = _diary_multi_search(state["diary_store"], q, limit=limit)
+    return jsonify({
+        "count": len(scored),
+        "entries": [_diary_entry_to_dict(e, score=score) for score, e in scored],
+    })
+
+
+# ─────────────────────────────────────────────────────────
+# FILES — explorador real para el chat/council (lectura, nunca escritura)
+# ─────────────────────────────────────────────────────────
+
+def _build_file_tree(dir_path, rel=""):
+    """Árbol recursivo de archivos legibles, misma lógica de exclusión
+    que phantom_council.py.read_repository — código y docs sí, datos
+    del nodo no."""
+    nodes = []
+    try:
+        entries = sorted(os.listdir(dir_path))
+    except OSError:
+        return nodes
+    for name in entries:
+        if name in FILES_EXCLUDE_NAMES:
+            continue
+        full = os.path.join(dir_path, name)
+        relpath = os.path.join(rel, name) if rel else name
+        if os.path.isdir(full):
+            if name in FILES_EXCLUDE_DIRS or name.startswith('.'):
+                continue
+            children = _build_file_tree(full, relpath)
+            if children:  # no mostrar carpetas vacías (post-filtro)
+                nodes.append({"type": "dir", "name": name, "path": relpath, "children": children})
+        else:
+            ext = os.path.splitext(name)[1].lower()
+            if ext not in FILES_TEXT_EXTENSIONS:
+                continue
+            if name in FILES_EXCLUDE_NAMES:
+                continue
+            nodes.append({"type": "file", "name": name, "path": relpath})
+    return nodes
+
+
+def _safe_project_path(rel_path):
+    """Resuelve rel_path contra PROJECT_ROOT y garantiza que no se
+    escapa de ahí (nada de ../../etc/passwd). Devuelve None si es
+    inválido o cae fuera de los tipos/nombres permitidos."""
+    candidate = os.path.realpath(os.path.join(PROJECT_ROOT, rel_path))
+    if os.path.commonpath([candidate, PROJECT_ROOT]) != PROJECT_ROOT:
+        return None
+    name = os.path.basename(candidate)
+    if name in FILES_EXCLUDE_NAMES:
+        return None
+    ext = os.path.splitext(name)[1].lower()
+    if ext not in FILES_TEXT_EXTENSIONS:
+        return None
+    for part in os.path.relpath(candidate, PROJECT_ROOT).split(os.sep):
+        if part in FILES_EXCLUDE_DIRS:
+            return None
+    return candidate
+
+
+@app.route("/api/files/tree", methods=["GET"])
+@require_token
+def files_tree():
+    tree = _build_file_tree(PROJECT_ROOT)
+    return jsonify({"root": os.path.basename(PROJECT_ROOT), "tree": tree})
+
+
+@app.route("/api/files/content", methods=["GET"])
+@require_token
+def files_content():
+    rel_path = request.args.get("path", default="", type=str)
+    if not rel_path:
+        return jsonify({"error": "missing_path"}), 400
+    full_path = _safe_project_path(rel_path)
+    if not full_path or not os.path.isfile(full_path):
+        return jsonify({"error": "not_found_or_forbidden"}), 404
+    try:
+        with open(full_path, "r", encoding="utf-8") as f:
+            content = f.read()
+    except (UnicodeDecodeError, IOError) as e:
+        return jsonify({"error": "unreadable", "message": str(e)}), 400
+    truncated = len(content) > FILES_MAX_READ_CHARS
+    if truncated:
+        content = content[:FILES_MAX_READ_CHARS]
+    return jsonify({
+        "path": rel_path, "content": content,
+        "truncated": truncated, "full_length": len(content) if not truncated else None,
+    })
+
+
+# ─────────────────────────────────────────────────────────
 # STATIC APP (PWA — served from ../app/)
 # Service workers require http://localhost, not file://
 # ─────────────────────────────────────────────────────────
@@ -369,12 +586,14 @@ def api_connect():
 
 def main():
     global API_TOKEN  # [AUTH] We need to write to the global variable
+    global EXPECTED_HOST  # [SECURITY] Same deal, for the Host check
 
     args = sys.argv[1:]
 
     api_port = DEFAULT_API_PORT
     if "--api-port" in args:
         api_port = int(args[args.index("--api-port") + 1])
+    EXPECTED_HOST = f"127.0.0.1:{api_port}"
 
     auto_connect_interval = DEFAULT_AUTO_CONNECT_INTERVAL
     if "--auto-connect-interval" in args:
@@ -404,6 +623,7 @@ def main():
         receipt_ledger=ReceiptLedger(km),
         contact_book=ContactBook(km),
         dm_store=DMStore(km),
+        diary_store=DiaryStore(km),  # [DIARY] mismo km ya desbloqueado, sin passphrase extra
         identity=identity,
     )
 

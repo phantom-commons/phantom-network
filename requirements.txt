@@ -1,0 +1,5 @@
+flask
+websockets
+cryptography
+PySocks
+stem

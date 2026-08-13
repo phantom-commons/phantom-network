@@ -102,6 +102,10 @@ MODE_PERMANENT = "permanent"
 MODE_EPHEMERAL = "ephemeral"
 DEFAULT_MODE = MODE_PRIVATE
 
+# Canales opcionales para sellos compartidos (Commons). Sellos privados
+# no llevan channel — no tiene sentido un tema para algo que nadie más ve.
+CHANNELS = ("governance", "technical", "security", "philosophy", "development", "general")
+
 # Protocol limits
 MAX_MESSAGE_SIZE = 4 * 1024 * 1024  # 4 MB max message size
 MAX_IDEA_LENGTH = 100_000            # 100 KB max idea length
@@ -220,12 +224,33 @@ def decrypt_data(encrypted_dict, key):
 # This format is permanent. Changing it breaks all seals.
 # ─────────────────────────────────────────────────────────
 
-def seal(idea, mode=None):
+def seal(idea, mode=None, channel=None, ref=None):
     """
-    Seal an idea. Returns a dict with idea, moment, stamp, mode.
+    Seal an idea. Returns a dict with idea, moment, stamp, mode,
+    and optionally channel/ref.
 
     The seal is a mathematical proof that this exact idea
     existed at this exact moment.
+
+    channel and ref are siblings of `mode` — same pattern, same
+    reasoning: they live NEXT TO the stamp, never inside it. The
+    stamp is computed from idea+moment only, exactly as it always
+    has been (SEALING.md — never change this). That also means
+    neither field is tamper-evident: a relay could alter channel
+    or ref in transit and the stamp would still verify, exactly
+    like mode already can be altered today. If tamper-evidence is
+    ever needed for these, sign them separately (channel_sig over
+    stamp+channel) rather than touching the stamp formula.
+
+    channel: optional, one of CHANNELS. Only valid when mode is
+    shared (not MODE_PRIVATE) — a private seal has no audience to
+    have a topic for.
+
+    ref: optional stamp (64-char hex) of another seal this one is
+    replying to. Only the FORMAT is validated here — the referenced
+    seal doesn't need to exist locally yet (you may not have synced
+    it). ref is informational for building threads in the UI, not a
+    cryptographic dependency.
 
     # GAP (Void Walker — "hiding versus power"): this format only
     # supports all-or-nothing reveal — decrypt a seal, or don't.
@@ -247,6 +272,16 @@ def seal(idea, mode=None):
     if len(idea) > MAX_IDEA_LENGTH:
         raise ValueError(f"Idea exceeds maximum length ({MAX_IDEA_LENGTH} characters).")
 
+    if channel is not None:
+        if channel not in CHANNELS:
+            raise ValueError(f"Unknown channel: '{channel}'. Must be one of {CHANNELS}.")
+        if mode == MODE_PRIVATE:
+            raise ValueError("Private seals don't take a channel — nobody but you sees it.")
+
+    if ref is not None:
+        if len(ref) != 64 or any(c not in "0123456789abcdef" for c in ref):
+            raise ValueError("ref must be a valid stamp (64 lowercase hex characters).")
+
     # Warn about non-printable characters
     non_printable = [c for c in idea if ord(c) < 32 and c not in '\n\r\t']
     if non_printable:
@@ -261,12 +296,19 @@ def seal(idea, mode=None):
     )
     stamp = hashlib.sha256(data.encode()).hexdigest()
 
-    return {
+    entry = {
         "idea": idea,
         "moment": moment,
         "stamp": stamp,
         "mode": mode
     }
+    if channel is not None:
+        entry["channel"] = channel
+    if ref is not None:
+        if ref == stamp:
+            raise ValueError("A seal cannot reference itself.")
+        entry["ref"] = ref
+    return entry
 
 
 def verify(idea, moment, stamp):
@@ -771,6 +813,39 @@ def send_json(conn, obj):
     conn.sendall(data)
 
 
+class MalformedMessage(ValueError):
+    """
+    Raised when a peer sends bytes that aren't valid newline-delimited
+    JSON. Carries a *safe* preview of what was actually received —
+    for debugging/inspection, so you can see what hit your listener
+    instead of just "Malformed message" with no detail.
+
+    Safety restrictions (this is untrusted input from the network,
+    treat it like one):
+      - Capped to PREVIEW_MAX bytes, regardless of how much the peer
+        sent — a hostile/broken peer flooding garbage shouldn't be
+        able to flood your console or logs either.
+      - Rendered with repr(), which escapes control characters and
+        ANSI escape sequences instead of letting them reach the
+        terminal raw. A peer could otherwise send terminal escape
+        codes designed to manipulate or exploit whatever prints this.
+      - Never parsed, evaluated, or executed as anything other than
+        opaque display text. It is data to look at, never code to run.
+      - Not written to disk anywhere — only shown in the running
+        console session. If you want a persistent record, that's a
+        deliberate separate decision, not a default.
+    """
+    PREVIEW_MAX = 200
+
+    def __init__(self, raw_bytes, note=""):
+        self.raw_len = len(raw_bytes)
+        capped = raw_bytes[:self.PREVIEW_MAX]
+        text = capped.decode('utf-8', errors='replace')
+        self.raw_preview = repr(text) + ("…" if self.raw_len > self.PREVIEW_MAX else "")
+        suffix = f" — {note}" if note else ""
+        super().__init__(f"{self.raw_len} byte(s){suffix}: {self.raw_preview}")
+
+
 def recv_json(conn):
     """
     Receive a newline-delimited JSON message with size limit.
@@ -794,7 +869,8 @@ def recv_json(conn):
     while True:
         chunk = conn.recv(4096)
         if not chunk:
-            raise ConnectionError("Connection closed mid-message")
+            raise MalformedMessage(data, note="connection closed mid-message") if data \
+                else ConnectionError("Connection closed mid-message")
         data += chunk
         if len(data) > MAX_MESSAGE_SIZE:
             raise ValueError(
@@ -804,7 +880,10 @@ def recv_json(conn):
         if b"\n" in data:
             # Take only up to the first newline
             line, _ = data.split(b"\n", 1)
-            return json.loads(line.decode().strip())
+            try:
+                return json.loads(line.decode().strip())
+            except (json.JSONDecodeError, UnicodeDecodeError) as e:
+                raise MalformedMessage(line) from e
 
 
 # ─────────────────────────────────────────────────────────
