@@ -46,6 +46,7 @@ If she can't use it — it's not Phantom.
 | Local encryption       | ✅ Working | Your thoughts are encrypted on your device.                 |
 | P2P sync (local Wi-Fi) | ✅ Working | Two phones can exchange seals without the internet.         |
 | Browser interface      | ✅ Working | `phantom.html` — open and seal. Nothing leaves your device. |
+| Tor integration        | ✅ Working | Phantom can operate through the Tor network.                |
 | Deliberation tool      | ✅ Working | `phantom_council.py` — question the project and find gaps.  |
 
 ## What It Does Not Do Yet
@@ -53,10 +54,10 @@ If she can't use it — it's not Phantom.
 | Feature                        | Status       |
 | ------------------------------ | ------------ |
 | Node-to-node over the internet | 🚧 Not built |
-| Tor integration                | 🚧 Not built |
 | Native Android app             | 🚧 Not built |
 | SUIJURIS economic layer        | 🚧 Not built |
 | Federated learning             | 🚧 Not built |
+
 
 
 This table is honest. It will not lie. When something is built — it moves to working. When it's not — it stays not built.
