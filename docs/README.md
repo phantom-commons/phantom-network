@@ -37,21 +37,27 @@ Phantom exists for her.
 Not as a metaphor. As a design criterion.
 
 If she can't use it — it's not Phantom.
-What it does right now
-Feature	Status	What it means
-Seal ideas	✅ Working	SHA-256 stamp. Your thought exists at that exact moment.
-Verify seals	✅ Working	Anyone can check if a seal is real. No server.
-Local encryption	✅ Working	Your thoughts are encrypted on your device.
-P2P sync (local WiFi)	✅ Working	Two phones can exchange seals without internet.
-Browser interface	✅ Working	phantom.html — open and seal, nothing leaves your device.
-Deliberation tool	✅ Working	phantom_council.py — question the project, find gaps.
-What it does not do yet
-Feature	Status
-Node-to-node over internet	Not built
-Tor integration	Not built
-Native Android app	Not built
-SUIJURIS (economic layer)	Not built
-Federated learning	Not built
+## What It Does Right Now
+
+| Feature                | Status    | What it means                                               |
+| ---------------------- | --------- | ----------------------------------------------------------- |
+| Seal ideas             | ✅ Working | SHA-256 stamp. Your thought exists at that exact moment.    |
+| Verify seals           | ✅ Working | Anyone can check if a seal is real. No server required.     |
+| Local encryption       | ✅ Working | Your thoughts are encrypted on your device.                 |
+| P2P sync (local Wi-Fi) | ✅ Working | Two phones can exchange seals without the internet.         |
+| Browser interface      | ✅ Working | `phantom.html` — open and seal. Nothing leaves your device. |
+| Deliberation tool      | ✅ Working | `phantom_council.py` — question the project and find gaps.  |
+
+## What It Does Not Do Yet
+
+| Feature                        | Status       |
+| ------------------------------ | ------------ |
+| Node-to-node over the internet | 🚧 Not built |
+| Tor integration                | 🚧 Not built |
+| Native Android app             | 🚧 Not built |
+| SUIJURIS economic layer        | 🚧 Not built |
+| Federated learning             | 🚧 Not built |
+
 
 This table is honest. It will not lie. When something is built — it moves to working. When it's not — it stays not built.
 The Genesis Seals
